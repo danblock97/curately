@@ -28,8 +28,8 @@ const features: Feature[] = [
   },
   {
     id: 2,
-    title: 'Smart Deeplinks',
-    description: 'Send users directly to your app with intelligent routing. No more lost conversions or poor user experience.',
+    title: 'Deeplinks',
+    description: 'Create links that send users to different destinations based on their device - iOS app, Android app, or web fallback.',
     buttonText: 'Create deeplink',
     icon: <ExternalLink className="w-6 h-6" />,
     image: '/api/placeholder/300/500',
@@ -37,8 +37,8 @@ const features: Feature[] = [
   },
   {
     id: 3,
-    title: 'Beautiful QR Codes',
-    description: 'Generate stunning, trackable QR codes that people actually want to scan. Customize colors, size, and branding.',
+    title: 'Custom QR Codes',
+    description: 'Generate QR codes with custom colors and sizes. Perfect for print materials, business cards, and offline marketing.',
     buttonText: 'Generate QR code',
     icon: <QrCode className="w-6 h-6" />,
     image: '/api/placeholder/300/500',
@@ -46,19 +46,19 @@ const features: Feature[] = [
   },
   {
     id: 4,
-    title: 'Lightning Fast Performance',
-    description: 'Built for speed with edge computing and global CDN. Your links load instantly anywhere in the world.',
-    buttonText: 'See performance',
-    icon: <Zap className="w-6 h-6" />,
+    title: 'Click Tracking',
+    description: 'Monitor how many people click your links and see which ones perform best. Track your growth over time.',
+    buttonText: 'View analytics',
+    icon: <BarChart3 className="w-6 h-6" />,
     image: '/api/placeholder/300/500',
     side: 'right'
   },
   {
     id: 5,
-    title: 'Global Analytics',
-    description: 'Track clicks, locations, devices, and more. Get insights that help you understand your audience better.',
-    buttonText: 'View analytics',
-    icon: <BarChart3 className="w-6 h-6" />,
+    title: 'Custom Themes',
+    description: 'Choose from 4 beautiful themes to match your brand. Light, dark, and gradient options available.',
+    buttonText: 'See themes',
+    icon: <Zap className="w-6 h-6" />,
     image: '/api/placeholder/300/500',
     side: 'left'
   }

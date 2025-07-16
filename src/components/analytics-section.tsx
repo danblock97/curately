@@ -25,29 +25,29 @@ const clicksData = [
 const metrics = [
   {
     title: 'Total Clicks',
-    value: '847,329',
+    value: '2,847',
     change: '+12.5%',
     icon: <MousePointer className="w-5 h-5" />,
     color: 'text-blue-400'
   },
   {
     title: 'Active Links',
-    value: '2,847',
-    change: '+8.2%',
+    value: '24',
+    change: '+3 new',
     icon: <Link className="w-5 h-5" />,
     color: 'text-green-400'
   },
   {
-    title: 'Unique Visitors',
-    value: '124,891',
-    change: '+15.3%',
+    title: 'Link Types',
+    value: '3 Types',
+    change: 'Bio, Deep, QR',
     icon: <Users className="w-5 h-5" />,
     color: 'text-purple-400'
   },
   {
-    title: 'Global Reach',
-    value: '89 Countries',
-    change: '+3 new',
+    title: 'Themes',
+    value: '4 Themes',
+    change: 'All included',
     icon: <Globe className="w-5 h-5" />,
     color: 'text-orange-400'
   }
@@ -63,10 +63,10 @@ export function AnalyticsSection() {
             ANALYTICS
           </Badge>
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Insights that drive your growth
+            Track your link performance
           </h2>
           <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-            Track every click, understand your audience, and optimize your link strategy with powerful analytics
+            Monitor click counts, see your top performing links, and track your growth over time
           </p>
         </div>
 
@@ -175,25 +175,21 @@ export function AnalyticsSection() {
               </CardContent>
             </Card>
 
-            {/* Geographic Distribution */}
+            {/* Quick Stats */}
             <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-white text-lg">Top Countries</CardTitle>
+                <CardTitle className="text-white text-lg">Quick Stats</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
-                  { country: 'United States', percentage: '32%', flag: '🇺🇸' },
-                  { country: 'United Kingdom', percentage: '18%', flag: '🇬🇧' },
-                  { country: 'Canada', percentage: '12%', flag: '🇨🇦' },
-                  { country: 'Australia', percentage: '8%', flag: '🇦🇺' },
-                  { country: 'Germany', percentage: '7%', flag: '🇩🇪' }
-                ].map((country, index) => (
+                  { label: 'Total Links', value: '24' },
+                  { label: 'Bio Links', value: '18' },
+                  { label: 'QR Codes', value: '4' },
+                  { label: 'Deeplinks', value: '2' }
+                ].map((stat, index) => (
                   <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg">{country.flag}</span>
-                      <span className="text-white">{country.country}</span>
-                    </div>
-                    <div className="text-blue-400 font-bold">{country.percentage}</div>
+                    <span className="text-white">{stat.label}</span>
+                    <div className="text-blue-400 font-bold">{stat.value}</div>
                   </div>
                 ))}
               </CardContent>

@@ -54,8 +54,8 @@ const advantages = [
   },
   {
     icon: <Shield className="w-8 h-8" />,
-    title: 'Enhanced Security & Reliability',
-    description: 'Enterprise-grade security with 99.9% uptime guarantee. Your links are protected with SSL encryption and DDoS protection.',
+    title: 'Secure & Reliable',
+    description: 'Your links are protected with SSL encryption and secure database storage. Built on reliable infrastructure for consistent performance.',
     color: 'bg-red-500/20 text-red-400 border-red-500/30',
     iconBg: 'bg-red-500/20'
   },
@@ -68,17 +68,10 @@ const advantages = [
   },
   {
     icon: <Globe className="w-8 h-8" />,
-    title: 'Global Reach & Accessibility',
-    description: 'CDN-powered delivery ensures fast loading worldwide. Accessible design standards make your content available to everyone.',
+    title: 'Works Everywhere',
+    description: 'Your links work perfectly across all platforms and devices. Share once and it works on social media, websites, and mobile apps.',
     color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
     iconBg: 'bg-indigo-500/20'
-  },
-  {
-    icon: <Target className="w-8 h-8" />,
-    title: 'Targeted Content Delivery',
-    description: 'Smart routing based on user location, device, and preferences. Deliver the right content to the right audience at the right time.',
-    color: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
-    iconBg: 'bg-pink-500/20'
   }
 ]
 
@@ -130,79 +123,29 @@ export function AdvantagesSection() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           <Card className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-blue-500/20 backdrop-blur-sm">
             <CardContent className="p-8 text-center">
-              <div className="text-4xl font-bold text-white mb-2">3x</div>
-              <div className="text-blue-400 font-semibold mb-2">Higher Conversion</div>
-              <div className="text-gray-400 text-sm">Compared to scattered links</div>
+              <div className="text-4xl font-bold text-white mb-2">∞</div>
+              <div className="text-blue-400 font-semibold mb-2">Unlimited Links</div>
+              <div className="text-gray-400 text-sm">Add as many links as you need</div>
             </CardContent>
           </Card>
           
           <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20 backdrop-blur-sm">
             <CardContent className="p-8 text-center">
-              <div className="text-4xl font-bold text-white mb-2">99.9%</div>
-              <div className="text-green-400 font-semibold mb-2">Uptime Guarantee</div>
-              <div className="text-gray-400 text-sm">Enterprise-grade reliability</div>
+              <div className="text-4xl font-bold text-white mb-2">3</div>
+              <div className="text-green-400 font-semibold mb-2">Link Types</div>
+              <div className="text-gray-400 text-sm">Bio links, deeplinks, and QR codes</div>
             </CardContent>
           </Card>
           
           <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20 backdrop-blur-sm">
             <CardContent className="p-8 text-center">
-              <div className="text-4xl font-bold text-white mb-2">50ms</div>
-              <div className="text-purple-400 font-semibold mb-2">Average Load Time</div>
-              <div className="text-gray-400 text-sm">Lightning-fast performance</div>
+              <div className="text-4xl font-bold text-white mb-2">4</div>
+              <div className="text-purple-400 font-semibold mb-2">Beautiful Themes</div>
+              <div className="text-gray-400 text-sm">Choose your perfect look</div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Feature Highlight */}
-        <Card className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 border-gray-600 backdrop-blur-sm">
-          <CardContent className="p-12">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <div className="flex items-center space-x-2 mb-4">
-                  <Sparkles className="w-6 h-6 text-yellow-400" />
-                  <Badge variant="outline" className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                    FEATURED
-                  </Badge>
-                </div>
-                <h3 className="text-3xl font-bold text-white mb-6">
-                  Smart Link Intelligence
-                </h3>
-                <p className="text-gray-300 text-lg mb-8 leading-relaxed">
-                  Our AI-powered system learns from your audience behavior to automatically optimize 
-                  link placement, suggest content improvements, and maximize engagement rates.
-                </p>
-                <Button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-8 py-3 rounded-lg font-semibold">
-                  Learn More About AI Features
-                </Button>
-              </div>
-              
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-3xl blur-2xl"></div>
-                <div className="relative bg-gray-900/50 rounded-3xl p-8 border border-gray-700">
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-white font-medium">AI analyzing user behavior...</span>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
-                      <span className="text-white font-medium">Optimizing link placement...</span>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse"></div>
-                      <span className="text-white font-medium">Suggesting improvements...</span>
-                    </div>
-                    <div className="bg-gray-800/50 rounded-lg p-4 mt-6">
-                      <div className="text-sm text-gray-400 mb-2">Conversion Rate</div>
-                      <div className="text-2xl font-bold text-white">+47%</div>
-                      <div className="text-sm text-green-400">↑ This week</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Call to Action */}
         <div className="text-center mt-16">
