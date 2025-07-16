@@ -16,7 +16,7 @@ export function DashboardSidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 min-h-full">
+    <div className="w-64 bg-black border-r border-gray-700 min-h-full">
       <nav className="mt-8">
         <div className="px-4">
           <ul className="space-y-2">
@@ -29,8 +29,8 @@ export function DashboardSidebar() {
                     className={cn(
                       'flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
                       isActive
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                     )}
                   >
                     <item.icon className="w-5 h-5" />
