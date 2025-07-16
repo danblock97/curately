@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { AppearanceForm } from '@/components/dashboard/appearance-form'
 
 export default async function AppearancePage() {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { data: { user } } = await supabase.auth.getUser()
   

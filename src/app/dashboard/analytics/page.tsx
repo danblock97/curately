@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { ExternalLink, TrendingUp, MousePointer } from 'lucide-react'
 
 export default async function AnalyticsPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { data: { user } } = await supabase.auth.getUser()
   

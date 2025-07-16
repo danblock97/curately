@@ -10,7 +10,7 @@ interface PageProps {
 
 export default async function UserProfilePage({ params }: PageProps) {
   const resolvedParams = await params
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Get user profile
   const { data: profile } = await supabase
@@ -48,7 +48,7 @@ export default async function UserProfilePage({ params }: PageProps) {
 
 export async function generateMetadata({ params }: PageProps) {
   const resolvedParams = await params
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: profile } = await supabase
     .from('profiles')

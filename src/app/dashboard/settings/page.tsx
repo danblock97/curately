@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { SettingsForm } from '@/components/dashboard/settings-form'
 
 export default async function SettingsPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { data: { user } } = await supabase.auth.getUser()
   
