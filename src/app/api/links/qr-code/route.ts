@@ -2,50 +2,56 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateQRCode, generateQRCodeSVG, getQRCodeUrl } from '@/lib/qr-code'
 import { generateShortCode, isValidUrl, formatUrl } from '@/lib/deeplink'
+import { withErrorHandling, AuthError, ValidationError, createSuccessResponse } from '@/lib/error-handler'
+import { validateQRCodeData } from '@/lib/validation'
+import { rateLimiters } from '@/lib/rate-limit'
+import { withSecurity, sanitizeInput, sanitizeUrl, getSecureHeaders } from '@/lib/security'
 
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+export const POST = withErrorHandling(withSecurity(async (request: NextRequest) => {
+  // Apply rate limiting
+  const rateLimitResult = rateLimiters.qrCode.check(request)
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Please try again later.' },
+      { 
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': '5',
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
+        }
+      }
+    )
+  }
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-    const body = await request.json()
-    const {
-      title,
-      url,
-      size = 200,
-      errorCorrection = 'M',
-      foregroundColor = '#000000',
-      backgroundColor = '#FFFFFF',
-      format = 'PNG',
-    } = body
+  if (!user) {
+    throw new AuthError()
+  }
 
-    // Validate required fields
-    if (!title || !url) {
-      return NextResponse.json(
-        { error: 'Title and URL are required' },
-        { status: 400 }
-      )
-    }
+  const body = await request.json()
+  
+  // Validate request data
+  const validation = validateQRCodeData(body)
+  if (!validation.success) {
+    throw new ValidationError('Invalid QR code data: ' + validation.error.issues[0].message)
+  }
 
-    // Validate URL
-    if (!isValidUrl(url)) {
-      return NextResponse.json(
-        { error: 'Invalid URL' },
-        { status: 400 }
-      )
-    }
+  const {
+    title: rawTitle,
+    url: rawUrl,
+    size = 200,
+    errorCorrection = 'M',
+    foregroundColor = '#000000',
+    backgroundColor = '#FFFFFF',
+    format = 'PNG',
+  } = validation.data
 
-    // Validate size
-    if (size < 50 || size > 1000) {
-      return NextResponse.json(
-        { error: 'Size must be between 50 and 1000' },
-        { status: 400 }
-      )
-    }
+  // Sanitize inputs
+  const title = sanitizeInput(rawTitle)
+  const url = sanitizeUrl(rawUrl)
 
     // Generate unique short code
     let shortCode = generateShortCode()
@@ -150,17 +156,18 @@ export async function POST(request: NextRequest) {
         link_type: 'qr_code',
       })
 
-    return NextResponse.json({
-      link,
-      shortUrl,
-      shortCode,
-      qrCodeData,
-    })
-  } catch (error) {
-    console.error('Error creating QR code:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
+  const response = createSuccessResponse({
+    link,
+    shortUrl,
+    shortCode,
+    qrCodeData,
+  }, 'QR code created successfully')
+
+  // Add security headers
+  const secureHeaders = getSecureHeaders()
+  Object.entries(secureHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value)
+  })
+
+  return response
+}))

@@ -2,11 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getDeeplinkRedirectUrl, parseUserAgent } from '@/lib/deeplink'
 import { redirect } from 'next/navigation'
+import { rateLimiters } from '@/lib/rate-limit'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ shortCode: string }> }
 ) {
+  // Apply rate limiting for API endpoints
+  const rateLimitResult = rateLimiters.api.check(request)
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Please try again later.' },
+      { 
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': '100',
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
+        }
+      }
+    )
+  }
+
   try {
     const resolvedParams = await params
     const supabase = await createClient()

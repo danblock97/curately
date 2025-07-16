@@ -1,7 +1,45 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { rateLimiters } from '@/lib/rate-limit'
+import { getSecureHeaders } from '@/lib/security'
 
 export async function middleware(request: NextRequest) {
+  // Apply global rate limiting for API routes
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    const rateLimitResult = rateLimiters.api.check(request)
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '100',
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
+          }
+        }
+      )
+    }
+  }
+
+  // Apply auth rate limiting for auth pages
+  if (request.nextUrl.pathname.startsWith('/auth/')) {
+    const rateLimitResult = rateLimiters.auth.check(request)
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '5',
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
+          }
+        }
+      )
+    }
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -50,6 +88,12 @@ export async function middleware(request: NextRequest) {
   if (isPublicProfile) {
     return supabaseResponse
   }
+
+  // Add security headers to all responses
+  const secureHeaders = getSecureHeaders()
+  Object.entries(secureHeaders).forEach(([key, value]) => {
+    supabaseResponse.headers.set(key, value)
+  })
 
   return supabaseResponse
 }

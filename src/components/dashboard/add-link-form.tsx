@@ -10,7 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { Database } from '@/lib/supabase/types'
-import { Link2, ExternalLink, QrCode } from 'lucide-react'
+import { Link2, ExternalLink, QrCode, AlertCircle } from 'lucide-react'
+import { LoadingButton } from '@/components/ui/loading'
+import { useFormValidation, linkInBioSchema, deeplinkSchema, qrCodeSchema } from '@/lib/validation'
+import { handleClientError } from '@/lib/error-handler'
 
 type Link = Database['public']['Tables']['links']['Row']
 
@@ -24,6 +27,7 @@ interface AddLinkFormProps {
 export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder }: AddLinkFormProps) {
   const [activeTab, setActiveTab] = useState('link_in_bio')
   const [isLoading, setIsLoading] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
   
   // Common fields
   const [title, setTitle] = useState('')
@@ -43,6 +47,17 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder }: AddLin
   const [qrBackground, setQrBackground] = useState('#FFFFFF')
 
   const supabase = createClient()
+  const linkInBioValidation = useFormValidation(linkInBioSchema)
+  const deeplinkValidation = useFormValidation(deeplinkSchema)
+  const qrCodeValidation = useFormValidation(qrCodeSchema)
+
+  const clearErrors = () => setErrors({})
+  
+  const handleError = (error: unknown, context?: string) => {
+    const errorMessage = handleClientError(error)
+    toast.error(context ? `${context}: ${errorMessage}` : errorMessage)
+    console.error('Form error:', error)
+  }
 
   const handleLinkInBioSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -235,7 +250,9 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder }: AddLin
                   type="submit"
                   disabled={isLoading || !title.trim() || !url.trim()}
                 >
-                  {isLoading ? 'Adding...' : 'Add Link'}
+                  <LoadingButton isLoading={isLoading} loadingText="Adding...">
+                    Add Link
+                  </LoadingButton>
                 </Button>
                 <Button
                   type="button"
@@ -327,7 +344,9 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder }: AddLin
                   type="submit"
                   disabled={isLoading || !title.trim() || !url.trim()}
                 >
-                  {isLoading ? 'Creating...' : 'Create Deeplink'}
+                  <LoadingButton isLoading={isLoading} loadingText="Creating...">
+                    Create Deeplink
+                  </LoadingButton>
                 </Button>
                 <Button
                   type="button"
@@ -426,7 +445,9 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder }: AddLin
                   type="submit"
                   disabled={isLoading || !title.trim() || !url.trim()}
                 >
-                  {isLoading ? 'Creating...' : 'Create QR Code'}
+                  <LoadingButton isLoading={isLoading} loadingText="Creating...">
+                    Create QR Code
+                  </LoadingButton>
                 </Button>
                 <Button
                   type="button"

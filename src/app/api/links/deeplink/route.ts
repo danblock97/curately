@@ -1,45 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { generateShortCode, isValidUrl, formatUrl } from '@/lib/deeplink'
+import { generateShortCode, isValidUrl, formatUrl, validateDeeplinkConfig } from '@/lib/deeplink'
+import { withErrorHandling, AuthError, ValidationError, createSuccessResponse } from '@/lib/error-handler'
+import { validateDeeplinkData } from '@/lib/validation'
+import { rateLimiters } from '@/lib/rate-limit'
+import { withSecurity, sanitizeInput, sanitizeUrl, getSecureHeaders } from '@/lib/security'
 
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const body = await request.json()
-    const {
-      title,
-      originalUrl,
-      iosUrl,
-      androidUrl,
-      desktopUrl,
-      fallbackUrl,
-      userAgentRules,
-    } = body
-
-    // Validate required fields
-    if (!title || !originalUrl) {
-      return NextResponse.json(
-        { error: 'Title and original URL are required' },
-        { status: 400 }
-      )
-    }
-
-    // Validate URLs
-    const urls = [originalUrl, iosUrl, androidUrl, desktopUrl, fallbackUrl].filter(Boolean)
-    for (const url of urls) {
-      if (!isValidUrl(url)) {
-        return NextResponse.json(
-          { error: `Invalid URL: ${url}` },
-          { status: 400 }
-        )
+export const POST = withErrorHandling(withSecurity(async (request: NextRequest) => {
+  // Apply rate limiting
+  const rateLimitResult = rateLimiters.linkCreation.check(request)
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Please try again later.' },
+      { 
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': '10',
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
+        }
       }
-    }
+    )
+  }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new AuthError()
+  }
+
+  const body = await request.json()
+  
+  // Validate request data
+  const validation = validateDeeplinkData(body)
+  if (!validation.success) {
+    throw new ValidationError('Invalid deeplink data: ' + validation.error.issues[0].message)
+  }
+
+  const {
+    title: rawTitle,
+    originalUrl: rawOriginalUrl,
+    iosUrl: rawIosUrl,
+    androidUrl: rawAndroidUrl,
+    desktopUrl: rawDesktopUrl,
+    fallbackUrl: rawFallbackUrl,
+  } = validation.data
+
+  // Sanitize all inputs
+  const title = sanitizeInput(rawTitle)
+  const originalUrl = sanitizeUrl(rawOriginalUrl)
+  const iosUrl = rawIosUrl ? sanitizeUrl(rawIosUrl) : undefined
+  const androidUrl = rawAndroidUrl ? sanitizeUrl(rawAndroidUrl) : undefined
+  const desktopUrl = rawDesktopUrl ? sanitizeUrl(rawDesktopUrl) : undefined
+  const fallbackUrl = rawFallbackUrl ? sanitizeUrl(rawFallbackUrl) : undefined
+
+  // Additional validation for deeplink configuration
+  const configValidation = validateDeeplinkConfig({
+    originalUrl,
+    iosUrl: iosUrl || undefined,
+    androidUrl: androidUrl || undefined,
+    desktopUrl: desktopUrl || undefined,
+    fallbackUrl: fallbackUrl || undefined,
+  })
+
+  if (!configValidation.isValid) {
+    throw new ValidationError(configValidation.errors.join(', '))
+  }
 
     // Generate unique short code
     let shortCode = generateShortCode()
@@ -106,7 +133,7 @@ export async function POST(request: NextRequest) {
         android_url: androidUrl ? formatUrl(androidUrl) : null,
         desktop_url: desktopUrl ? formatUrl(desktopUrl) : null,
         fallback_url: fallbackUrl ? formatUrl(fallbackUrl) : null,
-        user_agent_rules: userAgentRules || null,
+        user_agent_rules: null,
       })
 
     if (deeplinkError) {
@@ -130,16 +157,17 @@ export async function POST(request: NextRequest) {
 
     const shortUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/l/${shortCode}`
 
-    return NextResponse.json({
-      link,
-      shortUrl,
-      shortCode,
-    })
-  } catch (error) {
-    console.error('Error creating deeplink:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
+  const response = createSuccessResponse({
+    link,
+    shortUrl,
+    shortCode,
+  }, 'Deeplink created successfully')
+
+  // Add security headers
+  const secureHeaders = getSecureHeaders()
+  Object.entries(secureHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value)
+  })
+
+  return response
+}))
