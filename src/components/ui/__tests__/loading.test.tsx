@@ -130,76 +130,78 @@ describe('Loading Components', () => {
 
   describe('LoadingTable', () => {
     it('should render with default props', () => {
-      render(<LoadingTable />)
+      const { container } = render(<LoadingTable />)
       
-      // Should render 5 rows by default
-      const rows = screen.getAllByRole('generic')
+      // Should render 5 rows by default (looking for flex space-x-4 divs which are the rows)
+      const rows = container.querySelectorAll('.flex.space-x-4')
       expect(rows).toHaveLength(5)
     })
 
     it('should render with custom rows and columns', () => {
-      render(<LoadingTable rows={3} columns={4} />)
+      const { container } = render(<LoadingTable rows={3} columns={4} />)
       
       // Should render 3 rows with 4 columns each
-      const rows = screen.getAllByRole('generic')
+      const rows = container.querySelectorAll('.flex.space-x-4')
       expect(rows).toHaveLength(3)
+      
+      // Each row should have 4 columns
+      const firstRow = rows[0]
+      const columns = firstRow.querySelectorAll('.h-8')
+      expect(columns).toHaveLength(4)
     })
   })
 
   describe('LoadingList', () => {
     it('should render with default props', () => {
-      render(<LoadingList />)
+      const { container } = render(<LoadingList />)
       
-      // Should render 3 items by default
-      const items = screen.getAllByRole('generic')
+      // Should render 3 items by default (looking for flex items-center space-x-3 divs which are the items)
+      const items = container.querySelectorAll('.flex.items-center.space-x-3')
       expect(items).toHaveLength(3)
     })
 
     it('should render with custom number of items', () => {
-      render(<LoadingList items={5} />)
+      const { container } = render(<LoadingList items={5} />)
       
       // Should render 5 items
-      const items = screen.getAllByRole('generic')
+      const items = container.querySelectorAll('.flex.items-center.space-x-3')
       expect(items).toHaveLength(5)
     })
   })
 
   describe('LoadingForm', () => {
     it('should render form skeleton', () => {
-      render(<LoadingForm />)
+      const { container } = render(<LoadingForm />)
       
       // Should render form elements
-      const container = screen.getByRole('generic')
-      expect(container).toBeInTheDocument()
+      expect(container.firstChild).toBeInTheDocument()
     })
   })
 
   describe('LoadingChart', () => {
     it('should render chart skeleton', () => {
-      render(<LoadingChart />)
+      const { container } = render(<LoadingChart />)
       
       // Should render chart elements
-      const container = screen.getByRole('generic')
-      expect(container).toBeInTheDocument()
+      expect(container.firstChild).toBeInTheDocument()
     })
   })
 
   describe('LoadingProfile', () => {
     it('should render profile skeleton', () => {
-      render(<LoadingProfile />)
+      const { container } = render(<LoadingProfile />)
       
       // Should render profile elements
-      const container = screen.getByRole('generic')
-      expect(container).toBeInTheDocument()
+      expect(container.firstChild).toBeInTheDocument()
     })
   })
 
   describe('LoadingDots', () => {
     it('should render loading dots', () => {
-      render(<LoadingDots />)
+      const { container } = render(<LoadingDots />)
       
       // Should render 3 dots
-      const dots = screen.getAllByRole('generic')
+      const dots = container.querySelectorAll('.w-2.h-2.bg-gray-400.rounded-full.animate-pulse')
       expect(dots).toHaveLength(3)
     })
   })

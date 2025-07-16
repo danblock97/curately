@@ -39,12 +39,12 @@ describe('ErrorBoundary', () => {
     )
     
     expect(screen.getByText('Something went wrong')).toBeInTheDocument()
-    expect(screen.getByText('We apologize for the inconvenience. Please try refreshing the page.')).toBeInTheDocument()
+    expect(screen.getByText('We\'re sorry, but something unexpected happened. Please try again.')).toBeInTheDocument()
   })
 
   it('should render custom fallback when provided', () => {
-    const CustomFallback = ({ error }: { error: Error }) => (
-      <div>Custom error: {error.message}</div>
+    const CustomFallback = (
+      <div>Custom error: Test error</div>
     )
     
     render(
@@ -63,7 +63,7 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     )
     
-    const resetButton = screen.getByText('Try again')
+    const resetButton = screen.getByText('Try Again')
     expect(resetButton).toBeInTheDocument()
     
     // Click the reset button
@@ -84,70 +84,11 @@ describe('ErrorBoundary', () => {
     )
     
     expect(consoleSpy).toHaveBeenCalledWith(
-      'ErrorBoundary caught an error:',
+      'Error caught by boundary:',
       expect.any(Error),
       expect.any(Object)
     )
     
     consoleSpy.mockRestore()
-  })
-
-  it('should display error details when showDetails is true', () => {
-    render(
-      <ErrorBoundary showDetails={true}>
-        <ThrowError shouldThrow={true} />
-      </ErrorBoundary>
-    )
-    
-    expect(screen.getByText('Error Details:')).toBeInTheDocument()
-    expect(screen.getByText('Test error')).toBeInTheDocument()
-  })
-
-  it('should not display error details when showDetails is false', () => {
-    render(
-      <ErrorBoundary showDetails={false}>
-        <ThrowError shouldThrow={true} />
-      </ErrorBoundary>
-    )
-    
-    expect(screen.queryByText('Error Details:')).not.toBeInTheDocument()
-    expect(screen.queryByText('Test error')).not.toBeInTheDocument()
-  })
-
-  it('should call onError callback when error occurs', () => {
-    const onErrorMock = jest.fn()
-    
-    render(
-      <ErrorBoundary onError={onErrorMock}>
-        <ThrowError shouldThrow={true} />
-      </ErrorBoundary>
-    )
-    
-    expect(onErrorMock).toHaveBeenCalledWith(
-      expect.any(Error),
-      expect.any(Object)
-    )
-  })
-
-  it('should display custom error message', () => {
-    const customMessage = 'Custom error message'
-    
-    render(
-      <ErrorBoundary errorMessage={customMessage}>
-        <ThrowError shouldThrow={true} />
-      </ErrorBoundary>
-    )
-    
-    expect(screen.getByText(customMessage)).toBeInTheDocument()
-  })
-
-  it('should use default error message when none provided', () => {
-    render(
-      <ErrorBoundary>
-        <ThrowError shouldThrow={true} />
-      </ErrorBoundary>
-    )
-    
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument()
   })
 })

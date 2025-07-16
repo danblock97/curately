@@ -5,7 +5,7 @@ import {
   AuthError,
   NotFoundError,
   RateLimitError,
-  handleError,
+  handleApiError,
   handleClientError,
   withErrorHandling,
   createErrorResponse,
@@ -13,10 +13,35 @@ import {
   logError,
 } from '../error-handler'
 
+// Mock NextResponse.json
+jest.mock('next/server', () => ({
+  NextResponse: {
+    json: jest.fn((data, init) => ({
+      status: init?.status || 200,
+      json: () => Promise.resolve(data),
+    })),
+  },
+  NextRequest: jest.fn(),
+}))
+
+// Helper function to create mock NextRequest
+function createMockRequest(url: string, method: string = 'GET'): NextRequest {
+  return {
+    url,
+    method,
+    headers: {
+      get: jest.fn(),
+    },
+    nextUrl: {
+      pathname: new URL(url).pathname,
+    },
+  } as any
+}
+
 describe('Error Handler', () => {
   describe('AppError', () => {
     it('should create AppError with correct properties', () => {
-      const error = new AppError('Test error', 400, true, 'TEST_ERROR')
+      const error = new AppError('Test error', 400, 'TEST_ERROR')
       expect(error.message).toBe('Test error')
       expect(error.statusCode).toBe(400)
       expect(error.isOperational).toBe(true)
@@ -50,7 +75,7 @@ describe('Error Handler', () => {
 
   describe('AuthError', () => {
     it('should create AuthError with correct properties', () => {
-      const error = new AuthError('Unauthorized', 'AUTH_ERROR')
+      const error = new AuthError('Unauthorized')
       expect(error.message).toBe('Unauthorized')
       expect(error.statusCode).toBe(401)
       expect(error.isOperational).toBe(true)
@@ -60,7 +85,7 @@ describe('Error Handler', () => {
 
     it('should use default message and code', () => {
       const error = new AuthError()
-      expect(error.message).toBe('Unauthorized')
+      expect(error.message).toBe('Authentication required')
       expect(error.code).toBe('AUTH_ERROR')
     })
   })
@@ -84,40 +109,37 @@ describe('Error Handler', () => {
 
   describe('RateLimitError', () => {
     it('should create RateLimitError with correct properties', () => {
-      const error = new RateLimitError('Rate limit exceeded', 'RATE_LIMIT')
+      const error = new RateLimitError('Rate limit exceeded')
       expect(error.message).toBe('Rate limit exceeded')
       expect(error.statusCode).toBe(429)
       expect(error.isOperational).toBe(true)
-      expect(error.code).toBe('RATE_LIMIT')
+      expect(error.code).toBe('RATE_LIMIT_ERROR')
       expect(error.name).toBe('RateLimitError')
     })
 
     it('should use default message and code', () => {
       const error = new RateLimitError()
-      expect(error.message).toBe('Rate limit exceeded. Please try again later.')
-      expect(error.code).toBe('RATE_LIMIT')
+      expect(error.message).toBe('Too many requests')
+      expect(error.code).toBe('RATE_LIMIT_ERROR')
     })
   })
 
-  describe('handleError', () => {
+  describe('handleApiError', () => {
     it('should handle AppError', () => {
       const error = new ValidationError('Invalid input')
-      const response = handleError(error)
-      expect(response).toBeInstanceOf(NextResponse)
+      const response = handleApiError(error)
       expect(response.status).toBe(400)
     })
 
     it('should handle unknown errors', () => {
       const error = new Error('Unknown error')
-      const response = handleError(error)
-      expect(response).toBeInstanceOf(NextResponse)
+      const response = handleApiError(error)
       expect(response.status).toBe(500)
     })
 
     it('should handle non-Error objects', () => {
       const error = 'String error'
-      const response = handleError(error)
-      expect(response).toBeInstanceOf(NextResponse)
+      const response = handleApiError(error)
       expect(response.status).toBe(500)
     })
   })
@@ -132,13 +154,13 @@ describe('Error Handler', () => {
     it('should handle unknown errors', () => {
       const error = new Error('Unknown error')
       const message = handleClientError(error)
-      expect(message).toBe('An unexpected error occurred')
+      expect(message).toBe('Unknown error')
     })
 
     it('should handle non-Error objects', () => {
       const error = 'String error'
       const message = handleClientError(error)
-      expect(message).toBe('An unexpected error occurred')
+      expect(message).toBe('String error')
     })
   })
 
@@ -147,7 +169,7 @@ describe('Error Handler', () => {
       const mockHandler = jest.fn().mockResolvedValue('success')
       const wrappedHandler = withErrorHandling(mockHandler)
       
-      const request = new NextRequest('https://example.com/api/test')
+      const request = createMockRequest('https://example.com/api/test')
       const result = await wrappedHandler(request)
       
       expect(result).toBe('success')
@@ -158,10 +180,9 @@ describe('Error Handler', () => {
       const mockHandler = jest.fn().mockRejectedValue(new ValidationError('Invalid input'))
       const wrappedHandler = withErrorHandling(mockHandler)
       
-      const request = new NextRequest('https://example.com/api/test')
+      const request = createMockRequest('https://example.com/api/test')
       const result = await wrappedHandler(request)
       
-      expect(result).toBeInstanceOf(NextResponse)
       expect(result.status).toBe(400)
     })
   })
@@ -169,7 +190,6 @@ describe('Error Handler', () => {
   describe('createErrorResponse', () => {
     it('should create error response with message', () => {
       const response = createErrorResponse('Test error', 400, 'TEST_ERROR')
-      expect(response).toBeInstanceOf(NextResponse)
       expect(response.status).toBe(400)
     })
 
@@ -183,7 +203,6 @@ describe('Error Handler', () => {
     it('should create success response with data', () => {
       const data = { id: 1, name: 'Test' }
       const response = createSuccessResponse(data, 'Success')
-      expect(response).toBeInstanceOf(NextResponse)
       expect(response.status).toBe(200)
     })
 
@@ -206,7 +225,7 @@ describe('Error Handler', () => {
 
     it('should log error with context', () => {
       const error = new ValidationError('Test error')
-      const request = new NextRequest('https://example.com/api/test')
+      const request = createMockRequest('https://example.com/api/test')
       
       logError(error, request, 'Test context')
       
@@ -224,7 +243,7 @@ describe('Error Handler', () => {
 
     it('should log error without context', () => {
       const error = new Error('Test error')
-      const request = new NextRequest('https://example.com/api/test')
+      const request = createMockRequest('https://example.com/api/test')
       
       logError(error, request)
       

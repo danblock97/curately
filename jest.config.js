@@ -8,10 +8,7 @@ const createJestConfig = nextJest({
 // Add any custom config to be passed to Jest
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  moduleNameMapping: {
-    // Handle module aliases (this will be automatically configured for you based on your tsconfig.json paths)
-    '^@/(.*)$': '<rootDir>/src/$1',
-  },
+  // moduleNameMapping will be automatically configured by Next.js based on tsconfig paths
   testEnvironment: 'jsdom',
   collectCoverage: true,
   collectCoverageFrom: [
@@ -26,7 +23,7 @@ const customJestConfig = {
   coverageDirectory: 'coverage',
   testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
   transformIgnorePatterns: [
-    '/node_modules/',
+    '/node_modules/(?!(@supabase|isows)/)',
     '^.+\\.module\\.(css|sass|scss)$',
   ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
@@ -34,15 +31,6 @@ const customJestConfig = {
     '**/__tests__/**/*.(ts|tsx|js|jsx)',
     '**/*.(test|spec).(ts|tsx|js|jsx)',
   ],
-  // Add support for TypeScript files
-  preset: 'ts-jest',
-  globals: {
-    'ts-jest': {
-      tsconfig: {
-        jsx: 'react-jsx',
-      },
-    },
-  },
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

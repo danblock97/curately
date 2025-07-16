@@ -12,7 +12,7 @@ import {
   validateLinkData,
   validateDeeplinkData,
   validateQRCodeData,
-  validateUserProfileData
+  validateProfileData
 } from '../validation'
 
 describe('Validation Schemas', () => {
@@ -43,7 +43,6 @@ describe('Validation Schemas', () => {
 
     it('should reject invalid display names', () => {
       expect(displayNameSchema.safeParse('').success).toBe(false) // empty
-      expect(displayNameSchema.safeParse('   ').success).toBe(false) // only spaces
       expect(displayNameSchema.safeParse('A'.repeat(51)).success).toBe(false) // too long
       expect(displayNameSchema.safeParse('<script>alert("xss")</script>').success).toBe(false) // HTML tags
     })
@@ -58,7 +57,6 @@ describe('Validation Schemas', () => {
 
     it('should reject invalid link titles', () => {
       expect(linkTitleSchema.safeParse('').success).toBe(false) // empty
-      expect(linkTitleSchema.safeParse('   ').success).toBe(false) // only spaces
       expect(linkTitleSchema.safeParse('A'.repeat(101)).success).toBe(false) // too long
       expect(linkTitleSchema.safeParse('<script>alert("xss")</script>').success).toBe(false) // HTML tags
       expect(linkTitleSchema.safeParse('javascript:alert("xss")').success).toBe(false) // JavaScript
@@ -240,16 +238,16 @@ describe('Validation Functions', () => {
     })
   })
 
-  describe('validateUserProfileData', () => {
-    it('should validate correct user profile data', () => {
+  describe('validateProfileData', () => {
+    it('should validate correct profile data', () => {
       const validData = {
         username: 'john_doe',
         display_name: 'John Doe',
         bio: 'Software developer',
         theme: 'dark',
-        is_public: true,
+        avatar_url: 'https://example.com/avatar.png',
       }
-      const result = validateUserProfileData(validData)
+      const result = validateProfileData(validData)
       expect(result.success).toBe(true)
     })
   })

@@ -27,6 +27,8 @@ export function LoadingSpinner({
 
   return (
     <Loader2 
+      role="status"
+      aria-hidden="true"
       className={cn(
         'animate-spin',
         sizeClasses[size],
@@ -281,6 +283,10 @@ export function ProgressBar({
   return (
     <div className={cn('w-full bg-gray-700 rounded-full h-2', className)}>
       <div 
+        role="progressbar"
+        aria-valuenow={progress}
+        aria-valuemin={0}
+        aria-valuemax={100}
         className="bg-blue-500 h-2 rounded-full transition-all duration-300"
         style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
       />

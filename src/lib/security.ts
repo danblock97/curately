@@ -29,6 +29,15 @@ export function sanitizeUrl(url: string): string {
   // Remove any whitespace
   url = url.trim()
   
+  // Return empty string if nothing left after trimming
+  if (!url) return ''
+  
+  // Check for blocked protocols first
+  const blockedProtocols = ['javascript:', 'data:', 'vbscript:', 'ftp:']
+  if (blockedProtocols.some(protocol => url.toLowerCase().startsWith(protocol))) {
+    throw new Error('Invalid protocol')
+  }
+  
   // Check for valid protocols
   const validProtocols = ['http:', 'https:', 'mailto:', 'tel:']
   try {

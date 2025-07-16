@@ -17,6 +17,23 @@ import {
   getSecureHeaders,
 } from '../security'
 
+// Helper function to create mock NextRequest
+function createMockRequest(url: string, options: { headers?: Record<string, string>; method?: string } = {}): NextRequest {
+  const { headers = {}, method = 'GET' } = options
+  const request = {
+    url,
+    method,
+    headers: {
+      get: (name: string) => headers[name.toLowerCase()] || null,
+    },
+    nextUrl: {
+      pathname: new URL(url).pathname,
+    },
+    ip: headers['x-forwarded-for'] || headers['x-real-ip'] || 'unknown',
+  } as any
+  return request
+}
+
 describe('Security Utilities', () => {
   describe('sanitizeInput', () => {
     it('should sanitize malicious input', () => {
@@ -52,7 +69,7 @@ describe('Security Utilities', () => {
       expect(() => sanitizeUrl('javascript:alert("xss")')).toThrow('Invalid protocol')
       expect(() => sanitizeUrl('data:text/html,<script>alert("xss")</script>')).toThrow('Invalid protocol')
       expect(() => sanitizeUrl('ftp://example.com')).toThrow('Invalid protocol')
-      expect(() => sanitizeUrl('invalid-url')).toThrow('Invalid URL format')
+      expect(() => sanitizeUrl('://invalid-url')).toThrow('Invalid URL format')
     })
 
     it('should handle empty input', () => {
@@ -114,7 +131,7 @@ describe('Security Utilities', () => {
 
   describe('isValidOrigin', () => {
     it('should validate correct origins', () => {
-      const request = new NextRequest('https://example.com/api/test', {
+      const request = createMockRequest('https://example.com/api/test', {
         headers: {
           origin: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
         },
@@ -123,7 +140,7 @@ describe('Security Utilities', () => {
     })
 
     it('should reject invalid origins', () => {
-      const request = new NextRequest('https://example.com/api/test', {
+      const request = createMockRequest('https://example.com/api/test', {
         headers: {
           origin: 'https://malicious.com',
         },
@@ -132,7 +149,7 @@ describe('Security Utilities', () => {
     })
 
     it('should validate referer if origin is missing', () => {
-      const request = new NextRequest('https://example.com/api/test', {
+      const request = createMockRequest('https://example.com/api/test', {
         headers: {
           referer: 'http://localhost:3000/page',
         },
@@ -143,7 +160,7 @@ describe('Security Utilities', () => {
 
   describe('getClientIP', () => {
     it('should extract IP from x-forwarded-for header', () => {
-      const request = new NextRequest('https://example.com/api/test', {
+      const request = createMockRequest('https://example.com/api/test', {
         headers: {
           'x-forwarded-for': '192.168.1.1, 10.0.0.1',
         },
@@ -152,7 +169,7 @@ describe('Security Utilities', () => {
     })
 
     it('should extract IP from x-real-ip header', () => {
-      const request = new NextRequest('https://example.com/api/test', {
+      const request = createMockRequest('https://example.com/api/test', {
         headers: {
           'x-real-ip': '192.168.1.1',
         },
@@ -161,7 +178,7 @@ describe('Security Utilities', () => {
     })
 
     it('should fallback to unknown if no IP found', () => {
-      const request = new NextRequest('https://example.com/api/test')
+      const request = createMockRequest('https://example.com/api/test')
       expect(getClientIP(request)).toBe('unknown')
     })
   })
@@ -240,7 +257,7 @@ describe('Security Utilities', () => {
     it('should reject invalid session tokens', () => {
       expect(isValidSessionToken('too-short')).toBe(false)
       expect(isValidSessionToken('A'.repeat(65))).toBe(false)
-      expect(isValidSessionToken('A'.repeat(63) + '!'))).toBe(false)
+      expect(isValidSessionToken('A'.repeat(63) + '!')).toBe(false)
     })
   })
 
@@ -266,7 +283,7 @@ describe('Security Utilities', () => {
     it('should allow normal user agents', () => {
       const result = detectSuspiciousActivity(
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        '192.168.1.1',
+        '203.0.113.1', // Use a public IP address
         '/api/test'
       )
       expect(result.isSuspicious).toBe(false)
@@ -297,7 +314,7 @@ describe('Security Utilities', () => {
       const mockHandler = jest.fn().mockResolvedValue('success')
       const secureHandler = withSecurity(mockHandler)
       
-      const request = new NextRequest('https://example.com/api/test', {
+      const request = createMockRequest('https://example.com/api/test', {
         headers: {
           'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
           'origin': 'http://localhost:3000',
@@ -313,7 +330,7 @@ describe('Security Utilities', () => {
       const mockHandler = jest.fn()
       const secureHandler = withSecurity(mockHandler)
       
-      const request = new NextRequest('https://example.com/api/test', {
+      const request = createMockRequest('https://example.com/api/test', {
         method: 'POST',
         headers: {
           'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -329,7 +346,7 @@ describe('Security Utilities', () => {
       const mockHandler = jest.fn()
       const secureHandler = withSecurity(mockHandler)
       
-      const request = new NextRequest('https://example.com/api/test', {
+      const request = createMockRequest('https://example.com/api/test', {
         headers: {
           'user-agent': 'GoogleBot/1.0',
         },

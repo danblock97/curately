@@ -51,69 +51,47 @@ jest.mock('next/image', () => ({
   },
 }))
 
-// Mock Supabase client
-jest.mock('@/lib/supabase/client', () => ({
-  createClient: jest.fn(() => ({
-    auth: {
-      getUser: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
-      getSession: jest.fn(() => Promise.resolve({ data: { session: null }, error: null })),
-      signInWithPassword: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
-      signUp: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
-      signOut: jest.fn(() => Promise.resolve({ error: null })),
-      onAuthStateChange: jest.fn(() => ({ data: { subscription: { unsubscribe: jest.fn() } } })),
-    },
-    from: jest.fn(() => ({
+// Create mock Supabase client
+const mockSupabaseClient = {
+  auth: {
+    getUser: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
+    getSession: jest.fn(() => Promise.resolve({ data: { session: null }, error: null })),
+    signInWithPassword: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
+    signUp: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
+    signOut: jest.fn(() => Promise.resolve({ error: null })),
+    onAuthStateChange: jest.fn(() => ({ data: { subscription: { unsubscribe: jest.fn() } } })),
+  },
+  from: jest.fn(() => ({
+    select: jest.fn(() => ({
+      eq: jest.fn(() => ({
+        single: jest.fn(() => Promise.resolve({ data: null, error: null })),
+        limit: jest.fn(() => Promise.resolve({ data: [], error: null })),
+      })),
+      order: jest.fn(() => Promise.resolve({ data: [], error: null })),
+    })),
+    insert: jest.fn(() => ({
       select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          single: jest.fn(() => Promise.resolve({ data: null, error: null })),
-          limit: jest.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        order: jest.fn(() => Promise.resolve({ data: [], error: null })),
-      })),
-      insert: jest.fn(() => ({
-        select: jest.fn(() => ({
-          single: jest.fn(() => Promise.resolve({ data: null, error: null })),
-        })),
-      })),
-      update: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
-      })),
-      delete: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
+        single: jest.fn(() => Promise.resolve({ data: null, error: null })),
       })),
     })),
+    update: jest.fn(() => ({
+      eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    })),
+    delete: jest.fn(() => ({
+      eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    })),
   })),
-}))
+}
+
+// Mock Supabase client
+jest.mock('@/lib/supabase/client', () => ({
+  createClient: jest.fn(() => mockSupabaseClient),
+}), { virtual: true })
 
 // Mock Supabase server client
 jest.mock('@/lib/supabase/server', () => ({
-  createClient: jest.fn(() => ({
-    auth: {
-      getUser: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
-      getSession: jest.fn(() => Promise.resolve({ data: { session: null }, error: null })),
-    },
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          single: jest.fn(() => Promise.resolve({ data: null, error: null })),
-          limit: jest.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        order: jest.fn(() => Promise.resolve({ data: [], error: null })),
-      })),
-      insert: jest.fn(() => ({
-        select: jest.fn(() => ({
-          single: jest.fn(() => Promise.resolve({ data: null, error: null })),
-        })),
-      })),
-      update: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
-      })),
-      delete: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
-      })),
-    })),
-  })),
-}))
+  createClient: jest.fn(() => mockSupabaseClient),
+}), { virtual: true })
 
 // Mock toast notifications
 jest.mock('sonner', () => ({
@@ -143,6 +121,16 @@ Object.defineProperty(global, 'crypto', {
     getRandomValues: (arr) => crypto.randomBytes(arr.length),
   },
 })
+
+// Mock Request/Response for Node.js environment
+const { Request, Response } = require('whatwg-fetch')
+global.Request = Request
+global.Response = Response
+
+// Mock TextEncoder/TextDecoder
+const { TextEncoder, TextDecoder } = require('util')
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {

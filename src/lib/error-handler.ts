@@ -7,6 +7,7 @@ export class AppError extends Error {
 
   constructor(message: string, statusCode: number = 500, code?: string) {
     super(message)
+    this.name = 'AppError'
     this.statusCode = statusCode
     this.isOperational = true
     this.code = code
@@ -16,32 +17,37 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string) {
-    super(message, 400, 'VALIDATION_ERROR')
+  constructor(message: string, code?: string) {
+    super(message, 400, code || 'VALIDATION_ERROR')
+    this.name = 'ValidationError'
   }
 }
 
 export class AuthError extends AppError {
   constructor(message: string = 'Authentication required') {
     super(message, 401, 'AUTH_ERROR')
+    this.name = 'AuthError'
   }
 }
 
 export class NotFoundError extends AppError {
-  constructor(message: string = 'Resource not found') {
-    super(message, 404, 'NOT_FOUND')
+  constructor(message: string = 'Resource not found', code?: string) {
+    super(message, 404, code || 'NOT_FOUND')
+    this.name = 'NotFoundError'
   }
 }
 
 export class ConflictError extends AppError {
   constructor(message: string) {
     super(message, 409, 'CONFLICT_ERROR')
+    this.name = 'ConflictError'
   }
 }
 
 export class RateLimitError extends AppError {
   constructor(message: string = 'Too many requests') {
     super(message, 429, 'RATE_LIMIT_ERROR')
+    this.name = 'RateLimitError'
   }
 }
 
@@ -132,6 +138,10 @@ export function withErrorHandling<T extends any[], R>(
 export function handleClientError(error: unknown): string {
   console.error('Client Error:', error)
 
+  if (error instanceof AppError) {
+    return error.message
+  }
+
   if (error instanceof Error) {
     return error.message
   }
@@ -171,7 +181,7 @@ export function createSuccessResponse<T>(data: T, message?: string) {
   })
 }
 
-export function createErrorResponse(message: string, code?: string, statusCode: number = 400) {
+export function createErrorResponse(message: string, statusCode: number = 500, code?: string) {
   return NextResponse.json(
     {
       success: false,
@@ -242,13 +252,27 @@ export function sanitizeInput(input: string): string {
 /**
  * Log error with context
  */
-export function logError(error: unknown, context?: Record<string, any>) {
-  console.error('Error occurred:', {
-    error: error instanceof Error ? error.message : String(error),
-    stack: error instanceof Error ? error.stack : undefined,
-    context,
+export function logError(error: unknown, request?: any, context?: string) {
+  const errorData: any = {
+    message: error instanceof Error ? error.message : String(error),
+    statusCode: error instanceof AppError ? error.statusCode : 500,
     timestamp: new Date().toISOString()
-  })
+  }
+  
+  if (request) {
+    errorData.url = request.url
+    errorData.method = request.method
+  }
+  
+  if (context) {
+    errorData.context = context
+  }
+  
+  if (error instanceof Error) {
+    errorData.stack = error.stack
+  }
+  
+  console.error('Error occurred:', errorData)
 }
 
 /**
