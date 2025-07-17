@@ -49,7 +49,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   private handleReload = () => {
-    window.location.reload()
+    if (typeof window !== 'undefined') {
+      window.location.reload()
+    }
   }
 
   public render() {

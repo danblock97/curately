@@ -43,11 +43,8 @@ export function Navbar() {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" asChild className="text-gray-300 hover:text-white">
-              <Link href="/auth">Sign in</Link>
-            </Button>
             <Button asChild className="bg-white hover:bg-gray-100 text-black">
-              <Link href="/auth">Sign up</Link>
+              <Link href="/auth">Get Started</Link>
             </Button>
           </div>
 
@@ -97,11 +94,8 @@ export function Navbar() {
               
               <div className="pt-4 border-t border-gray-700">
                 <div className="flex flex-col space-y-2">
-                  <Button variant="ghost" asChild className="text-gray-300 hover:text-white">
-                    <Link href="/auth">Sign in</Link>
-                  </Button>
                   <Button asChild className="bg-white hover:bg-gray-100 text-black">
-                    <Link href="/auth">Sign up</Link>
+                    <Link href="/auth">Get Started</Link>
                   </Button>
                 </div>
               </div>

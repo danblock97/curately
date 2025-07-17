@@ -76,7 +76,9 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
       await supabase.auth.signOut()
       
       toast.success('Account deleted successfully.')
-      window.location.href = '/auth'
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth'
+      }
     } catch (error) {
       toast.error('An error occurred. Please try again.')
     } finally {

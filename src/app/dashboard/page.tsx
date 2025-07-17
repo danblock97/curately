@@ -30,14 +30,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Links</h1>
-        <p className="text-gray-600">
-          Manage your links and customize your profile page
-        </p>
-      </div>
-      
+    <div className="w-full">
       <LinkManager links={links || []} userId={user.id} />
     </div>
   )

@@ -24,18 +24,18 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
   }
 
   return (
-    <header className="bg-black border-b border-gray-700 px-6 py-4">
+    <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-white">Curately</h1>
-          {profile?.username && (
+          <h1 className="text-2xl font-bold text-gray-900">Curately</h1>
+          {profile && profile.username && (
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-400">Your page:</span>
+              <span className="text-sm text-gray-600">Your page:</span>
               <a
                 href={`/${profile.username}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-blue-400 hover:text-blue-300 flex items-center space-x-1"
+                className="text-sm text-blue-600 hover:text-blue-700 flex items-center space-x-1"
               >
                 <span>curately.co.uk/{profile.username}</span>
                 <ExternalLink className="w-3 h-3" />
@@ -45,14 +45,14 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
         </div>
         
         <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-300">
+          <div className="text-sm text-gray-700">
             {user.email}
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={handleSignOut}
-            className="flex items-center space-x-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+            className="flex items-center space-x-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
           >
             <LogOut className="w-4 h-4" />
             <span>Sign out</span>

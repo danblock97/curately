@@ -23,12 +23,21 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single()
 
+  // If no profile exists, don't show the sidebar/header layout
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-white">
+        {children}
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-white">
       <DashboardHeader user={user} profile={profile} />
       <div className="flex">
         <DashboardSidebar />
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-6">
           {children}
         </main>
       </div>

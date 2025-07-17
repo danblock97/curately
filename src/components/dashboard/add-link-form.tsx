@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,14 +17,23 @@ import { handleClientError } from '@/lib/error-handler'
 
 type Link = Database['public']['Tables']['links']['Row']
 
+interface PlatformType {
+  name: string
+  icon: React.ComponentType<{ className?: string }>
+  color: string
+  url: string
+  placeholder: string
+}
+
 interface AddLinkFormProps {
   userId: string
   onLinkAdded: (link: Link) => void
   onCancel: () => void
   nextOrder: number
+  selectedPlatform?: PlatformType | null
 }
 
-export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder }: AddLinkFormProps) {
+export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selectedPlatform }: AddLinkFormProps) {
   const [activeTab, setActiveTab] = useState('link_in_bio')
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -133,7 +142,8 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder }: AddLin
         return
       }
 
-      const { link } = await response.json()
+      const result = await response.json()
+      const link = result.success ? result.data.link : result.link
       onLinkAdded(link)
       toast.success('Deeplink created successfully!')
       resetForm()
@@ -171,7 +181,8 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder }: AddLin
         return
       }
 
-      const { link } = await response.json()
+      const result = await response.json()
+      const link = result.success ? result.data.link : result.link
       onLinkAdded(link)
       toast.success('QR code created successfully!')
       resetForm()
@@ -196,23 +207,103 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder }: AddLin
     setQrBackground('#FFFFFF')
   }
 
+  // Pre-fill form if platform is selected
+  React.useEffect(() => {
+    if (selectedPlatform) {
+      setTitle(selectedPlatform.name)
+      setUrl(selectedPlatform.url)
+    } else {
+      setTitle('')
+      setUrl('')
+    }
+  }, [selectedPlatform])
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Add New Link</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-6">
+      {/* Platform Header */}
+      {selectedPlatform && (
+        <div className="flex items-center space-x-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedPlatform.color}`}>
+            <selectedPlatform.icon className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-gray-900">{selectedPlatform.name}</h4>
+            <p className="text-sm text-gray-600">Enter your {selectedPlatform.name.toLowerCase()} details</p>
+          </div>
+        </div>
+      )}
+
+      {/* Simplified Form for Selected Platform */}
+      {selectedPlatform ? (
+        <form onSubmit={handleLinkInBioSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title" className="text-gray-900">Title *</Label>
+            <Input
+              id="title"
+              type="text"
+              placeholder={selectedPlatform.name}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              maxLength={100}
+              className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="url" className="text-gray-900">
+              {selectedPlatform.name === 'Website' ? 'Website URL' : `${selectedPlatform.name} URL`} *
+            </Label>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600 whitespace-nowrap">
+                {selectedPlatform.url}
+              </span>
+              <Input
+                id="url"
+                type="text"
+                placeholder={selectedPlatform.placeholder}
+                value={url.startsWith(selectedPlatform.url) ? url.replace(selectedPlatform.url, '') : ''}
+                onChange={(e) => setUrl(selectedPlatform.url + e.target.value)}
+                required
+                className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Button
+              type="submit"
+              disabled={isLoading || !title.trim() || !url.trim()}
+              className="bg-gray-900 hover:bg-gray-800 text-white font-semibold"
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-gray-600 border-t-white rounded-full animate-spin mr-2" />
+              ) : null}
+              {isLoading ? 'Adding...' : 'Add Link'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isLoading}
+              className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="link_in_bio" className="flex items-center space-x-2">
+          <TabsList className="grid w-full grid-cols-3 bg-gray-100">
+            <TabsTrigger value="link_in_bio" className="flex items-center space-x-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <Link2 className="w-4 h-4" />
               <span>Link in Bio</span>
             </TabsTrigger>
-            <TabsTrigger value="deeplink" className="flex items-center space-x-2">
+            <TabsTrigger value="deeplink" className="flex items-center space-x-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <ExternalLink className="w-4 h-4" />
               <span>Deeplink</span>
             </TabsTrigger>
-            <TabsTrigger value="qr_code" className="flex items-center space-x-2">
+            <TabsTrigger value="qr_code" className="flex items-center space-x-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <QrCode className="w-4 h-4" />
               <span>QR Code</span>
             </TabsTrigger>
@@ -221,7 +312,7 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder }: AddLin
           <TabsContent value="link_in_bio" className="space-y-4">
             <form onSubmit={handleLinkInBioSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title" className="text-gray-900">Title *</Label>
                 <Input
                   id="title"
                   type="text"
@@ -230,11 +321,12 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder }: AddLin
                   onChange={(e) => setTitle(e.target.value)}
                   required
                   maxLength={100}
+                  className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="url">URL *</Label>
+                <Label htmlFor="url" className="text-gray-900">URL *</Label>
                 <Input
                   id="url"
                   type="url"
@@ -242,6 +334,7 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder }: AddLin
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   required
+                  className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
                 />
               </div>
 
@@ -249,16 +342,19 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder }: AddLin
                 <Button
                   type="submit"
                   disabled={isLoading || !title.trim() || !url.trim()}
+                  className="bg-gray-900 hover:bg-gray-800 text-white font-semibold"
                 >
-                  <LoadingButton isLoading={isLoading} loadingText="Adding...">
-                    Add Link
-                  </LoadingButton>
+                  {isLoading ? (
+                    <div className="w-4 h-4 border-2 border-gray-600 border-t-white rounded-full animate-spin mr-2" />
+                  ) : null}
+                  {isLoading ? 'Adding...' : 'Add Link'}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={onCancel}
                   disabled={isLoading}
+                  className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </Button>
@@ -461,7 +557,7 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder }: AddLin
             </form>
           </TabsContent>
         </Tabs>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   )
 }

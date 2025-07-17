@@ -213,7 +213,7 @@ export function FeaturesTimeline() {
                                           <div
                                             key={i}
                                             className={`${
-                                              Math.random() > 0.5 ? 'bg-white' : 'bg-black'
+                                              i % 2 === 0 ? 'bg-white' : 'bg-black'
                                             }`}
                                           />
                                         ))}

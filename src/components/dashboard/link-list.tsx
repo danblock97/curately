@@ -68,14 +68,14 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
   }
 
   return (
-    <Card 
+    <div 
       ref={setNodeRef} 
       style={style} 
-      className={`p-4 ${isDragging ? 'opacity-50' : ''}`}
+      className={`bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all duration-200 shadow-sm ${isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-center space-x-4">
         <div className="cursor-move" {...attributes} {...listeners}>
-          <GripVertical className="w-5 h-5 text-gray-400" />
+          <GripVertical className="w-5 h-5 text-gray-500 hover:text-gray-700" />
         </div>
         
         <div className="flex-1 min-w-0">
@@ -86,12 +86,14 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 onChange={(e) => setEditTitle(e.target.value)}
                 placeholder="Link title"
                 maxLength={100}
+                className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
               />
               <Input
                 value={editUrl}
                 onChange={(e) => setEditUrl(e.target.value)}
                 placeholder="https://example.com"
                 type="url"
+                className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
               />
             </div>
           ) : (
@@ -100,7 +102,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 <h3 className="font-medium text-gray-900 truncate">
                   {link.title}
                 </h3>
-                <Badge variant={link.is_active ? "default" : "secondary"}>
+                <Badge variant={link.is_active ? "default" : "secondary"} className={link.is_active ? "bg-green-100 text-green-700 border-green-300" : "bg-gray-100 text-gray-600 border-gray-300"}>
                   {link.is_active ? 'Active' : 'Inactive'}
                 </Badge>
               </div>
@@ -108,13 +110,13 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1 truncate"
+                className="text-sm text-blue-600 hover:text-blue-700 flex items-center space-x-1 truncate"
               >
                 <span className="truncate">{link.url}</span>
                 <ExternalLink className="w-3 h-3 flex-shrink-0" />
               </a>
-              <div className="text-xs text-gray-500 mt-1">
-                {link.clicks} clicks
+              <div className="text-xs text-gray-600 mt-1">
+                {link.clicks || 0} clicks
               </div>
             </div>
           )}
@@ -133,6 +135,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 size="sm"
                 onClick={() => onSave(link.id)}
                 disabled={isLoading || !editTitle.trim() || !editUrl.trim()}
+                className="bg-gray-900 hover:bg-gray-800 text-white"
               >
                 <Save className="w-4 h-4" />
               </Button>
@@ -141,6 +144,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 variant="outline"
                 onClick={onCancel}
                 disabled={isLoading}
+                className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -151,6 +155,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 size="sm"
                 variant="outline"
                 onClick={() => onEdit(link)}
+                className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 <Edit2 className="w-4 h-4" />
               </Button>
@@ -158,6 +163,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 size="sm"
                 variant="outline"
                 onClick={() => onDelete(link.id)}
+                className="bg-white border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
@@ -165,7 +171,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
           )}
         </div>
       </div>
-    </Card>
+    </div>
   )
 }
 
@@ -186,9 +192,11 @@ export function LinkList({ links, onLinkUpdated, onLinkDeleted, onLinksReordered
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
 
-    if (active.id !== over?.id) {
-      const oldIndex = links.findIndex(link => link.id === active.id)
-      const newIndex = links.findIndex(link => link.id === over?.id)
+    if (active.id !== over?.id && over?.id) {
+      const oldIndex = links.findIndex(link => link && link.id === active.id)
+      const newIndex = links.findIndex(link => link && link.id === over.id)
+
+      if (oldIndex === -1 || newIndex === -1) return
 
       const newLinks = arrayMove(links, oldIndex, newIndex)
       
@@ -320,7 +328,7 @@ export function LinkList({ links, onLinkUpdated, onLinkDeleted, onLinksReordered
 
   if (links.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-gray-600">
         <p>No links yet. Add your first link to get started!</p>
       </div>
     )
@@ -332,9 +340,9 @@ export function LinkList({ links, onLinkUpdated, onLinkDeleted, onLinksReordered
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <SortableContext items={links.map(link => link.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext items={links.filter(link => link && link.id).map(link => link.id)} strategy={verticalListSortingStrategy}>
         <div className="space-y-3">
-          {links.map((link) => (
+          {links.filter(link => link && link.id).map((link) => (
             <SortableLink
               key={link.id}
               link={link}

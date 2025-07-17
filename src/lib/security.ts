@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server'
-import { createHash } from 'crypto'
 
 /**
  * Security utility functions for the application
@@ -73,10 +72,14 @@ export function generateSecureToken(length: number = 32): string {
 }
 
 /**
- * Hash a string using SHA-256
+ * Hash a string using SHA-256 (Web Crypto API)
  */
-export function hashString(input: string): string {
-  return createHash('sha256').update(input).digest('hex')
+export async function hashString(input: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(input)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
 /**

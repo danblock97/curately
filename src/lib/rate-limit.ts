@@ -106,10 +106,10 @@ export const rateLimiters = {
     maxRequests: 100
   }),
   
-  // Authentication endpoints
+  // Authentication endpoints (more generous for OAuth flows)
   auth: rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 5
+    maxRequests: 20 // Increased from 5 to handle OAuth flows
   }),
   
   // Link creation endpoints

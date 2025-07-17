@@ -209,7 +209,7 @@ export function ThreeWaysSection() {
                         <div
                           key={i}
                           className={`aspect-square ${
-                            Math.random() > 0.5 ? 'bg-white' : 'bg-black'
+                            i % 2 === 0 ? 'bg-white' : 'bg-black'
                           }`}
                         />
                       ))}

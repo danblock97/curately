@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Globe } from 'lucide-react'
 import { Navbar } from '@/components/navbar'
-import { MockPhonePreview } from '@/components/mock-phone-preview'
+import { DeviceMockups } from '@/components/device-mockups'
 import { ThreeWaysSection } from '@/components/three-ways-section'
 import { FeaturesTimeline } from '@/components/features-timeline'
 import { AnalyticsSection } from '@/components/analytics-section'
@@ -16,7 +16,7 @@ export function LandingPage() {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-24 pb-20 px-4">
+      <section className="pt-24 pb-32 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight tracking-tight">
@@ -58,7 +58,7 @@ export function LandingPage() {
           {/* Product Demo Area */}
           <div className="relative flex justify-center">
             <div className="relative z-10">
-              <MockPhonePreview />
+              <DeviceMockups />
             </div>
             {/* Background decoration */}
             <div className="absolute inset-0 flex items-center justify-center">

@@ -97,17 +97,17 @@ describe('Security Utilities', () => {
   })
 
   describe('hashString', () => {
-    it('should hash strings consistently', () => {
+    it('should hash strings consistently', async () => {
       const input = 'test string'
-      const hash1 = hashString(input)
-      const hash2 = hashString(input)
+      const hash1 = await hashString(input)
+      const hash2 = await hashString(input)
       expect(hash1).toBe(hash2)
       expect(hash1).toHaveLength(64) // SHA-256 hex output
     })
 
-    it('should produce different hashes for different inputs', () => {
-      const hash1 = hashString('input1')
-      const hash2 = hashString('input2')
+    it('should produce different hashes for different inputs', async () => {
+      const hash1 = await hashString('input1')
+      const hash2 = await hashString('input2')
       expect(hash1).not.toBe(hash2)
     })
   })
