@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { AppearanceForm } from '@/components/dashboard/appearance-form'
+import { AppearanceCustomizer } from '@/components/dashboard/appearance-customizer'
 
 export default async function AppearancePage() {
   const supabase = await createClient()
@@ -22,20 +22,21 @@ export default async function AppearancePage() {
     .select('*')
     .eq('user_id', user.id)
 
+  const { data: links } = await supabase
+    .from('links')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('order')
+
   if (!profile) {
     redirect('/dashboard')
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Appearance</h1>
-        <p className="text-gray-600">
-          Customize how your profile page looks
-        </p>
-      </div>
-      
-      <AppearanceForm profile={profile} socialLinks={socialLinks || []} />
-    </div>
+    <AppearanceCustomizer 
+      profile={profile} 
+      socialLinks={socialLinks || []} 
+      links={links || []}
+    />
   )
 }
