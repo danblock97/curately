@@ -46,6 +46,7 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
   const [socialLinks, setSocialLinks] = useState(initialSocialLinks)
   const [isLoading, setIsLoading] = useState(false)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [isUpdatingTheme, setIsUpdatingTheme] = useState(false)
   const [newSocialPlatform, setNewSocialPlatform] = useState('')
   const [newSocialUrl, setNewSocialUrl] = useState('')
   const supabase = createClient()
@@ -59,8 +60,7 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
         .from('profiles')
         .update({
           display_name: displayName.trim(),
-          bio: bio.trim(),
-          theme
+          bio: bio.trim()
         })
         .eq('id', profile.id)
 
@@ -70,7 +70,7 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
       }
 
       toast.success('Profile updated successfully!')
-    } catch (error) {
+    } catch {
       toast.error('An error occurred. Please try again.')
     } finally {
       setIsLoading(false)
@@ -112,7 +112,7 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
       }
 
       toast.success('Avatar updated successfully!')
-    } catch (error) {
+    } catch {
       toast.error('An error occurred. Please try again.')
     } finally {
       setIsUploadingAvatar(false)
@@ -133,7 +133,7 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
         .from('social_media_links')
         .insert({
           user_id: profile.id,
-          platform: newSocialPlatform as any,
+          platform: newSocialPlatform as Database['public']['Tables']['social_media_links']['Row']['platform'],
           url: validUrl
         })
         .select()
@@ -148,7 +148,7 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
       setNewSocialPlatform('')
       setNewSocialUrl('')
       toast.success('Social link added successfully!')
-    } catch (error) {
+    } catch {
       toast.error('An error occurred. Please try again.')
     }
   }
@@ -167,20 +167,45 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
 
       setSocialLinks(prev => prev.filter(link => link.id !== linkId))
       toast.success('Social link deleted successfully!')
-    } catch (error) {
+    } catch {
       toast.error('An error occurred. Please try again.')
     }
   }
 
+  const handleThemeUpdate = async () => {
+    setIsUpdatingTheme(true)
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ theme })
+        .eq('id', profile.id)
+
+      if (error) {
+        toast.error('Error updating theme. Please try again.')
+        return
+      }
+
+      toast.success('Theme updated successfully!')
+      
+      // Refresh the page to reflect theme changes
+      window.location.reload()
+    } catch {
+      toast.error('An error occurred. Please try again.')
+    } finally {
+      setIsUpdatingTheme(false)
+    }
+  }
+
   const usedPlatforms = socialLinks.map(link => link.platform)
-  const availablePlatforms = socialPlatforms.filter(platform => !usedPlatforms.includes(platform.value as any))
+  const availablePlatforms = socialPlatforms.filter(platform => !usedPlatforms.includes(platform.value as Database['public']['Tables']['social_media_links']['Row']['platform']))
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="bg-white border-gray-200">
         <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-gray-900">Profile Information</CardTitle>
+          <CardDescription className="text-gray-600">
             Update your display name, bio, and profile picture
           </CardDescription>
         </CardHeader>
@@ -194,9 +219,9 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
                 </AvatarFallback>
               </Avatar>
               <div>
-                <Label htmlFor="avatar" className="cursor-pointer">
+                <Label htmlFor="avatar" className="cursor-pointer text-gray-700">
                   <div className="flex items-center space-x-2">
-                    <Button type="button" variant="outline" disabled={isUploadingAvatar}>
+                    <Button type="button" variant="outline" disabled={isUploadingAvatar} className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900">
                       <Upload className="w-4 h-4 mr-2" />
                       {isUploadingAvatar ? 'Uploading...' : 'Upload Avatar'}
                     </Button>
@@ -216,7 +241,7 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name</Label>
+              <Label htmlFor="displayName" className="text-gray-700">Display Name</Label>
               <Input
                 id="displayName"
                 type="text"
@@ -224,11 +249,12 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 maxLength={50}
+                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
+              <Label htmlFor="bio" className="text-gray-700">Bio</Label>
               <textarea
                 id="bio"
                 placeholder="Tell people about yourself..."
@@ -236,7 +262,7 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
                 onChange={(e) => setBio(e.target.value)}
                 maxLength={160}
                 rows={3}
-                className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
               />
               <p className="text-xs text-gray-500">
                 {bio.length}/160 characters
@@ -250,42 +276,80 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-white border-gray-200">
         <CardHeader>
-          <CardTitle>Theme</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-gray-900">Theme</CardTitle>
+          <CardDescription className="text-gray-600">
             Choose how your profile page looks
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            {themes.map((themeOption) => (
-              <div
-                key={themeOption.value}
-                className={`relative cursor-pointer rounded-lg border-2 transition-colors ${
-                  theme === themeOption.value ? 'border-blue-500' : 'border-gray-200'
-                }`}
-                onClick={() => setTheme(themeOption.value as any)}
-              >
-                <div className={`p-4 rounded-lg ${themeOption.preview}`}>
-                  <div className="text-sm font-medium">{themeOption.label}</div>
-                  <div className="text-xs opacity-75 mt-1">Preview</div>
-                </div>
-                {theme === themeOption.value && (
-                  <div className="absolute top-2 right-2">
-                    <Badge variant="default">Selected</Badge>
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              {themes.map((themeOption) => (
+                <div
+                  key={themeOption.value}
+                  className={`relative cursor-pointer rounded-lg border-2 transition-colors ${
+                    theme === themeOption.value ? 'border-blue-500' : 'border-gray-200'
+                  }`}
+                  onClick={() => setTheme(themeOption.value as Database['public']['Tables']['profiles']['Row']['theme'])}
+                >
+                  <div className={`p-4 rounded-lg ${themeOption.preview}`}>
+                    <div className="text-sm font-medium">{themeOption.label}</div>
+                    <div className="text-xs opacity-75 mt-1">Preview</div>
                   </div>
-                )}
+                  {theme === themeOption.value && (
+                    <div className="absolute top-2 right-2">
+                      <Badge variant="default">Selected</Badge>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            {/* Theme Preview */}
+            <div className="border border-gray-200 rounded-lg p-4 bg-white">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">Profile Preview</h4>
+              <div className={`p-6 rounded-lg ${themes.find(t => t.value === theme)?.preview || 'bg-gray-50 text-gray-900'}`}>
+                <div className="text-center space-y-3">
+                  <div className="w-16 h-16 mx-auto rounded-full bg-current/20 flex items-center justify-center">
+                    <span className="text-lg font-bold">
+                      {(displayName || profile.display_name || profile.username).charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold">
+                    {displayName || profile.display_name || profile.username}
+                  </h3>
+                  {(bio || profile.bio) && (
+                    <p className="text-sm opacity-80">
+                      {bio || profile.bio}
+                    </p>
+                  )}
+                  <div className="space-y-2">
+                    <div className={`w-full p-3 rounded-lg ${theme === 'dark' ? 'bg-white text-gray-900' : theme === 'gradient1' || theme === 'gradient2' ? 'bg-white/20 backdrop-blur-sm' : 'bg-white border border-gray-200'} transition-all`}>
+                      <span className="text-sm font-medium">Sample Link</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            ))}
+            </div>
+
+            {/* Save Theme Button */}
+            {theme !== profile.theme && (
+              <div className="flex justify-center">
+                <Button onClick={handleThemeUpdate} disabled={isUpdatingTheme}>
+                  {isUpdatingTheme ? 'Saving Theme...' : 'Save Theme'}
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-white border-gray-200">
         <CardHeader>
-          <CardTitle>Social Media Links</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-gray-900">Social Media Links</CardTitle>
+          <CardDescription className="text-gray-600">
             Add links to your social media profiles
           </CardDescription>
         </CardHeader>
@@ -294,9 +358,9 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
             {socialLinks.length > 0 && (
               <div className="space-y-2">
                 {socialLinks.map((link) => (
-                  <div key={link.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={link.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
                     <div>
-                      <div className="font-medium capitalize">{link.platform}</div>
+                      <div className="font-medium capitalize text-gray-900">{link.platform}</div>
                       <div className="text-sm text-gray-500 truncate">{link.url}</div>
                     </div>
                     <Button
@@ -315,9 +379,9 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
               <form onSubmit={handleAddSocialLink} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Platform</Label>
+                    <Label className="text-gray-700">Platform</Label>
                     <Select value={newSocialPlatform} onValueChange={setNewSocialPlatform}>
-                      <SelectTrigger>
+                      <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         <SelectValue placeholder="Select platform" />
                       </SelectTrigger>
                       <SelectContent>
@@ -330,12 +394,13 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>URL</Label>
+                    <Label className="text-gray-700">URL</Label>
                     <Input
                       type="url"
                       placeholder="https://example.com"
                       value={newSocialUrl}
                       onChange={(e) => setNewSocialUrl(e.target.value)}
+                      className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
                 </div>
