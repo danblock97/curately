@@ -26,7 +26,16 @@ export default async function UserProfilePage({ params }: PageProps) {
   // Get active links
   const { data: links } = await supabase
     .from('links')
-    .select('*')
+    .select(`
+      *,
+      qr_codes (
+        qr_code_data,
+        format,
+        size,
+        foreground_color,
+        background_color
+      )
+    `)
     .eq('user_id', profile.id)
     .eq('is_active', true)
     .order('order', { ascending: true })

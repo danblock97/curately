@@ -6,10 +6,18 @@ import { Card } from '@/components/ui/card'
 import { Database } from '@/lib/supabase/types'
 import { SocialIcons } from './social-icons'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, QrCode } from 'lucide-react'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
-type Link = Database['public']['Tables']['links']['Row']
+type Link = Database['public']['Tables']['links']['Row'] & {
+  qr_codes?: {
+    qr_code_data: string
+    format: string
+    size: number
+    foreground_color: string
+    background_color: string
+  }[]
+}
 type SocialLink = Database['public']['Tables']['social_media_links']['Row']
 
 interface ProfilePageProps {
@@ -84,17 +92,67 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
         </div>
 
         <div className="space-y-4 mb-8">
-          {links.map((link) => (
-            <Button
-              key={link.id}
-              onClick={() => handleLinkClick(link.id, link.url)}
-              className={`w-full py-6 text-left justify-between ${getButtonClasses(profile.theme)}`}
-              variant="outline"
-            >
-              <span className="font-medium">{link.title}</span>
-              <ExternalLink className="w-4 h-4" />
-            </Button>
-          ))}
+          {links.map((link) => {
+            // Special handling for QR codes
+            if (link.link_type === 'qr_code' && link.qr_codes && link.qr_codes[0]) {
+              return (
+                <div key={link.id} className={`w-full p-6 rounded-lg border ${getButtonClasses(profile.theme)} backdrop-blur-sm`}>
+                  <div className="text-center space-y-4">
+                    <div className="flex items-center justify-center space-x-2 mb-3">
+                      <QrCode className="w-5 h-5" />
+                      <span className="font-medium">{link.title}</span>
+                    </div>
+                    
+                    <div className="bg-white p-4 rounded-lg mx-auto w-fit border border-gray-300 shadow-lg">
+                      {link.qr_codes[0].format === 'SVG' ? (
+                        <div 
+                          className="w-32 h-32 mx-auto [&>svg]:w-full [&>svg]:h-full [&>svg]:block"
+                          dangerouslySetInnerHTML={{ __html: link.qr_codes[0].qr_code_data }}
+                        />
+                      ) : (
+                        <img 
+                          src={link.qr_codes[0].qr_code_data}
+                          alt={`QR Code for ${link.title}`}
+                          className="w-32 h-32 mx-auto object-contain block"
+                          onError={(e) => {
+                            console.error('QR Code image failed to load:', link.qr_codes[0].qr_code_data.substring(0, 50))
+                            e.currentTarget.style.display = 'none'
+                          }}
+                        />
+                      )}
+                    </div>
+                    
+                    <p className="text-sm opacity-80">
+                      Scan to access: {link.url}
+                    </p>
+                    
+                    <Button
+                      onClick={() => handleLinkClick(link.id, link.url)}
+                      className={`${getButtonClasses(profile.theme)} mt-2`}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Open Link
+                      <ExternalLink className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+              )
+            }
+            
+            // Regular link display
+            return (
+              <Button
+                key={link.id}
+                onClick={() => handleLinkClick(link.id, link.url)}
+                className={`w-full py-6 text-left justify-between ${getButtonClasses(profile.theme)}`}
+                variant="outline"
+              >
+                <span className="font-medium">{link.title}</span>
+                <ExternalLink className="w-4 h-4" />
+              </Button>
+            )
+          })}
         </div>
 
         {socialLinks.length > 0 && (

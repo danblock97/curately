@@ -7,7 +7,15 @@ import { LinkList } from './link-list'
 import { Plus, Instagram, Youtube, Twitter, Github, Linkedin, Globe, Music, MessageCircle, Phone, Mail, Sparkles, Zap, Link2, TrendingUp, ExternalLink, QrCode } from 'lucide-react'
 import { Database } from '@/lib/supabase/types'
 
-type Link = Database['public']['Tables']['links']['Row']
+type Link = Database['public']['Tables']['links']['Row'] & {
+  qr_codes?: {
+    qr_code_data: string
+    format: string
+    size: number
+    foreground_color: string
+    background_color: string
+  }[]
+}
 
 interface LinkManagerProps {
   links: Link[]

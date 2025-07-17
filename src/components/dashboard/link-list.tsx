@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
-import { Edit2, Trash2, ExternalLink, Save, X, GripVertical } from 'lucide-react'
+import { Edit2, Trash2, ExternalLink, Save, X, GripVertical, QrCode } from 'lucide-react'
 import { Database } from '@/lib/supabase/types'
 import {
   DndContext,
@@ -30,7 +30,15 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
-type Link = Database['public']['Tables']['links']['Row']
+type Link = Database['public']['Tables']['links']['Row'] & {
+  qr_codes?: {
+    qr_code_data: string
+    format: string
+    size: number
+    foreground_color: string
+    background_color: string
+  }[]
+}
 
 interface LinkListProps {
   links: Link[]
@@ -105,16 +113,76 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 <Badge variant={link.is_active ? "default" : "secondary"} className={link.is_active ? "bg-green-100 text-green-700 border-green-300" : "bg-gray-100 text-gray-600 border-gray-300"}>
                   {link.is_active ? 'Active' : 'Inactive'}
                 </Badge>
+                {link.link_type === 'qr_code' && (
+                  <Badge className="bg-purple-100 text-purple-700 border-purple-300">
+                    <QrCode className="w-3 h-3 mr-1" />
+                    QR Code
+                  </Badge>
+                )}
               </div>
-              <a
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-700 flex items-center space-x-1 truncate"
-              >
-                <span className="truncate">{link.url}</span>
-                <ExternalLink className="w-3 h-3 flex-shrink-0" />
-              </a>
+              
+              {link.link_type === 'qr_code' && link.qr_codes && link.qr_codes[0] ? (
+                <div className="mt-2">
+                  <div className="flex items-start space-x-3">
+                    <div className="bg-white border border-gray-300 rounded-lg p-3 flex-shrink-0 shadow-sm">
+                      {link.qr_codes[0].format === 'SVG' ? (
+                        <div 
+                          className="w-16 h-16 [&>svg]:w-full [&>svg]:h-full"
+                          dangerouslySetInnerHTML={{ __html: link.qr_codes[0].qr_code_data }}
+                        />
+                      ) : (
+                        <img 
+                          src={link.qr_codes[0].qr_code_data}
+                          alt={`QR Code for ${link.title}`}
+                          className="w-16 h-16 object-contain"
+                          onError={(e) => {
+                            console.error('QR Code image failed to load:', {
+                              format: link.qr_codes[0].format,
+                              dataStart: link.qr_codes[0].qr_code_data.substring(0, 50),
+                              linkType: link.link_type,
+                              title: link.title
+                            })
+                            // Show fallback
+                            const fallback = document.createElement('div')
+                            fallback.className = 'w-16 h-16 bg-gray-100 border border-gray-300 rounded flex items-center justify-center'
+                            fallback.innerHTML = '<span class="text-xs text-gray-500">QR Error</span>'
+                            e.currentTarget.parentNode.replaceChild(fallback, e.currentTarget)
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-600 mb-1">
+                        Scan this QR code to access: {link.url}
+                      </p>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:text-blue-700 flex items-center space-x-1 truncate"
+                      >
+                        <span className="truncate">{link.url}</span>
+                        <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                      </a>
+                      {/* Debug info - remove this in production */}
+                      <div className="text-xs text-gray-400 mt-1">
+                        Format: {link.qr_codes[0].format} | Data: {link.qr_codes[0].qr_code_data.substring(0, 30)}...
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:text-blue-700 flex items-center space-x-1 truncate"
+                >
+                  <span className="truncate">{link.url}</span>
+                  <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                </a>
+              )}
+              
               <div className="text-xs text-gray-600 mt-1">
                 {link.clicks || 0} clicks
               </div>
