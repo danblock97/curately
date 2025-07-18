@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
+import { Textarea } from '@/components/ui/textarea'
 import { 
   X,
   Search,
@@ -36,21 +37,21 @@ interface WidgetModalProps {
 }
 
 const socialPlatforms = [
-  { name: 'Instagram', icon: Instagram, value: 'instagram', color: 'bg-pink-500' },
-  { name: 'Facebook', icon: Facebook, value: 'facebook', color: 'bg-blue-600' },
-  { name: 'TikTok', icon: Music, value: 'tiktok', color: 'bg-gray-800' },
-  { name: 'LinkedIn', icon: Linkedin, value: 'linkedin', color: 'bg-blue-700' },
-  { name: 'YouTube', icon: Youtube, value: 'youtube', color: 'bg-red-500' },
-  { name: 'X (Twitter)', icon: Twitter, value: 'twitter', color: 'bg-gray-700' },
-  { name: 'GitHub', icon: Github, value: 'github', color: 'bg-gray-800' },
-  { name: 'Website', icon: Globe, value: 'website', color: 'bg-blue-500' },
+  { name: 'Instagram', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg', value: 'instagram', color: 'bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500', baseUrl: 'https://instagram.com/' },
+  { name: 'Facebook', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg', value: 'facebook', color: 'bg-blue-600', baseUrl: 'https://facebook.com/' },
+  { name: 'TikTok', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/tiktok.svg', value: 'tiktok', color: 'bg-black', baseUrl: 'https://tiktok.com/@' },
+  { name: 'LinkedIn', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg', value: 'linkedin', color: 'bg-blue-700', baseUrl: 'https://linkedin.com/in/' },
+  { name: 'YouTube', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg', value: 'youtube', color: 'bg-red-500', baseUrl: 'https://youtube.com/@' },
+  { name: 'X (Twitter)', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg', value: 'twitter', color: 'bg-black', baseUrl: 'https://x.com/' },
+  { name: 'GitHub', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', value: 'github', color: 'bg-gray-800', baseUrl: 'https://github.com/' },
+  { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', value: 'website', color: 'bg-blue-500', baseUrl: '' },
 ]
 
 const essentialWidgets = [
   { name: 'Link', icon: Link, value: 'link', description: 'Add an external link', color: 'bg-blue-500' },
-  { name: 'Voice', icon: Mic, value: 'voice', description: 'Add a voice message', color: 'bg-purple-500' },
-  { name: 'Photo / Video', icon: ImageIcon, value: 'media', description: 'Show an image or video on your page', color: 'bg-green-500' },
   { name: 'Text', icon: Type, value: 'text', description: 'Add a free text block', color: 'bg-gray-600' },
+  { name: 'Photo / Video', icon: ImageIcon, value: 'media', description: 'Show an image or video on your page', color: 'bg-green-500' },
+  { name: 'Voice', icon: Mic, value: 'voice', description: 'Add a voice message', color: 'bg-purple-500' },
   { name: 'Product', icon: Package, value: 'product', description: 'Highlight a product', color: 'bg-orange-500' },
   { name: 'One Link (App)', icon: Smartphone, value: 'app', description: 'A single link that redirects to App Store or Play Store', color: 'bg-indigo-500' },
 ]
@@ -64,6 +65,13 @@ export function WidgetModal({ isOpen, onClose, onAddWidget }: WidgetModalProps) 
     url?: string
     title?: string
     type?: string
+    baseUrl?: string
+    content?: string
+    caption?: string
+    file?: File
+    price?: string
+    appStoreUrl?: string
+    playStoreUrl?: string
   }>({})
 
   if (!isOpen) return null
@@ -73,9 +81,16 @@ export function WidgetModal({ isOpen, onClose, onAddWidget }: WidgetModalProps) 
 
     const widget: Widget = {
       id: Date.now().toString(),
-      type: selectedWidget.startsWith('social') ? 'social' : 'link',
-      size: 'thin',
-      data: widgetData,
+      type: selectedWidget.startsWith('social') || selectedWidget.startsWith('music') ? 'social' : 
+            selectedWidget.startsWith('essential') ? widgetData.type || 'link' : 'link',
+      size: 'small-square',
+      data: {
+        ...widgetData,
+        platform: widgetData.platform,
+        username: widgetData.username,
+        url: widgetData.url,
+        title: widgetData.username ? `@${widgetData.username}` : widgetData.title || widgetData.platform
+      },
       position: { x: 0, y: 0 },
       webPosition: { x: 0, y: 0 },
       mobilePosition: { x: 0, y: 0 }
@@ -83,11 +98,20 @@ export function WidgetModal({ isOpen, onClose, onAddWidget }: WidgetModalProps) 
 
     onAddWidget(widget)
     onClose()
+    // Reset form
+    setSelectedWidget(null)
+    setWidgetData({})
   }
 
   const handleSocialSelect = (platform: string) => {
+    const selectedPlatform = socialPlatforms.find(p => p.value === platform)
     setSelectedWidget(`social_${platform}`)
-    setWidgetData({ platform, username: '', url: '' })
+    setWidgetData({ 
+      platform, 
+      username: '', 
+      url: selectedPlatform?.baseUrl || 'https://',
+      baseUrl: selectedPlatform?.baseUrl || 'https://' 
+    })
   }
 
   const handleEssentialSelect = (type: string) => {
@@ -199,8 +223,21 @@ export function WidgetModal({ isOpen, onClose, onAddWidget }: WidgetModalProps) 
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 ${platform.color} rounded flex items-center justify-center`}>
-                              <platform.icon className="w-4 h-4 text-white" />
+                            <div className={`w-8 h-8 ${platform.color} rounded flex items-center justify-center p-1.5`}>
+                              <img 
+                                src={platform.logoUrl} 
+                                alt={`${platform.name} logo`}
+                                className="w-full h-full object-contain filter invert brightness-0 contrast-100"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const fallback = target.nextElementSibling as HTMLElement;
+                                  if (fallback) fallback.style.display = 'block';
+                                }}
+                              />
+                              <div className="w-full h-full items-center justify-center text-white text-xs font-bold hidden">
+                                {platform.name.charAt(0)}
+                              </div>
                             </div>
                             <div>
                               <div className="font-medium text-gray-900">{platform.name}</div>
@@ -231,23 +268,44 @@ export function WidgetModal({ isOpen, onClose, onAddWidget }: WidgetModalProps) 
                 <h3 className="font-medium text-gray-900 mb-3">Music & Podcasts</h3>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { name: 'Spotify', icon: Music, value: 'spotify', color: 'bg-green-500' },
-                    { name: 'Apple Music', icon: Music, value: 'apple_music', color: 'bg-gray-700' },
-                    { name: 'SoundCloud', icon: Music, value: 'soundcloud', color: 'bg-orange-500' },
-                    { name: 'Podcast', icon: Mic, value: 'podcast', color: 'bg-purple-500' },
+                    { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', value: 'spotify', color: 'bg-green-500', baseUrl: 'https://open.spotify.com/user/' },
+                    { name: 'Apple Music', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/applemusic.svg', value: 'apple_music', color: 'bg-red-500', baseUrl: 'https://music.apple.com/profile/' },
+                    { name: 'SoundCloud', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/soundcloud.svg', value: 'soundcloud', color: 'bg-orange-500', baseUrl: 'https://soundcloud.com/' },
+                    { name: 'Podcast', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/podcast.svg', value: 'podcast', color: 'bg-purple-500', baseUrl: '' },
                   ].map((platform) => (
                     <Card
                       key={platform.value}
                       className={`cursor-pointer bg-white hover:bg-gray-50 transition-colors border ${
                         selectedWidget === `music_${platform.value}` ? 'ring-2 ring-blue-500' : 'border-gray-200'
                       }`}
-                      onClick={() => handleSocialSelect(platform.value)}
+                      onClick={() => {
+                        setSelectedWidget(`music_${platform.value}`)
+                        setWidgetData({ 
+                          platform: platform.value, 
+                          username: '', 
+                          url: platform.baseUrl || 'https://',
+                          baseUrl: platform.baseUrl || 'https://' 
+                        })
+                      }}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 ${platform.color} rounded flex items-center justify-center`}>
-                              <platform.icon className="w-4 h-4 text-white" />
+                            <div className={`w-8 h-8 ${platform.color} rounded flex items-center justify-center p-1.5`}>
+                              <img 
+                                src={platform.logoUrl} 
+                                alt={`${platform.name} logo`}
+                                className="w-full h-full object-contain filter invert brightness-0 contrast-100"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const fallback = target.nextElementSibling as HTMLElement;
+                                  if (fallback) fallback.style.display = 'block';
+                                }}
+                              />
+                              <div className="w-full h-full items-center justify-center text-white text-xs font-bold hidden">
+                                {platform.name.charAt(0)}
+                              </div>
                             </div>
                             <div>
                               <div className="font-medium text-gray-900">{platform.name}</div>
@@ -278,49 +336,201 @@ export function WidgetModal({ isOpen, onClose, onAddWidget }: WidgetModalProps) 
               <div className="p-6 space-y-4">
                 <h3 className="font-medium text-gray-900">Configure Widget</h3>
                 
-                {selectedWidget.startsWith('social_') && (
+                {(selectedWidget.startsWith('social_') || selectedWidget.startsWith('music_')) && (
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="username">Username</Label>
+                      <Label htmlFor="username" className="text-gray-900">
+                        {widgetData.platform === 'website' ? 'Domain' : widgetData.platform === 'podcast' ? 'Podcast Name' : 'Username'}
+                      </Label>
                       <Input
                         id="username"
-                        placeholder="@username"
+                        placeholder={widgetData.platform === 'website' ? 'example.com' : widgetData.platform === 'podcast' ? 'My Podcast' : 'username'}
                         value={widgetData.username || ''}
-                        onChange={(e) => setWidgetData({...widgetData, username: e.target.value})}
+                        onChange={(e) => {
+                          const username = e.target.value
+                          const baseUrl = widgetData.baseUrl || ''
+                          let constructedUrl = ''
+                          
+                          if (widgetData.platform === 'website') {
+                            constructedUrl = username ? `https://${username}` : 'https://'
+                          } else if (widgetData.platform === 'podcast') {
+                            constructedUrl = username
+                          } else {
+                            constructedUrl = username ? baseUrl + username : baseUrl
+                          }
+                          
+                          setWidgetData({...widgetData, username, url: constructedUrl})
+                        }}
+                        className="text-gray-900 bg-white"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="url">Profile URL</Label>
+                      <Label htmlFor="url" className="text-gray-900">Profile URL</Label>
                       <Input
                         id="url"
                         placeholder="https://..."
-                        value={widgetData.url || ''}
+                        value={widgetData.url || widgetData.baseUrl || ''}
                         onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
+                        readOnly={widgetData.platform !== 'website' && widgetData.platform !== 'podcast'}
+                        className={`text-gray-900 ${widgetData.platform !== 'website' && widgetData.platform !== 'podcast' ? 'bg-gray-100' : 'bg-white'}`}
                       />
+                      {widgetData.platform !== 'website' && widgetData.platform !== 'podcast' && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          URL is automatically generated based on username
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
 
                 {selectedWidget.startsWith('essential_') && (
                   <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="title">Title</Label>
-                      <Input
-                        id="title"
-                        placeholder="Widget title"
-                        value={widgetData.title || ''}
-                        onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="url">URL</Label>
-                      <Input
-                        id="url"
-                        placeholder="https://..."
-                        value={widgetData.url || ''}
-                        onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
-                      />
-                    </div>
+                    {widgetData.type === 'text' ? (
+                      <div>
+                        <Label htmlFor="text-content" className="text-gray-900">Text Content</Label>
+                        <Textarea
+                          id="text-content"
+                          placeholder="Enter your text content..."
+                          value={widgetData.content || ''}
+                          onChange={(e) => setWidgetData({...widgetData, content: e.target.value, title: e.target.value})}
+                          className="text-gray-900 bg-white"
+                          rows={3}
+                        />
+                      </div>
+                    ) : widgetData.type === 'media' ? (
+                      <>
+                        <div>
+                          <Label htmlFor="media-file" className="text-gray-900">Upload Image/Video</Label>
+                          <Input
+                            id="media-file"
+                            type="file"
+                            accept="image/*,video/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) {
+                                setWidgetData({...widgetData, file, title: file.name})
+                              }
+                            }}
+                            className="text-gray-900 bg-white"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="media-caption" className="text-gray-900">Caption (Optional)</Label>
+                          <Input
+                            id="media-caption"
+                            placeholder="Add a caption..."
+                            value={widgetData.caption || ''}
+                            onChange={(e) => setWidgetData({...widgetData, caption: e.target.value})}
+                            className="text-gray-900 bg-white"
+                          />
+                        </div>
+                      </>
+                    ) : widgetData.type === 'voice' ? (
+                      <div>
+                        <Label htmlFor="voice-file" className="text-gray-900">Upload Voice Message</Label>
+                        <Input
+                          id="voice-file"
+                          type="file"
+                          accept="audio/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              setWidgetData({...widgetData, file, title: file.name})
+                            }
+                          }}
+                          className="text-gray-900 bg-white"
+                        />
+                      </div>
+                    ) : widgetData.type === 'product' ? (
+                      <>
+                        <div>
+                          <Label htmlFor="product-name" className="text-gray-900">Product Name</Label>
+                          <Input
+                            id="product-name"
+                            placeholder="Product name"
+                            value={widgetData.title || ''}
+                            onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                            className="text-gray-900 bg-white"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="product-url" className="text-gray-900">Product URL</Label>
+                          <Input
+                            id="product-url"
+                            placeholder="https://..."
+                            value={widgetData.url || ''}
+                            onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
+                            className="text-gray-900 bg-white"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="product-price" className="text-gray-900">Price (Optional)</Label>
+                          <Input
+                            id="product-price"
+                            placeholder="$99.99"
+                            value={widgetData.price || ''}
+                            onChange={(e) => setWidgetData({...widgetData, price: e.target.value})}
+                            className="text-gray-900 bg-white"
+                          />
+                        </div>
+                      </>
+                    ) : widgetData.type === 'app' ? (
+                      <>
+                        <div>
+                          <Label htmlFor="app-name" className="text-gray-900">App Name</Label>
+                          <Input
+                            id="app-name"
+                            placeholder="My App"
+                            value={widgetData.title || ''}
+                            onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                            className="text-gray-900 bg-white"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="app-store-url" className="text-gray-900">App Store URL</Label>
+                          <Input
+                            id="app-store-url"
+                            placeholder="https://apps.apple.com/..."
+                            value={widgetData.appStoreUrl || ''}
+                            onChange={(e) => setWidgetData({...widgetData, appStoreUrl: e.target.value})}
+                            className="text-gray-900 bg-white"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="play-store-url" className="text-gray-900">Play Store URL</Label>
+                          <Input
+                            id="play-store-url"
+                            placeholder="https://play.google.com/..."
+                            value={widgetData.playStoreUrl || ''}
+                            onChange={(e) => setWidgetData({...widgetData, playStoreUrl: e.target.value})}
+                            className="text-gray-900 bg-white"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <Label htmlFor="title" className="text-gray-900">Title</Label>
+                          <Input
+                            id="title"
+                            placeholder="Widget title"
+                            value={widgetData.title || ''}
+                            onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                            className="text-gray-900 bg-white"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="url" className="text-gray-900">URL</Label>
+                          <Input
+                            id="url"
+                            placeholder="https://..."
+                            value={widgetData.url || ''}
+                            onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
+                            className="text-gray-900 bg-white"
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
 

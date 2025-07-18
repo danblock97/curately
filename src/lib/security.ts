@@ -160,13 +160,16 @@ export function validateFileUpload(file: File): { isValid: boolean; error?: stri
  * Content Security Policy headers
  */
 export function getCSPHeaders(): Record<string, string> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://api.supabase.co'
+  const supabaseHost = new URL(supabaseUrl).host
+  
   const csp = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://api.supabase.co wss://realtime.supabase.co",
+    `connect-src 'self' ${supabaseUrl} wss://${supabaseHost}`,
     "frame-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

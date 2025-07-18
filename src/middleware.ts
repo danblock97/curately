@@ -89,10 +89,12 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
-  // Add security headers to all responses
+  // Add security headers to all responses (excluding CSP which is set in next.config.ts)
   const secureHeaders = getSecureHeaders()
   Object.entries(secureHeaders).forEach(([key, value]) => {
-    supabaseResponse.headers.set(key, value)
+    if (key !== 'Content-Security-Policy') {
+      supabaseResponse.headers.set(key, value)
+    }
   })
 
   return supabaseResponse

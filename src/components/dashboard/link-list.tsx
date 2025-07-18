@@ -372,10 +372,6 @@ export function LinkList({ links, onLinkUpdated, onLinkDeleted, onLinksReordered
   }
 
   const handleDelete = async (linkId: string) => {
-    if (!confirm('Are you sure you want to delete this link?')) {
-      return
-    }
-
     try {
       const { error } = await supabase
         .from('links')
