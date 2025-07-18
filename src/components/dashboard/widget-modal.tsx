@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import { Database } from '@/lib/supabase/types'
 import { Widget } from './appearance-customizer'
+import { toast } from 'sonner'
 
 interface WidgetModalProps {
   isOpen: boolean
@@ -59,6 +60,7 @@ const essentialWidgets = [
 export function WidgetModal({ isOpen, onClose, onAddWidget }: WidgetModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedWidget, setSelectedWidget] = useState<string | null>(null)
+  const [isConverting, setIsConverting] = useState(false)
   const [widgetData, setWidgetData] = useState<{
     platform?: string
     username?: string
@@ -76,31 +78,98 @@ export function WidgetModal({ isOpen, onClose, onAddWidget }: WidgetModalProps) 
 
   if (!isOpen) return null
 
-  const handleAddWidget = () => {
+  const handleAddWidget = async () => {
     if (!selectedWidget) return
 
-    const widget: Widget = {
-      id: Date.now().toString(),
-      type: selectedWidget.startsWith('social') || selectedWidget.startsWith('music') ? 'social' : 
-            selectedWidget.startsWith('essential') ? widgetData.type || 'link' : 'link',
-      size: 'small-square',
-      data: {
-        ...widgetData,
-        platform: widgetData.platform,
-        username: widgetData.username,
-        url: widgetData.url,
-        title: widgetData.username ? `@${widgetData.username}` : widgetData.title || widgetData.platform
-      },
-      position: { x: 0, y: 0 },
-      webPosition: { x: 0, y: 0 },
-      mobilePosition: { x: 0, y: 0 }
+    // Handle Linktree conversion
+    if (selectedWidget === 'convert_linktree') {
+      if (!widgetData.url) {
+        toast.error('Please enter a Linktree URL')
+        return
+      }
+      
+      try {
+        setIsConverting(true)
+
+        // Call the API to convert Linktree
+        const response = await fetch('/api/convert-linktree', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url: widgetData.url }),
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Failed to convert Linktree')
+        }
+
+        const { links } = await response.json()
+
+        if (!links || links.length === 0) {
+          toast.error('No links found in the Linktree page. Please check the URL and try again.')
+          return
+        }
+
+        // Create widgets for each link found
+        let widgetCount = 0
+        for (const link of links) {
+          const widget: Widget = {
+            id: `${Date.now()}-${widgetCount}`,
+            type: link.platform ? 'social' : 'link',
+            size: 'large-square',
+            data: {
+              title: link.title,
+              url: link.url,
+              platform: link.platform,
+              username: link.username,
+              description: `Imported from Linktree`,
+            },
+            position: { x: 20, y: 20 + (widgetCount * 180) },
+            webPosition: { x: 20, y: 20 + (widgetCount * 180) },
+            mobilePosition: { x: 20, y: 20 + (widgetCount * 180) }
+          }
+
+          onAddWidget(widget)
+          widgetCount++
+        }
+
+        toast.success(`Successfully imported ${links.length} links from Linktree!`)
+      } catch (error) {
+        console.error('Linktree conversion error:', error)
+        toast.error(`Failed to import from Linktree: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        return
+      } finally {
+        setIsConverting(false)
+      }
+    } else {
+      // Handle normal widget creation
+      const widget: Widget = {
+        id: Date.now().toString(),
+        type: selectedWidget.startsWith('social') || selectedWidget.startsWith('music') ? 'social' : 
+              selectedWidget.startsWith('essential') ? widgetData.type || 'link' : 'link',
+        size: 'small-square',
+        data: {
+          ...widgetData,
+          platform: widgetData.platform,
+          username: widgetData.username,
+          url: widgetData.url,
+          title: widgetData.username ? `@${widgetData.username}` : widgetData.title || widgetData.platform
+        },
+        position: { x: 0, y: 0 },
+        webPosition: { x: 0, y: 0 },
+        mobilePosition: { x: 0, y: 0 }
+      }
+
+      onAddWidget(widget)
     }
 
-    onAddWidget(widget)
     onClose()
     // Reset form
     setSelectedWidget(null)
     setWidgetData({})
+    setIsConverting(false)
   }
 
   const handleSocialSelect = (platform: string) => {
@@ -167,7 +236,19 @@ export function WidgetModal({ isOpen, onClose, onAddWidget }: WidgetModalProps) 
                         <div className="text-sm text-gray-500">Linktree, Beacons & other</div>
                         <div className="text-sm text-gray-500">Transform your existing bio link into tapLink and offer an immersive experience to your visitors with our widgets</div>
                       </div>
-                      <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                        onClick={() => {
+                          setSelectedWidget('convert_linktree')
+                          setWidgetData({ 
+                            type: 'convert',
+                            title: 'Import from Linktree',
+                            url: ''
+                          })
+                        }}
+                      >
                         Convert
                       </Button>
                     </div>
@@ -534,9 +615,37 @@ export function WidgetModal({ isOpen, onClose, onAddWidget }: WidgetModalProps) 
                   </div>
                 )}
 
-                <Button onClick={handleAddWidget} className="w-full">
+                {selectedWidget === 'convert_linktree' && (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="linktree-url" className="text-gray-900">Linktree URL</Label>
+                      <Input
+                        id="linktree-url"
+                        placeholder="https://linktr.ee/yourusername"
+                        value={widgetData.url || ''}
+                        onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
+                        className="text-gray-900 bg-white"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Enter your Linktree URL to import your links
+                      </p>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-sm text-blue-800">
+                        <strong>Note:</strong> This will fetch your public links from Linktree and convert them to widgets. Your existing widgets will remain unchanged.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <Button 
+                  onClick={handleAddWidget} 
+                  className="w-full"
+                  disabled={isConverting}
+                >
                   <ArrowRight className="w-4 h-4 mr-2" />
-                  Add Widget
+                  {isConverting ? 'Converting...' : 
+                   selectedWidget === 'convert_linktree' ? 'Import Links' : 'Add Widget'}
                 </Button>
               </div>
             </div>

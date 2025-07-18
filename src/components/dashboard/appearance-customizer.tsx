@@ -132,13 +132,16 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
           // Convert links to widgets with proper positioning and fetch metadata
           const linkWidgets: Widget[] = await Promise.all(
             linksData.map(async (link, index) => {
+              console.log('Processing link:', link)
               let metadata = { description: '', favicon: '', isPopularApp: false, appName: '', appLogo: '' }
               
               try {
-                // Fetch metadata for each link
-                const metadataResponse = await fetch(`/api/metadata?url=${encodeURIComponent(link.url)}`)
-                if (metadataResponse.ok) {
-                  metadata = await metadataResponse.json()
+                // Only fetch metadata if URL exists and is valid
+                if (link.url && typeof link.url === 'string') {
+                  const metadataResponse = await fetch(`/api/metadata?url=${encodeURIComponent(link.url)}`)
+                  if (metadataResponse.ok) {
+                    metadata = await metadataResponse.json()
+                  }
                 }
               } catch (error) {
                 console.error('Failed to fetch metadata for link:', link.url, error)
@@ -150,10 +153,12 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
               let displayName = ''
               
               try {
-                const urlObj = new URL(link.url)
-                const hostname = urlObj.hostname.toLowerCase()
+                // Only process URL if it exists and is valid
+                if (link.url && typeof link.url === 'string') {
+                  const urlObj = new URL(link.url)
+                  const hostname = urlObj.hostname.toLowerCase()
                 
-                if (hostname.includes('github.com')) {
+                  if (hostname.includes('github.com')) {
                   platform = 'github'
                   const pathSegments = urlObj.pathname.split('/').filter(Boolean)
                   if (pathSegments.length > 0) {
@@ -214,6 +219,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                     username = pathSegments[0]
                   }
                 }
+                }
                 
                 // Fetch display name if we have platform and username
                 if (platform && username) {
@@ -230,13 +236,48 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                 console.warn('Failed to extract platform info from URL:', link.url, error)
               }
 
+              // Safe JSON parsing with fallback
+              let widgetPosition = { x: 20, y: index * 80 + 20 }
+              let webPosition = { x: 20, y: index * 80 + 20 }
+              let mobilePosition = { x: 20, y: index * 80 + 20 }
+              
+              try {
+                if (link.widget_position && typeof link.widget_position === 'string') {
+                  widgetPosition = JSON.parse(link.widget_position)
+                } else if (link.widget_position && typeof link.widget_position === 'object') {
+                  widgetPosition = link.widget_position
+                }
+              } catch (error) {
+                console.warn('Failed to parse widget_position:', link.widget_position, error)
+              }
+              
+              try {
+                if (link.web_position && typeof link.web_position === 'string') {
+                  webPosition = JSON.parse(link.web_position)
+                } else if (link.web_position && typeof link.web_position === 'object') {
+                  webPosition = link.web_position
+                }
+              } catch (error) {
+                console.warn('Failed to parse web_position:', link.web_position, error)
+              }
+              
+              try {
+                if (link.mobile_position && typeof link.mobile_position === 'string') {
+                  mobilePosition = JSON.parse(link.mobile_position)
+                } else if (link.mobile_position && typeof link.mobile_position === 'object') {
+                  mobilePosition = link.mobile_position
+                }
+              } catch (error) {
+                console.warn('Failed to parse mobile_position:', link.mobile_position, error)
+              }
+
               return {
                 id: link.id,
                 type: (link.widget_type || 'link') as const,
                 size: (link.size || 'thin') as const,
                 data: {
-                  title: link.title,
-                  url: link.url,
+                  title: link.title || '',
+                  url: link.url || '',
                   description: metadata.description || '',
                   favicon: metadata.favicon || '',
                   isPopularApp: metadata.isPopularApp || false,
@@ -253,9 +294,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                   playStoreUrl: link.play_store_url || '',
                   fileUrl: link.file_url || ''
                 },
-                position: link.widget_position ? JSON.parse(link.widget_position) : { x: 20, y: index * 80 + 20 },
-                webPosition: link.web_position ? JSON.parse(link.web_position) : { x: 20, y: index * 80 + 20 },
-                mobilePosition: link.mobile_position ? JSON.parse(link.mobile_position) : { x: 20, y: index * 80 + 20 }
+                position: widgetPosition,
+                webPosition: webPosition,
+                mobilePosition: mobilePosition
               }
             })
           )
@@ -324,7 +365,12 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
       }
       
       const profileUrl = profileUrls[platform.toLowerCase()]
-      if (!profileUrl) return ''
+      if (!profileUrl) {
+        console.warn(`No profile URL template for platform: ${platform}`)
+        return ''
+      }
+      
+      console.log(`Fetching profile picture for ${platform}/${username} from:`, profileUrl)
       
       // For GitHub, we can reliably return the URL since GitHub always provides a profile picture
       if (platform.toLowerCase() === 'github') {
@@ -334,12 +380,21 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
       // For other platforms, try to load the image to verify it exists
       return new Promise<string>((resolve) => {
         const img = new Image()
-        img.onload = () => resolve(profileUrl)
-        img.onerror = () => resolve('')
+        img.onload = () => {
+          console.log(`Profile picture found for ${platform}/${username}`)
+          resolve(profileUrl)
+        }
+        img.onerror = () => {
+          console.warn(`Profile picture not found for ${platform}/${username}`)
+          resolve('')
+        }
         img.src = profileUrl
         
         // Set timeout to avoid hanging
-        setTimeout(() => resolve(''), 5000)
+        setTimeout(() => {
+          console.warn(`Profile picture timeout for ${platform}/${username}`)
+          resolve('')
+        }, 5000)
       })
     } catch (error) {
       console.warn('Failed to fetch profile picture:', error)
@@ -369,14 +424,18 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
         // For Twitter/X, we can try to extract display name from metadata
         // Since we don't have direct API access, we'll use a heuristic approach
         try {
+          console.log('Fetching Twitter/X profile for:', username)
           const response = await fetch(`https://unavatar.io/twitter/${username}`)
           if (response.ok) {
+            console.log('Twitter/X profile found via unavatar.io')
             // If unavatar works, we have a valid user - use username as display name for now
             displayName = `@${username}`
           } else {
+            console.log('Twitter/X profile not found via unavatar.io, status:', response.status)
             displayName = `@${username}`
           }
         } catch (error) {
+          console.warn('Failed to fetch Twitter display name:', error)
           displayName = `@${username}`
         }
       } else if (platform.toLowerCase() === 'instagram') {
@@ -1090,22 +1149,19 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
             <div className="flex items-center space-x-3 h-full">
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden bg-gradient-to-br ${socialInfo.gradient} p-1.5`}>
                 {widget.data.appLogo || socialInfo.logo ? (
-                  <>
-                    <img 
-                      src={widget.data.appLogo || socialInfo.logo} 
-                      alt={platform}
-                      className={`w-full h-full object-contain ${socialInfo.logoStyle || ''}`}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        const fallback = target.parentElement?.querySelector('.fallback-text');
-                        if (fallback) fallback.classList.remove('hidden');
-                      }}
-                    />
-                    <span className={`fallback-text text-white text-sm font-bold ${socialInfo.logo ? 'hidden' : ''}`}>
-                      {socialInfo.fallback || (platform || widget.data.title || 'L').charAt(0).toUpperCase()}
-                    </span>
-                  </>
+                  <img 
+                    src={widget.data.appLogo || socialInfo.logo} 
+                    alt={platform}
+                    className={`w-full h-full object-contain ${socialInfo.logoStyle || ''}`}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `<span class="text-white text-sm font-bold">${socialInfo.fallback || (platform || widget.data.title || 'L').charAt(0).toUpperCase()}</span>`;
+                      }
+                    }}
+                  />
                 ) : (
                   <span className="text-white text-sm font-bold">
                     {(platform || widget.data.title || 'L').charAt(0).toUpperCase()}
@@ -1132,8 +1188,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                     alt={widget.data.username || platform}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
+                      (e.target as HTMLImageElement).style.display = 'none';
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -1185,8 +1240,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                     alt={widget.data.username || platform}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
+                      (e.target as HTMLImageElement).style.display = 'none';
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -1238,8 +1292,19 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                     alt={widget.data.username || platform}
                     className="w-full h-full object-cover"
                     onError={(e) => {
+                      console.log('Profile image failed to load:', widget.data.profileImage, 'for', widget.data.username, widget.data.platform)
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
+                      // Find parent container and add fallback
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `
+                          <div class="absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center">
+                            ${socialInfo.logo ? `<img src="${socialInfo.logo}" alt="${platform}" class="w-16 h-16 object-contain ${socialInfo.logoStyle || ''}" />` : ''}
+                            <span class="text-3xl font-bold text-white ${socialInfo.logo ? 'hidden' : ''}">${socialInfo.fallback}</span>
+                          </div>
+                        `;
+                      }
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -1658,7 +1723,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                     <div className="text-gray-500">Loading widgets...</div>
                   </div>
                 ) : (
-                  widgets.map(widget => renderWidget(widget))
+                  <div suppressHydrationWarning>
+                    {widgets.map(widget => renderWidget(widget))}
+                  </div>
                 )}
               </div>
             )}
@@ -1674,7 +1741,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                   <div className="text-gray-500">Loading widgets...</div>
                 </div>
               ) : (
-                widgets.map(widget => renderWidget(widget, true))
+                <div suppressHydrationWarning>
+                  {widgets.map(widget => renderWidget(widget, true))}
+                </div>
               )}
             </div>
           </div>
