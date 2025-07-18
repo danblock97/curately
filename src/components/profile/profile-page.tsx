@@ -2,11 +2,12 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Database } from '@/lib/supabase/types'
 import { SocialIcons } from './social-icons'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { ExternalLink, QrCode } from 'lucide-react'
+import { ExternalLink, QrCode, Type, Image as ImageIcon, Mic, Package, Smartphone } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 type Link = Database['public']['Tables']['links']['Row'] & {
@@ -26,14 +27,374 @@ interface ProfilePageProps {
   socialLinks: SocialLink[]
 }
 
+export interface Widget {
+  id: string
+  type: 'social' | 'link' | 'image' | 'text' | 'voice' | 'product' | 'app' | 'media'
+  size: 'thin' | 'small-square' | 'medium-square' | 'large-square' | 'wide' | 'tall'
+  data: {
+    platform?: string
+    username?: string
+    displayName?: string
+    url?: string
+    title?: string
+    type?: string
+    description?: string
+    favicon?: string
+    isPopularApp?: boolean
+    appName?: string
+    appLogo?: string
+    profileImage?: string
+    content?: string
+    caption?: string
+    file?: File
+    price?: string
+    appStoreUrl?: string
+    playStoreUrl?: string
+    fileUrl?: string
+  }
+  position: { x: number; y: number }
+  webPosition: { x: number; y: number }
+  mobilePosition: { x: number; y: number }
+}
+
 export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
   const supabase = createClient()
+  const [widgets, setWidgets] = useState<Widget[]>([])
+  const [isLoadingWidgets, setIsLoadingWidgets] = useState(true)
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
+
+  // Memoize links to prevent unnecessary re-renders
+  const memoizedLinks = useMemo(() => links, [links?.length, links?.map(l => l.id).join(',')])
+
+  // Convert links to widgets exactly like the appearance editor
+  useEffect(() => {
+    const loadWidgets = async () => {
+      try {
+        setIsLoadingWidgets(true)
+        
+        if (memoizedLinks && memoizedLinks.length > 0) {
+          // Convert links to widgets with proper positioning and fetch metadata
+          const linkWidgets: Widget[] = await Promise.all(
+            memoizedLinks.map(async (link, index) => {
+              console.log('Processing link:', link)
+              let metadata = { description: '', favicon: '', isPopularApp: false, appName: '', appLogo: '' }
+              
+              try {
+                // Only fetch metadata if URL exists and is valid
+                if (link.url && typeof link.url === 'string') {
+                  const metadataResponse = await fetch(`/api/metadata?url=${encodeURIComponent(link.url)}`)
+                  if (metadataResponse.ok) {
+                    metadata = await metadataResponse.json()
+                  }
+                }
+              } catch (error) {
+                console.error('Failed to fetch metadata for link:', link.url, error)
+              }
+
+              // Extract platform and username from URL to fetch display name
+              let platform = ''
+              let username = ''
+              let displayName = ''
+              
+              try {
+                // Only process URL if it exists and is valid
+                if (link.url && typeof link.url === 'string') {
+                  const urlObj = new URL(link.url)
+                  const hostname = urlObj.hostname.toLowerCase()
+                
+                  if (hostname.includes('github.com')) {
+                  platform = 'github'
+                  const pathSegments = urlObj.pathname.split('/').filter(Boolean)
+                  if (pathSegments.length > 0) {
+                    username = pathSegments[0]
+                  }
+                } else if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
+                  platform = 'twitter'
+                  const pathSegments = urlObj.pathname.split('/').filter(Boolean)
+                  if (pathSegments.length > 0) {
+                    username = pathSegments[0]
+                  }
+                } else if (hostname.includes('instagram.com')) {
+                  platform = 'instagram'
+                  const pathSegments = urlObj.pathname.split('/').filter(Boolean)
+                  if (pathSegments.length > 0) {
+                    username = pathSegments[0]
+                  }
+                } else if (hostname.includes('tiktok.com')) {
+                  platform = 'tiktok'
+                  const pathSegments = urlObj.pathname.split('/').filter(Boolean)
+                  if (pathSegments.length > 0) {
+                    username = pathSegments[0].replace('@', '')
+                  }
+                } else if (hostname.includes('linkedin.com')) {
+                  platform = 'linkedin'
+                  const pathSegments = urlObj.pathname.split('/').filter(Boolean)
+                  if (pathSegments.length > 1 && pathSegments[0] === 'in') {
+                    username = pathSegments[1]
+                  }
+                } else if (hostname.includes('youtube.com')) {
+                  platform = 'youtube'
+                  const pathSegments = urlObj.pathname.split('/').filter(Boolean)
+                  if (pathSegments.length > 0) {
+                    username = pathSegments[0].replace('@', '')
+                  }
+                } else if (hostname.includes('facebook.com')) {
+                  platform = 'facebook'
+                  const pathSegments = urlObj.pathname.split('/').filter(Boolean)
+                  if (pathSegments.length > 0) {
+                    username = pathSegments[0]
+                  }
+                } else if (hostname.includes('spotify.com')) {
+                  platform = 'spotify'
+                  const pathSegments = urlObj.pathname.split('/').filter(Boolean)
+                  if (pathSegments.length > 1 && pathSegments[0] === 'user') {
+                    username = pathSegments[1] // Extract just the user ID, ignore query params
+                  }
+                } else if (hostname.includes('music.apple.com')) {
+                  platform = 'apple_music'
+                  const pathSegments = urlObj.pathname.split('/').filter(Boolean)
+                  if (pathSegments.length > 1 && pathSegments[0] === 'profile') {
+                    username = pathSegments[1]
+                  }
+                } else if (hostname.includes('soundcloud.com')) {
+                  platform = 'soundcloud'
+                  const pathSegments = urlObj.pathname.split('/').filter(Boolean)
+                  if (pathSegments.length > 0) {
+                    username = pathSegments[0]
+                  }
+                }
+                }
+                
+                // Fetch display name if we have platform and username
+                if (platform && username) {
+                  try {
+                    console.log('Fetching display name for existing widget:', platform, username)
+                    const profileMetadata = await fetchProfileMetadata(platform, username)
+                    displayName = profileMetadata.displayName
+                    console.log('Got display name for existing widget:', displayName)
+                  } catch (error) {
+                    console.warn('Failed to fetch display name for existing widget:', error)
+                  }
+                }
+              } catch (error) {
+                console.warn('Failed to extract platform info from URL:', link.url, error)
+              }
+
+              // Safe JSON parsing with fallback
+              let widgetPosition = { x: 20, y: index * 80 + 20 }
+              let webPosition = { x: 20, y: index * 80 + 20 }
+              let mobilePosition = { x: 20, y: index * 80 + 20 }
+              
+              try {
+                if (link.widget_position && typeof link.widget_position === 'string') {
+                  widgetPosition = JSON.parse(link.widget_position)
+                } else if (link.widget_position && typeof link.widget_position === 'object') {
+                  widgetPosition = link.widget_position
+                }
+              } catch (error) {
+                console.warn('Failed to parse widget_position:', link.widget_position, error)
+              }
+              
+              try {
+                if (link.web_position && typeof link.web_position === 'string') {
+                  webPosition = JSON.parse(link.web_position)
+                } else if (link.web_position && typeof link.web_position === 'object') {
+                  webPosition = link.web_position
+                }
+              } catch (error) {
+                console.warn('Failed to parse web_position:', link.web_position, error)
+              }
+              
+              try {
+                if (link.mobile_position && typeof link.mobile_position === 'string') {
+                  mobilePosition = JSON.parse(link.mobile_position)
+                } else if (link.mobile_position && typeof link.mobile_position === 'object') {
+                  mobilePosition = link.mobile_position
+                }
+              } catch (error) {
+                console.warn('Failed to parse mobile_position:', link.mobile_position, error)
+              }
+
+              return {
+                id: link.id,
+                type: (link.widget_type || 'link') as const,
+                size: (link.size || 'thin') as const,
+                data: {
+                  title: link.title || '',
+                  url: link.url || '',
+                  description: metadata.description || '',
+                  favicon: metadata.favicon || '',
+                  isPopularApp: metadata.isPopularApp || false,
+                  appName: metadata.appName || '',
+                  appLogo: metadata.appLogo || metadata.favicon || '',
+                  platform: link.platform || platform || undefined,
+                  username: link.username || username || undefined,
+                  displayName: link.display_name || displayName || '',
+                  profileImage: link.profile_image_url || '',
+                  content: link.content || '',
+                  caption: link.caption || '',
+                  price: link.price || '',
+                  appStoreUrl: link.app_store_url || '',
+                  playStoreUrl: link.play_store_url || '',
+                  fileUrl: link.file_url || ''
+                },
+                position: widgetPosition,
+                webPosition: webPosition,
+                mobilePosition: mobilePosition
+              }
+            })
+          )
+
+          setWidgets(linkWidgets)
+          console.log(`Loaded ${linkWidgets.length} existing links as widgets with metadata`)
+        } else {
+          // No links found, start with empty widgets
+          setWidgets([])
+          console.log('No existing links found, starting with empty widgets')
+        }
+      } catch (error) {
+        console.error('Error loading widgets:', error)
+      } finally {
+        setIsLoadingWidgets(false)
+      }
+    }
+
+    if (profile?.id) {
+      loadWidgets()
+    } else {
+      // If no profile, just finish loading
+      setIsLoadingWidgets(false)
+    }
+  }, [profile?.id, memoizedLinks])
+
+  const fetchProfilePicture = async (platform: string, username: string) => {
+    try {
+      // Generate profile picture URLs for different platforms
+      const profileUrls: { [key: string]: string } = {
+        github: `https://github.com/${username}.png`,
+        twitter: `https://unavatar.io/twitter/${username}`,
+        instagram: `https://unavatar.io/instagram/${username}`,
+        linkedin: `https://unavatar.io/linkedin/${username}`,
+        tiktok: `https://unavatar.io/tiktok/${username}`,
+        youtube: `https://unavatar.io/youtube/${username}`,
+        facebook: `https://unavatar.io/facebook/${username}`,
+        spotify: `https://unavatar.io/spotify/${username}`,
+        apple_music: `https://unavatar.io/apple-music/${username}`,
+        soundcloud: `https://unavatar.io/soundcloud/${username}`
+      }
+      
+      const profileUrl = profileUrls[platform.toLowerCase()]
+      if (!profileUrl) {
+        console.warn(`No profile URL template for platform: ${platform}`)
+        return ''
+      }
+      
+      console.log(`Fetching profile picture for ${platform}/${username} from:`, profileUrl)
+      
+      // For GitHub, we can reliably return the URL since GitHub always provides a profile picture
+      if (platform.toLowerCase() === 'github') {
+        return profileUrl
+      }
+      
+      // For other platforms, try to load the image to verify it exists
+      return new Promise<string>((resolve) => {
+        const img = new Image()
+        img.onload = () => {
+          console.log(`Profile picture found for ${platform}/${username}`)
+          resolve(profileUrl)
+        }
+        img.onerror = () => {
+          console.warn(`Profile picture not found for ${platform}/${username}`)
+          resolve('')
+        }
+        img.src = profileUrl
+        
+        // Set timeout to avoid hanging
+        setTimeout(() => {
+          console.warn(`Profile picture timeout for ${platform}/${username}`)
+          resolve('')
+        }, 5000)
+      })
+    } catch (error) {
+      console.warn('Failed to fetch profile picture:', error)
+      return ''
+    }
+  }
+
+  const fetchProfileMetadata = async (platform: string, username: string): Promise<{profileImage: string, displayName: string}> => {
+    try {
+      const profileImage = await fetchProfilePicture(platform, username)
+      let displayName = username
+      
+      // Fetch display names from platform APIs where possible
+      if (platform.toLowerCase() === 'github') {
+        try {
+          const response = await fetch(`https://api.github.com/users/${username}`)
+          if (response.ok) {
+            const data = await response.json()
+            console.log('GitHub API response:', data)
+            displayName = data.name || data.login || username
+            console.log('Extracted display name:', displayName)
+          }
+        } catch (error) {
+          console.warn('Failed to fetch GitHub display name:', error)
+        }
+      } else if (platform.toLowerCase() === 'twitter') {
+        // For Twitter/X, we can try to extract display name from metadata
+        // Since we don't have direct API access, we'll use a heuristic approach
+        try {
+          console.log('Fetching Twitter/X profile for:', username)
+          const response = await fetch(`https://unavatar.io/twitter/${username}`)
+          if (response.ok) {
+            console.log('Twitter/X profile found via unavatar.io')
+            // If unavatar works, we have a valid user - use username as display name for now
+            displayName = `@${username}`
+          } else {
+            console.log('Twitter/X profile not found via unavatar.io, status:', response.status)
+            displayName = `@${username}`
+          }
+        } catch (error) {
+          console.warn('Failed to fetch Twitter display name:', error)
+          displayName = `@${username}`
+        }
+      } else if (platform.toLowerCase() === 'instagram') {
+        displayName = `@${username}`
+      } else if (platform.toLowerCase() === 'tiktok') {
+        displayName = `@${username}`
+      } else if (platform.toLowerCase() === 'linkedin') {
+        displayName = username
+      } else if (platform.toLowerCase() === 'youtube') {
+        displayName = `@${username}`
+      } else if (platform.toLowerCase() === 'spotify') {
+        // For Spotify, try to extract display name from metadata or clean username
+        const cleanUsername = username.split('?')[0] // Remove query parameters
+        displayName = cleanUsername
+      } else if (platform.toLowerCase() === 'apple_music') {
+        displayName = username
+      } else if (platform.toLowerCase() === 'soundcloud') {
+        displayName = username
+      } else if (platform.toLowerCase() === 'podcast') {
+        displayName = username
+      } else {
+        displayName = username
+      }
+      
+      return { profileImage, displayName }
+    } catch (error) {
+      console.warn('Failed to fetch profile metadata:', error)
+      return { profileImage: '', displayName: username }
+    }
+  }
 
   const handleLinkClick = async (linkId: string, url: string) => {
     // Track click
     await supabase
       .from('links')
-      .update({ clicks: (links.find(l => l.id === linkId)?.clicks || 0) + 1 })
+      .update({ clicks: (memoizedLinks.find(l => l.id === linkId)?.clicks || 0) + 1 })
       .eq('id', linkId)
 
     // Open link
@@ -42,137 +403,514 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
     }
   }
 
-  const getThemeClasses = (theme: string) => {
-    switch (theme) {
-      case 'dark':
-        return 'bg-gray-900 text-white'
-      case 'gradient1':
-        return 'bg-gradient-to-br from-purple-500 to-pink-500 text-white'
-      case 'gradient2':
-        return 'bg-gradient-to-br from-blue-500 to-teal-500 text-white'
-      default:
-        return 'bg-gray-50 text-gray-900'
+  const getWidgetSizeClass = (size: Widget['size']) => {
+    switch (size) {
+      case 'thin': return 'w-80 h-14'
+      case 'small-square': return 'w-48 h-48'
+      case 'medium-square': return 'w-56 h-56'
+      case 'large-square': return 'w-80 h-80'
+      case 'wide': return 'w-80 h-36'
+      case 'tall': return 'w-52 h-80'
+      default: return 'w-80 h-14'
     }
   }
 
-  const getButtonClasses = (theme: string) => {
-    switch (theme) {
-      case 'dark':
-        return 'bg-white text-gray-900 hover:bg-gray-100'
-      case 'gradient1':
-      case 'gradient2':
-        return 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
-      default:
-        return 'bg-white text-gray-900 hover:bg-gray-100 border border-gray-200'
+  const renderWidget = (widget: Widget) => {
+    const sizeClass = getWidgetSizeClass(widget.size)
+    const currentPosition = widget.webPosition
+
+    const widgetContent = () => {
+      const renderSocialWidget = () => {
+        const getSocialInfo = (platform: string) => {
+          const socialIcons: { [key: string]: { bg: string; logo: string; gradient: string; logoStyle?: string; fallback: string } } = {
+            twitter: { bg: 'bg-black', logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg', gradient: 'from-gray-700 to-gray-900', logoStyle: 'invert', fallback: '𝕏' },
+            instagram: { bg: 'bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500', logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg', gradient: 'from-pink-400 via-red-500 to-yellow-500', logoStyle: 'invert', fallback: '📷' },
+            facebook: { bg: 'bg-blue-600', logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg', gradient: 'from-blue-500 to-blue-700', logoStyle: 'invert', fallback: 'f' },
+            linkedin: { bg: 'bg-blue-700', logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg', gradient: 'from-blue-600 to-blue-800', logoStyle: 'invert', fallback: 'in' },
+            youtube: { bg: 'bg-red-500', logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg', gradient: 'from-red-500 to-red-700', logoStyle: 'invert', fallback: '▶️' },
+            tiktok: { bg: 'bg-black', logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/tiktok.svg', gradient: 'from-gray-900 to-black', logoStyle: 'invert', fallback: '🎵' },
+            github: { bg: 'bg-gray-800', logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', gradient: 'from-gray-700 to-gray-900', logoStyle: 'invert', fallback: '⚡' },
+            spotify: { bg: 'bg-green-500', logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', gradient: 'from-green-400 to-green-600', logoStyle: 'invert', fallback: '🎵' },
+            apple_music: { bg: 'bg-red-500', logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/applemusic.svg', gradient: 'from-red-400 to-red-600', logoStyle: 'invert', fallback: '🎵' },
+            soundcloud: { bg: 'bg-orange-500', logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/soundcloud.svg', gradient: 'from-orange-400 to-orange-600', logoStyle: 'invert', fallback: '☁️' },
+            podcast: { bg: 'bg-purple-500', logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/podcast.svg', gradient: 'from-purple-400 to-purple-600', logoStyle: 'invert', fallback: '🎙️' },
+            website: { bg: 'bg-blue-500', logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', gradient: 'from-blue-400 to-blue-600', logoStyle: 'invert', fallback: '🌐' }
+          }
+          return socialIcons[platform.toLowerCase()] || { bg: 'bg-gray-500', logo: '', gradient: 'from-gray-400 to-gray-600', fallback: '🔗' }
+        }
+        
+        // Extract platform from URL if not provided
+        let platform = widget.data.platform || ''
+        if (!platform && widget.data.url) {
+          try {
+            const urlObj = new URL(widget.data.url)
+            const hostname = urlObj.hostname.toLowerCase()
+            if (hostname.includes('github.com')) platform = 'github'
+            else if (hostname.includes('twitter.com') || hostname.includes('x.com')) platform = 'twitter'
+            else if (hostname.includes('instagram.com')) platform = 'instagram'
+            else if (hostname.includes('facebook.com')) platform = 'facebook'
+            else if (hostname.includes('linkedin.com')) platform = 'linkedin'
+            else if (hostname.includes('youtube.com')) platform = 'youtube'
+            else if (hostname.includes('tiktok.com')) platform = 'tiktok'
+            else if (hostname.includes('spotify.com')) platform = 'spotify'
+            else if (hostname.includes('music.apple.com')) platform = 'apple_music'
+            else if (hostname.includes('soundcloud.com')) platform = 'soundcloud'
+          } catch (e) {
+            // Invalid URL, use default
+          }
+        }
+        
+        const socialInfo = getSocialInfo(platform)
+        
+        // Different layouts based on size
+        if (widget.size === 'thin') {
+          return (
+            <div className="flex items-center space-x-3 h-full">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden bg-gradient-to-br ${socialInfo.gradient} p-1.5`}>
+                {widget.data.appLogo || socialInfo.logo ? (
+                  <img 
+                    src={widget.data.appLogo || socialInfo.logo} 
+                    alt={platform}
+                    className={`w-full h-full object-contain ${socialInfo.logoStyle || ''}`}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `<span class="text-white text-sm font-bold">${socialInfo.fallback || (platform || widget.data.title || 'L').charAt(0).toUpperCase()}</span>`;
+                      }
+                    }}
+                  />
+                ) : (
+                  <span className="text-white text-sm font-bold">
+                    {(platform || widget.data.title || 'L').charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="flex-1">
+                <div className="font-medium text-gray-900 text-sm">
+                  {widget.data.displayName || (widget.data.username ? `@${widget.data.username}` : widget.data.title || platform || 'Link')}
+                </div>
+              </div>
+            </div>
+          )
+        }
+        
+        if (widget.size === 'small-square') {
+          return (
+            <div className="relative h-full w-full overflow-hidden rounded-xl">
+              {/* Background - Profile Picture or Platform Logo */}
+              {widget.data.profileImage ? (
+                <div className="absolute inset-0">
+                  <img 
+                    src={widget.data.profileImage} 
+                    alt={widget.data.username || platform}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                </div>
+              ) : (
+                <div className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}>
+                  {socialInfo.logo ? (
+                    <img 
+                      src={socialInfo.logo} 
+                      alt={platform}
+                      className={`w-8 h-8 object-contain ${socialInfo.logoStyle || ''}`}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = target.parentElement?.querySelector('.fallback-text');
+                        if (fallback) fallback.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <span className={`fallback-text text-lg font-bold text-white ${socialInfo.logo ? 'hidden' : ''}`}>
+                    {socialInfo.fallback}
+                  </span>
+                </div>
+              )}
+              
+              {/* Content */}
+              <div className="absolute bottom-2 left-2 right-2">
+                <div className="text-xs font-medium text-white">
+                  {widget.data.displayName || (widget.data.username ? `@${widget.data.username}` : widget.data.title || platform || 'Link')}
+                </div>
+                {widget.data.username && platform && (
+                  <div className="text-xs text-white/80 mt-0.5 capitalize">
+                    {platform}
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        }
+        
+        if (widget.size === 'medium-square') {
+          return (
+            <div className="relative h-full w-full overflow-hidden rounded-2xl">
+              {/* Background - Profile Picture or Platform Logo */}
+              {widget.data.profileImage ? (
+                <div className="absolute inset-0">
+                  <img 
+                    src={widget.data.profileImage} 
+                    alt={widget.data.username || platform}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                </div>
+              ) : (
+                <div className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}>
+                  {socialInfo.logo ? (
+                    <img 
+                      src={socialInfo.logo} 
+                      alt={platform}
+                      className={`w-12 h-12 object-contain ${socialInfo.logoStyle || ''}`}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = target.parentElement?.querySelector('.fallback-text');
+                        if (fallback) fallback.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <span className={`fallback-text text-2xl font-bold text-white ${socialInfo.logo ? 'hidden' : ''}`}>
+                    {socialInfo.fallback}
+                  </span>
+                </div>
+              )}
+              
+              {/* Content */}
+              <div className="absolute bottom-3 left-3 right-3">
+                <div className="text-sm font-medium text-white">
+                  {widget.data.displayName || (widget.data.username ? `@${widget.data.username}` : widget.data.title || platform || 'Link')}
+                </div>
+                {widget.data.username && platform && (
+                  <div className="text-xs text-white/80 mt-1 capitalize">
+                    {platform}
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        }
+        
+        if (widget.size === 'large-square') {
+          return (
+            <div className="relative h-full w-full overflow-hidden rounded-3xl">
+              {/* Background - Profile Picture or Platform Logo */}
+              {widget.data.profileImage ? (
+                <div className="absolute inset-0">
+                  <img 
+                    src={widget.data.profileImage} 
+                    alt={widget.data.username || platform}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.log('Profile image failed to load:', widget.data.profileImage, 'for', widget.data.username, widget.data.platform)
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      // Find parent container and add fallback
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `
+                          <div class="absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center">
+                            ${socialInfo.logo ? `<img src="${socialInfo.logo}" alt="${platform}" class="w-16 h-16 object-contain ${socialInfo.logoStyle || ''}" />` : ''}
+                            <span class="text-3xl font-bold text-white ${socialInfo.logo ? 'hidden' : ''}">${socialInfo.fallback}</span>
+                          </div>
+                        `;
+                      }
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                </div>
+              ) : (
+                <div className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}>
+                  {socialInfo.logo ? (
+                    <img 
+                      src={socialInfo.logo} 
+                      alt={platform}
+                      className={`w-16 h-16 object-contain ${socialInfo.logoStyle || ''}`}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = target.parentElement?.querySelector('.fallback-text');
+                        if (fallback) fallback.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <span className={`fallback-text text-3xl font-bold text-white ${socialInfo.logo ? 'hidden' : ''}`}>
+                    {socialInfo.fallback}
+                  </span>
+                </div>
+              )}
+              
+              {/* Content */}
+              <div className="absolute bottom-4 left-4 right-4">
+                <div className="text-base font-semibold text-white">
+                  {widget.data.displayName || (widget.data.username ? `@${widget.data.username}` : widget.data.title || platform || 'Link')}
+                </div>
+                {widget.data.username && platform && (
+                  <div className="text-sm text-white/80 mt-1 capitalize">
+                    {platform}
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        }
+        
+        // Default wide layout (for wide and tall rectangles)
+        return (
+          <div className="relative h-full w-full overflow-hidden rounded-2xl">
+            {/* Background - Profile Picture or Platform Logo */}
+            {widget.data.profileImage ? (
+              <div className="absolute inset-0">
+                <img 
+                  src={widget.data.profileImage} 
+                  alt={widget.data.username || platform}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+              </div>
+            ) : (
+              <div className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}>
+                {socialInfo.logo ? (
+                  <img 
+                    src={socialInfo.logo} 
+                    alt={platform}
+                    className={`w-14 h-14 object-contain ${socialInfo.logoStyle || ''}`}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const fallback = target.parentElement?.querySelector('.fallback-text');
+                      if (fallback) fallback.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <span className={`fallback-text text-2xl font-bold text-white ${socialInfo.logo ? 'hidden' : ''}`}>
+                  {socialInfo.fallback}
+                </span>
+              </div>
+            )}
+            
+            {/* Content */}
+            <div className="absolute bottom-3 left-3 right-3">
+              <div className="text-sm font-medium text-white">
+                {widget.data.displayName || (widget.data.username ? `@${widget.data.username}` : widget.data.title || platform || 'Link')}
+              </div>
+              {widget.data.username && platform && (
+                <div className="text-xs text-white/80 mt-1 capitalize">
+                  {platform}
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      }
+      
+      const renderOtherWidget = () => {
+        switch (widget.type) {
+          case 'text':
+            return (
+              <div className="flex flex-col h-full p-2">
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                    <Type className="w-3 h-3 text-white" />
+                  </div>
+                  <div className="text-xs text-gray-500">Text</div>
+                </div>
+                <div className="flex-1 text-sm text-gray-900 line-clamp-3">
+                  {widget.data.content || widget.data.title || 'Text content...'}
+                </div>
+              </div>
+            )
+          case 'media':
+            return (
+              <div className="flex flex-col h-full relative">
+                {widget.data.fileUrl ? (
+                  <>
+                    <img 
+                      src={widget.data.fileUrl} 
+                      alt={widget.data.caption || 'Media'}
+                      className="w-full h-full object-cover rounded"
+                    />
+                    {widget.data.caption && widget.size !== 'thin' && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                        <div className="text-white text-xs">{widget.data.caption}</div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-full bg-gray-100 rounded">
+                    <ImageIcon className="w-8 h-8 text-gray-400" />
+                  </div>
+                )}
+              </div>
+            )
+          case 'voice':
+            return (
+              <div className="flex items-center space-x-3 h-full">
+                <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                  <Mic className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium text-gray-900 text-sm">Voice Message</div>
+                  <div className="text-xs text-gray-500">Click to play</div>
+                </div>
+              </div>
+            )
+          case 'product':
+            return (
+              <div className="flex items-center space-x-3 h-full">
+                <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                  <Package className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium text-gray-900 text-sm">{widget.data.title || 'Product'}</div>
+                  {widget.data.price && (
+                    <div className="text-sm text-green-600 font-semibold">{widget.data.price}</div>
+                  )}
+                  {widget.size !== 'thin' && (
+                    <div className="text-xs text-gray-500">Product</div>
+                  )}
+                </div>
+              </div>
+            )
+          case 'app':
+            return (
+              <div className="flex items-center space-x-3 h-full">
+                <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center">
+                  <Smartphone className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium text-gray-900 text-sm">{widget.data.title || 'App'}</div>
+                  {widget.size !== 'thin' && (
+                    <div className="text-xs text-gray-500">Download App</div>
+                  )}
+                </div>
+              </div>
+            )
+          default:
+            return renderSocialWidget()
+        }
+      }
+      
+      switch (widget.type) {
+        case 'social':
+          return renderSocialWidget()
+        case 'link':
+          return renderSocialWidget()
+        default:
+          return renderOtherWidget()
+      }
     }
+
+    return (
+      <div
+        key={widget.id}
+        className={`absolute ${sizeClass} transition-all duration-150 ease-out cursor-pointer`}
+        style={{
+          transform: `translate(${currentPosition.x}px, ${currentPosition.y}px)`,
+          zIndex: 1
+        }}
+        onClick={() => handleLinkClick(widget.id, widget.data.url || '')}
+      >
+        <Card className="h-full relative !bg-white border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-150">
+          <CardContent className="p-4 h-full flex items-center justify-center">
+            {widgetContent()}
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
+
 
   return (
-    <div className={`min-h-screen py-8 px-4 ${getThemeClasses(profile.theme)}`}>
-      <div className="max-w-md mx-auto">
-        <div className="text-center mb-8">
-          <div className="mb-4">
-            <Avatar className="w-24 h-24 mx-auto">
-              <AvatarImage src={profile.avatar_url || ''} alt={profile.display_name || profile.username} />
-              <AvatarFallback className="text-xl">
-                {(profile.display_name || profile.username).charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+    <div className="min-h-screen !bg-white">
+      {/* Main Content */}
+      <div className="flex min-h-screen">
+        {/* Left Side - Profile Preview */}
+        <div className="w-1/2 p-4 flex flex-col items-center">
+          <div className="w-full max-w-md">
+            {/* Profile Section */}
+            <div className="text-center mb-6">
+              <div className="mb-4">
+                <Avatar className="w-32 h-32 mx-auto mb-4">
+                  <AvatarImage src={profile.avatar_url || ''} alt={profile.display_name || profile.username} />
+                  <AvatarFallback className="text-3xl">
+                    {(profile.display_name || profile.username).charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              
+              <h1 className="text-2xl font-bold mb-2 !text-gray-900">
+                {profile.display_name || profile.username}
+              </h1>
+              
+              {profile.bio && (
+                <p className="!text-gray-600 text-sm mb-4">
+                  {profile.bio}
+                </p>
+              )}
+            </div>
+
+            {socialLinks.length > 0 && (
+              <div className="text-center mb-6">
+                <SocialIcons socialLinks={socialLinks} theme="light" />
+              </div>
+            )}
+
+            <div className="text-center mt-8 pt-8 border-t border-gray-200">
+              <p className="text-xs !text-gray-500">
+                Created with{' '}
+                <a
+                  href="https://curately.co.uk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline !text-gray-700 hover:!text-gray-900"
+                >
+                  Curately
+                </a>
+              </p>
+            </div>
           </div>
-          
-          <h1 className="text-2xl font-bold mb-2">
-            {profile.display_name || profile.username}
-          </h1>
-          
-          {profile.bio && (
-            <p className="text-sm opacity-80 mb-4">
-              {profile.bio}
-            </p>
-          )}
         </div>
 
-        <div className="space-y-4 mb-8">
-          {links.map((link) => {
-            // Special handling for QR codes
-            if (link.link_type === 'qr_code' && link.qr_codes && link.qr_codes[0]) {
-              return (
-                <div key={link.id} className={`w-full p-6 rounded-lg border ${getButtonClasses(profile.theme)} backdrop-blur-sm`}>
-                  <div className="text-center space-y-4">
-                    <div className="flex items-center justify-center space-x-2 mb-3">
-                      <QrCode className="w-5 h-5" />
-                      <span className="font-medium">{link.title}</span>
-                    </div>
-                    
-                    <div className="bg-white p-4 rounded-lg mx-auto w-fit border border-gray-300 shadow-lg">
-                      {link.qr_codes[0].format === 'SVG' ? (
-                        <div 
-                          className="w-32 h-32 mx-auto [&>svg]:w-full [&>svg]:h-full [&>svg]:block"
-                          dangerouslySetInnerHTML={{ __html: link.qr_codes[0].qr_code_data }}
-                        />
-                      ) : (
-                        <img 
-                          src={link.qr_codes[0].qr_code_data}
-                          alt={`QR Code for ${link.title}`}
-                          className="w-32 h-32 mx-auto object-contain block"
-                          onError={(e) => {
-                            console.error('QR Code image failed to load:', link.qr_codes[0].qr_code_data.substring(0, 50))
-                            e.currentTarget.style.display = 'none'
-                          }}
-                        />
-                      )}
-                    </div>
-                    
-                    <p className="text-sm opacity-80">
-                      Scan to access: {link.url}
-                    </p>
-                    
-                    <Button
-                      onClick={() => handleLinkClick(link.id, link.url)}
-                      className={`${getButtonClasses(profile.theme)} mt-2`}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Open Link
-                      <ExternalLink className="w-4 h-4 ml-2" />
-                    </Button>
-                  </div>
+        {/* Right Side - Widget Grid */}
+        <div className="w-1/2 p-4">
+          <div 
+            className="relative min-h-[calc(100vh-250px)] w-full !bg-gray-50 rounded-lg p-6"
+            style={{
+              maxWidth: '100%',
+              overflow: 'hidden'
+            }}
+          >
+            {!isHydrated || isLoadingWidgets ? (
+              <div className="flex items-center justify-center h-40">
+                <div className="!text-gray-500">Loading widgets...</div>
+              </div>
+            ) : widgets.length === 0 ? (
+              <div className="flex items-center justify-center h-40">
+                <div className="text-center !text-gray-500">
+                  <div className="text-lg font-medium mb-2">No widgets yet</div>
+                  <div className="text-sm">This profile has no links to display</div>
                 </div>
-              )
-            }
-            
-            // Regular link display
-            return (
-              <Button
-                key={link.id}
-                onClick={() => handleLinkClick(link.id, link.url)}
-                className={`w-full py-6 text-left justify-between ${getButtonClasses(profile.theme)}`}
-                variant="outline"
-              >
-                <span className="font-medium">{link.title}</span>
-                <ExternalLink className="w-4 h-4" />
-              </Button>
-            )
-          })}
-        </div>
-
-        {socialLinks.length > 0 && (
-          <div className="text-center">
-            <SocialIcons socialLinks={socialLinks} theme={profile.theme} />
+              </div>
+            ) : (
+              <div suppressHydrationWarning>
+                {widgets.map(widget => renderWidget(widget))}
+              </div>
+            )}
           </div>
-        )}
-
-        <div className="text-center mt-8 pt-8 border-t border-current/20">
-          <p className="text-xs opacity-60">
-            Created with{' '}
-            <a
-              href="https://curately.co.uk"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              Curately
-            </a>
-          </p>
         </div>
       </div>
     </div>

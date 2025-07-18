@@ -11,7 +11,8 @@
       "Bash(npx tsc:*)",
       "Bash(node:*)",
       "Bash(rm:*)",
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }
