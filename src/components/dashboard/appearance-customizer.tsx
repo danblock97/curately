@@ -83,6 +83,8 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
   const [widgets, setWidgets] = useState<Widget[]>([])
   const [hoveredWidget, setHoveredWidget] = useState<string | null>(null)
   const [draggedWidget, setDraggedWidget] = useState<string | null>(null)
+  const [dragPreview, setDragPreview] = useState<{ x: number; y: number; widget: Widget } | null>(null)
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const [showResizeMenu, setShowResizeMenu] = useState<string | null>(null)
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
@@ -553,9 +555,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
           appName: metadata.appName,
           appLogo: metadata.appLogo
         },
-        position: { x: 20, y: widgets.length * 80 + 20 },
-        webPosition: { x: 20, y: widgets.length * 80 + 20 },
-        mobilePosition: { x: 20, y: widgets.length * 80 + 20 }
+        position: { x: 20, y: 20 },
+        webPosition: { x: 20, y: 20 },
+        mobilePosition: { x: 20, y: 20 }
       }
 
       // Note: Widget positioning is handled in UI state, not persisted to database
@@ -588,9 +590,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
         title: imageTitle.trim() || 'Image',
         url: imageUrl.trim()
       },
-      position: { x: 20, y: widgets.length * 80 + 20 },
-      webPosition: { x: 20, y: widgets.length * 80 + 20 },
-      mobilePosition: { x: 20, y: widgets.length * 80 + 20 }
+      position: { x: 20, y: 20 },
+      webPosition: { x: 20, y: 20 },
+      mobilePosition: { x: 20, y: 20 }
     }
     
     setWidgets(prev => [...prev, newWidget])
@@ -613,9 +615,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
         title: textContent.trim(),
         type: 'text'
       },
-      position: { x: 20, y: widgets.length * 80 + 20 },
-      webPosition: { x: 20, y: widgets.length * 80 + 20 },
-      mobilePosition: { x: 20, y: widgets.length * 80 + 20 }
+      position: { x: 20, y: 20 },
+      webPosition: { x: 20, y: 20 },
+      mobilePosition: { x: 20, y: 20 }
     }
     
     setWidgets(prev => [...prev, newWidget])
@@ -886,9 +888,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
           playStoreUrl: widget.data.playStoreUrl,
           fileUrl: metadata.fileUrl || ''
         },
-        position: widget.position,
-        webPosition: widget.webPosition,
-        mobilePosition: widget.mobilePosition
+        position: getInitialPosition(widget),
+        webPosition: getInitialPosition(widget),
+        mobilePosition: getInitialPosition(widget)
       }
 
       console.log('Created widget with data:', newWidget.data)
@@ -1011,22 +1013,115 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
     ))
   }
 
+  // Enhanced grid system for better widget positioning
+  const GRID_SIZE = 20
+  const WIDGET_MARGINS = 8
+  
   const snapToGrid = (position: { x: number; y: number }) => {
-    const gridSize = 20
     return {
-      x: Math.round(position.x / gridSize) * gridSize,
-      y: Math.round(position.y / gridSize) * gridSize
+      x: Math.round(position.x / GRID_SIZE) * GRID_SIZE,
+      y: Math.round(position.y / GRID_SIZE) * GRID_SIZE
     }
   }
 
+  const getWidgetDimensions = (size: Widget['size']) => {
+    switch (size) {
+      case 'thin': return { width: 320, height: 48 }
+      case 'small-square': return { width: 192, height: 192 }
+      case 'medium-square': return { width: 224, height: 224 }
+      case 'large-square': return { width: 320, height: 320 }
+      case 'wide': return { width: 320, height: 128 }
+      case 'tall': return { width: 208, height: 320 }
+      default: return { width: 320, height: 48 }
+    }
+  }
+
+  const checkCollision = (widget1: Widget, widget2: Widget) => {
+    const dims1 = getWidgetDimensions(widget1.size)
+    const dims2 = getWidgetDimensions(widget2.size)
+    const pos1 = activeView === 'web' ? widget1.webPosition : widget1.mobilePosition
+    const pos2 = activeView === 'web' ? widget2.webPosition : widget2.mobilePosition
+
+    return !(
+      pos1.x + dims1.width + WIDGET_MARGINS <= pos2.x ||
+      pos2.x + dims2.width + WIDGET_MARGINS <= pos1.x ||
+      pos1.y + dims1.height + WIDGET_MARGINS <= pos2.y ||
+      pos2.y + dims2.height + WIDGET_MARGINS <= pos1.y
+    )
+  }
+
+  const findValidPosition = (widget: Widget, targetPosition: { x: number; y: number }) => {
+    const snappedPosition = snapToGrid(targetPosition)
+    const testWidget = {
+      ...widget,
+      [activeView === 'web' ? 'webPosition' : 'mobilePosition']: snappedPosition
+    }
+
+    // Check if position is valid (no collisions)
+    const hasCollision = widgets.some(w => 
+      w.id !== widget.id && checkCollision(testWidget, w)
+    )
+
+    if (!hasCollision) {
+      return snappedPosition
+    }
+
+    // If collision detected, find the nearest valid position
+    const containerWidth = gridRef.current ? gridRef.current.getBoundingClientRect().width - 48 : 600 // Account for padding
+    const maxSearchDistance = 200
+    
+    for (let distance = GRID_SIZE; distance <= maxSearchDistance; distance += GRID_SIZE) {
+      // Try positions in expanding squares around the target
+      for (let x = -distance; x <= distance; x += GRID_SIZE) {
+        for (let y = -distance; y <= distance; y += GRID_SIZE) {
+          const candidatePosition = {
+            x: Math.max(0, Math.min(containerWidth - getWidgetDimensions(widget.size).width, snappedPosition.x + x)),
+            y: Math.max(0, snappedPosition.y + y)
+          }
+          
+          const candidateWidget = {
+            ...widget,
+            [activeView === 'web' ? 'webPosition' : 'mobilePosition']: candidatePosition
+          }
+
+          const hasCollision = widgets.some(w => 
+            w.id !== widget.id && checkCollision(candidateWidget, w)
+          )
+
+          if (!hasCollision) {
+            return candidatePosition
+          }
+        }
+      }
+    }
+
+    // If no valid position found, place below all widgets
+    const maxY = widgets.reduce((max, w) => {
+      if (w.id === widget.id) return max
+      const pos = activeView === 'web' ? w.webPosition : w.mobilePosition
+      const dims = getWidgetDimensions(w.size)
+      return Math.max(max, pos.y + dims.height + WIDGET_MARGINS)
+    }, 0)
+
+    return { x: 20, y: maxY + 20 }
+  }
+
+  const getInitialPosition = (widget: Widget) => {
+    const tempWidget = { ...widget, position: { x: 20, y: 20 }, webPosition: { x: 20, y: 20 }, mobilePosition: { x: 20, y: 20 } }
+    return findValidPosition(tempWidget, { x: 20, y: 20 })
+  }
+
   const handleWidgetMove = async (widgetId: string, newPosition: { x: number; y: number }) => {
-    const snappedPosition = snapToGrid(newPosition)
+    const widget = widgets.find(w => w.id === widgetId)
+    if (!widget) return
+    
+    const validPosition = findValidPosition(widget, newPosition)
     
     try {
       // Update in database
       const updateData = {
-        widget_position: JSON.stringify(snappedPosition),
-        [activeView === 'web' ? 'web_position' : 'mobile_position']: JSON.stringify(snappedPosition)
+        widget_position: JSON.stringify(validPosition),
+        [activeView === 'web' ? 'web_position' : 'mobile_position']: JSON.stringify(validPosition)
       }
       
       const { error } = await supabase
@@ -1044,8 +1139,8 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
       setWidgets(prev => prev.map(w => 
         w.id === widgetId ? {
           ...w,
-          position: snappedPosition,
-          [activeView === 'web' ? 'webPosition' : 'mobilePosition']: snappedPosition
+          position: validPosition,
+          [activeView === 'web' ? 'webPosition' : 'mobilePosition']: validPosition
         } : w
       ))
     } catch (error) {
@@ -1055,6 +1150,20 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
+    if (!draggedWidget || !gridRef.current) return
+
+    const rect = gridRef.current.getBoundingClientRect()
+    const widget = widgets.find(w => w.id === draggedWidget)
+    if (!widget) return
+
+    // Account for container padding (24px on each side)
+    const mousePosition = {
+      x: Math.max(0, Math.min(rect.width - 48, e.clientX - rect.left - dragOffset.x - 24)),
+      y: Math.max(0, e.clientY - rect.top - dragOffset.y - 24)
+    }
+
+    const previewPosition = findValidPosition(widget, mousePosition)
+    setDragPreview({ x: previewPosition.x, y: previewPosition.y, widget })
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -1062,12 +1171,47 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
     if (!draggedWidget || !gridRef.current) return
 
     const rect = gridRef.current.getBoundingClientRect()
+    // Account for container padding (24px on each side)
     const newPosition = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: Math.max(0, Math.min(rect.width - 48, e.clientX - rect.left - dragOffset.x - 24)),
+      y: Math.max(0, e.clientY - rect.top - dragOffset.y - 24)
     }
 
     handleWidgetMove(draggedWidget, newPosition)
+    setDragPreview(null)
+  }
+
+  const handleDragStart = (e: React.DragEvent, widgetId: string) => {
+    const widget = widgets.find(w => w.id === widgetId)
+    if (!widget) return
+    
+    const rect = e.currentTarget.getBoundingClientRect()
+    const offset = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    }
+    
+    setDragOffset(offset)
+    setDraggedWidget(widgetId)
+    setDragPreview(null)
+    
+    // Add some visual feedback
+    e.currentTarget.style.opacity = '0.5'
+  }
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    // Reset opacity
+    e.currentTarget.style.opacity = '1'
+    setDraggedWidget(null)
+    setDragPreview(null)
+    setDragOffset({ x: 0, y: 0 })
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear preview if leaving the container, not child elements
+    if (e.currentTarget === e.target) {
+      setDragPreview(null)
+    }
   }
 
   const getWidgetSizeClass = (size: Widget['size'], inRightPanel = false) => {
@@ -1540,7 +1684,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
     return (
       <div
         key={widget.id}
-        className={`absolute ${sizeClass} ${isDragged ? 'opacity-50' : ''}`}
+        className={`absolute ${sizeClass} ${isDragged ? 'opacity-50' : ''} transition-all duration-150 ease-out`}
         style={{
           transform: `translate(${currentPosition.x}px, ${currentPosition.y}px)`,
           zIndex: isDragged ? 50 : 1
@@ -1548,14 +1692,39 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
         onMouseEnter={() => setHoveredWidget(widget.id)}
         onMouseLeave={() => setHoveredWidget(null)}
         draggable
-        onDragStart={() => setDraggedWidget(widget.id)}
-        onDragEnd={() => setDraggedWidget(null)}
+        onDragStart={(e) => handleDragStart(e, widget.id)}
+        onDragEnd={handleDragEnd}
       >
-        <Card className="h-full relative cursor-move bg-white border border-gray-200">
+        <Card className="h-full relative cursor-move bg-white border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-150">
           <CardContent className="p-4 h-full flex items-center justify-center">
             {widgetContent()}
           </CardContent>
           
+          {/* Hover Controls */}
+          {isHovered && (
+            <div className="absolute -top-2 -right-2 bg-white border border-gray-200 rounded-lg p-1 shadow-lg flex items-center space-x-1">
+              {sizeOptions.map(size => (
+                <Button
+                  key={size.value}
+                  variant={widget.size === size.value ? 'default' : 'ghost'}
+                  size="sm"
+                  className="w-6 h-6 p-0"
+                  onClick={() => handleResizeWidget(widget.id, size.value as Widget['size'])}
+                  title={size.label}
+                >
+                  {size.icon}
+                </Button>
+              ))}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-6 h-6 p-0 text-red-500 hover:text-red-700"
+                onClick={() => handleRemoveWidget(widget.id)}
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
         </Card>
         {showResizeMenu === widget.id && (
           <div className="absolute top-10 right-0 bg-white border-2 border-black rounded-lg shadow-xl p-3 z-20">
@@ -1628,7 +1797,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      <div className="flex items-center justify-between p-3 border-b border-gray-200">
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -1667,22 +1836,22 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
       </div>
 
       {/* Main Content */}
-      <div className="flex">
+      <div className="flex min-h-[calc(100vh-120px)]">
         {/* Left Side - Profile Preview */}
-        <div className={`${activeView === 'web' ? 'w-1/2' : 'w-full'} p-8 flex flex-col items-center`}>
-          <div className="w-full max-w-md">
+        <div className={`${activeView === 'web' ? 'w-1/2' : 'w-full'} p-4 flex flex-col items-center`}>
+          <div className={`w-full ${activeView === 'web' ? 'max-w-md' : 'max-w-7xl'}`}>
             {/* Profile Section */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <div className="relative mb-4 group">
                 <label className="cursor-pointer block">
-                  <Avatar className="w-32 h-32 mx-auto mb-4">
+                  <Avatar className={`${activeView === 'web' ? 'w-32 h-32' : 'w-20 h-20'} mx-auto mb-4`}>
                     <AvatarImage src={profile?.avatar_url || ''} alt={displayName} />
-                    <AvatarFallback className="text-3xl">
+                    <AvatarFallback className={`${activeView === 'web' ? 'text-3xl' : 'text-xl'}`}>
                       {isHydrated ? displayName.charAt(0).toUpperCase() || 'U' : 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="absolute inset-0 w-32 h-32 mx-auto mb-4 rounded-full bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Edit className="w-6 h-6 text-white" />
+                  <div className={`absolute inset-0 ${activeView === 'web' ? 'w-32 h-32' : 'w-20 h-20'} mx-auto mb-4 rounded-full bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity`}>
+                    <Edit className={`${activeView === 'web' ? 'w-6 h-6' : 'w-4 h-4'} text-white`} />
                   </div>
                   <input
                     type="file"
@@ -1714,17 +1883,52 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
             {activeView === 'mobile' && (
               <div 
                 ref={gridRef}
-                className="relative min-h-[400px] space-y-4"
+                className={`relative min-h-[calc(100vh-250px)] w-full bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${
+                  draggedWidget ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+                }`}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
+                onDragLeave={handleDragLeave}
+                style={{
+                  backgroundImage: `radial-gradient(circle at ${GRID_SIZE/2}px ${GRID_SIZE/2}px, rgba(0,0,0,0.08) 1px, transparent 1px)`,
+                  backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
+                  maxWidth: '100%',
+                  overflow: 'hidden'
+                }}
               >
                 {!isHydrated || isLoadingWidgets ? (
                   <div className="flex items-center justify-center h-40">
                     <div className="text-gray-500">Loading widgets...</div>
                   </div>
+                ) : widgets.length === 0 ? (
+                  <div className="flex items-center justify-center h-40">
+                    <div className="text-center text-gray-500">
+                      <div className="text-lg font-medium mb-2">No widgets yet</div>
+                      <div className="text-sm">Use the toolbar below to add your first widget</div>
+                    </div>
+                  </div>
                 ) : (
                   <div suppressHydrationWarning>
                     {widgets.map(widget => renderWidget(widget))}
+                    
+                    {/* Drag Preview */}
+                    {dragPreview && (
+                      <div
+                        className="absolute pointer-events-none transition-all duration-100 ease-out"
+                        style={{
+                          transform: `translate(${dragPreview.x}px, ${dragPreview.y}px)`,
+                          zIndex: 100
+                        }}
+                      >
+                        <div className={`${getWidgetSizeClass(dragPreview.widget.size)} opacity-60`}>
+                          <Card className="h-full relative bg-blue-100 border-2 border-blue-400 border-dashed shadow-lg">
+                            <CardContent className="p-4 h-full flex items-center justify-center">
+                              <div className="text-blue-600 font-medium animate-pulse">Drop here</div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1734,15 +1938,55 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
 
         {/* Right Side - Widget Grid (Web View Only) */}
         {activeView === 'web' && (
-          <div className="w-1/2 p-8">
-            <div className="flex flex-wrap gap-4 justify-start">
+          <div className="w-1/2 p-4">
+            <div 
+              ref={gridRef}
+              className={`relative min-h-[calc(100vh-250px)] w-full bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${
+                draggedWidget ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+              }`}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onDragLeave={handleDragLeave}
+              style={{
+                backgroundImage: `radial-gradient(circle at ${GRID_SIZE/2}px ${GRID_SIZE/2}px, rgba(0,0,0,0.08) 1px, transparent 1px)`,
+                backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
+                maxWidth: '100%',
+                overflow: 'hidden'
+              }}
+            >
               {!isHydrated || isLoadingWidgets ? (
-                <div className="flex items-center justify-center w-full h-40">
+                <div className="flex items-center justify-center h-40">
                   <div className="text-gray-500">Loading widgets...</div>
+                </div>
+              ) : widgets.length === 0 ? (
+                <div className="flex items-center justify-center h-40">
+                  <div className="text-center text-gray-500">
+                    <div className="text-lg font-medium mb-2">No widgets yet</div>
+                    <div className="text-sm">Use the toolbar below to add your first widget</div>
+                  </div>
                 </div>
               ) : (
                 <div suppressHydrationWarning>
-                  {widgets.map(widget => renderWidget(widget, true))}
+                  {widgets.map(widget => renderWidget(widget))}
+                  
+                  {/* Drag Preview */}
+                  {dragPreview && (
+                    <div
+                      className="absolute pointer-events-none transition-all duration-100 ease-out"
+                      style={{
+                        transform: `translate(${dragPreview.x}px, ${dragPreview.y}px)`,
+                        zIndex: 100
+                      }}
+                    >
+                      <div className={`${getWidgetSizeClass(dragPreview.widget.size)} opacity-60`}>
+                        <Card className="h-full relative bg-blue-100 border-2 border-blue-400 border-dashed shadow-lg">
+                          <CardContent className="p-4 h-full flex items-center justify-center">
+                            <div className="text-blue-600 font-medium animate-pulse">Drop here</div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
