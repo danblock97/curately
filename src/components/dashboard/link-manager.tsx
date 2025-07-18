@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { AddLinkForm } from './add-link-form'
 import { LinkList } from './link-list'
@@ -42,9 +42,16 @@ const popularPlatforms: PlatformType[] = [
 ]
 
 export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
-  const [links, setLinks] = useState(initialLinks)
+  const [links, setLinks] = useState<Link[]>([])
   const [showAddForm, setShowAddForm] = useState(false)
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType | null>(null)
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  // Handle hydration and initialize with server data
+  useEffect(() => {
+    setIsHydrated(true)
+    setLinks(initialLinks)
+  }, [initialLinks])
 
   const handleLinkAdded = (newLink: Link) => {
     setLinks(prev => [...prev, newLink])
@@ -77,14 +84,51 @@ export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
   }
 
   const totalClicks = useMemo(() => {
-    if (!Array.isArray(links) || links.length === 0) return 0
+    if (!isHydrated || !Array.isArray(links) || links.length === 0) return 0
     
     return links.reduce((sum, link) => {
       if (!link || typeof link !== 'object') return sum
       const clicks = typeof link.clicks === 'number' && !isNaN(link.clicks) ? link.clicks : 0
       return sum + clicks
     }, 0)
-  }, [links])
+  }, [links, isHydrated])
+
+  // Show loading state until hydration is complete
+  if (!isHydrated) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white border border-gray-200 rounded-xl p-6 animate-pulse">
+              <div className="w-16 h-16 bg-gray-200 rounded-xl mx-auto mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-8 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="bg-white border border-gray-200 rounded-xl p-4 animate-pulse">
+            <div className="h-6 bg-gray-200 rounded mb-4"></div>
+            <div className="space-y-2">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-4 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+          <div className="lg:col-span-2 space-y-4">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 animate-pulse">
+              <div className="h-6 bg-gray-200 rounded mb-4"></div>
+              <div className="h-32 bg-gray-200 rounded"></div>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-xl p-4 animate-pulse">
+              <div className="h-6 bg-gray-200 rounded mb-4"></div>
+              <div className="h-20 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
