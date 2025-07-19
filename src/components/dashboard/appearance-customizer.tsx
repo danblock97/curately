@@ -2102,12 +2102,16 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
             <ArrowLeft className="w-4 h-4 mr-2" />
             Return
           </Button>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center bg-gray-100 rounded-xl p-1">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => handleViewSwitch('web')}
-              className={activeView === 'web' ? 'bg-gray-900 text-white' : 'text-gray-900 hover:bg-gray-100'}
+              className={`rounded-lg font-semibold transition-all ${
+                activeView === 'web' 
+                  ? 'bg-white text-gray-900 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+              }`}
             >
               <Monitor className="w-4 h-4 mr-2" />
               Web
@@ -2116,7 +2120,11 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
               variant="ghost"
               size="sm"
               onClick={() => handleViewSwitch('mobile')}
-              className={activeView === 'mobile' ? 'bg-gray-900 text-white' : 'text-gray-900 hover:bg-gray-100'}
+              className={`rounded-lg font-semibold transition-all ${
+                activeView === 'mobile' 
+                  ? 'bg-white text-gray-900 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+              }`}
             >
               <Smartphone className="w-4 h-4 mr-2" />
               Mobile
@@ -2140,17 +2148,24 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
         <div className={`${activeView === 'web' ? 'w-1/2' : 'w-full'} p-4 flex flex-col items-center`}>
           <div className={`w-full ${activeView === 'web' ? 'max-w-md' : 'max-w-7xl'}`}>
             {/* Profile Section */}
-            <div className="text-center mb-6">
-              <div className="relative mb-4 group">
+            <div className="text-center mb-8">
+              <div className="relative mb-6 group">
                 <label className="cursor-pointer block">
-                  <Avatar className={`${activeView === 'web' ? 'w-32 h-32' : 'w-20 h-20'} mx-auto mb-4`}>
-                    <AvatarImage src={profile?.avatar_url || ''} alt={displayName} />
-                    <AvatarFallback className={`${activeView === 'web' ? 'text-3xl' : 'text-xl'}`}>
-                      {isHydrated ? displayName.charAt(0).toUpperCase() || 'U' : 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className={`absolute inset-0 ${activeView === 'web' ? 'w-32 h-32' : 'w-20 h-20'} mx-auto mb-4 rounded-full bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity`}>
-                    <Edit className={`${activeView === 'web' ? 'w-6 h-6' : 'w-4 h-4'} text-white`} />
+                  <div className="relative">
+                    <Avatar className={`${activeView === 'web' ? 'w-36 h-36' : 'w-24 h-24'} mx-auto mb-4 ring-4 ring-white shadow-2xl`}>
+                      <AvatarImage src={profile?.avatar_url || ''} alt={displayName} />
+                      <AvatarFallback className={`${activeView === 'web' ? 'text-4xl' : 'text-2xl'} bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold`}>
+                        {isHydrated ? displayName.charAt(0).toUpperCase() || 'U' : 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className={`absolute inset-0 ${activeView === 'web' ? 'w-36 h-36' : 'w-24 h-24'} mx-auto mb-4 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300`}>
+                      <div className="text-center">
+                        <Edit className={`${activeView === 'web' ? 'w-6 h-6' : 'w-4 h-4'} text-white mb-1 mx-auto`} />
+                        <span className={`text-white ${activeView === 'web' ? 'text-xs' : 'text-xs'} font-medium`}>
+                          Edit Photo
+                        </span>
+                      </div>
+                    </div>
                   </div>
                   <input
                     type="file"
@@ -2165,16 +2180,20 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                 value={displayName}
                 onChange={(e) => handleDisplayNameChange(e.target.value)}
                 onBlur={handleDisplayNameBlur}
-                className="text-2xl font-bold mb-2 bg-transparent border-none text-center w-full text-gray-900 focus:outline-none focus:ring-0 focus:bg-gray-50 rounded px-2"
+                className={`${
+                  activeView === 'web' ? 'text-4xl' : 'text-2xl'
+                } font-black mb-3 bg-transparent border-none text-center w-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white/80 rounded-lg px-3 py-2 transition-all hover:bg-gray-50/50 backdrop-blur-sm`}
                 placeholder="Your name"
               />
               <textarea
                 value={bio}
                 onChange={(e) => handleBioChange(e.target.value)}
                 onBlur={handleBioBlur}
-                className="text-gray-600 text-sm mb-4 bg-transparent border-none text-center w-full resize-none focus:outline-none focus:ring-0 focus:bg-gray-50 rounded px-2"
+                className={`${
+                  activeView === 'web' ? 'text-lg' : 'text-base'
+                } text-gray-700 font-medium mb-6 bg-transparent border-none text-center w-full resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white/80 rounded-lg px-3 py-2 transition-all hover:bg-gray-50/50 backdrop-blur-sm leading-relaxed`}
                 placeholder="Tell people about yourself..."
-                rows={2}
+                rows={activeView === 'web' ? 3 : 2}
               />
             </div>
 
@@ -2374,33 +2393,49 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
 
       {/* Background Color Picker */}
       {showBackgroundPicker && (profile.tier === 'pro' || !profile.tier) && (
-        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
-          <Card className="w-80 bg-white border border-gray-200 shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900 flex items-center space-x-2">
-                  <Palette className="w-4 h-4" />
-                  <span>Background Color</span>
-                </h3>
-                <Button variant="ghost" size="sm" onClick={() => setShowBackgroundPicker(false)}>
-                  <X className="w-4 h-4 text-gray-600" />
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md bg-white border-0 shadow-2xl rounded-2xl overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                    <Palette className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">Background Color</h3>
+                    <p className="text-white/80 text-sm">Customize your page background</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowBackgroundPicker(false)}
+                  className="text-white hover:bg-white/20 border-0"
+                >
+                  <X className="w-5 h-5" />
                 </Button>
               </div>
-              
+            </div>
+            
+            <CardContent className="p-6 space-y-6">
+              {/* Color Picker Section */}
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bg-color" className="text-sm font-medium text-gray-700">
-                    Choose Color
+                <div>
+                  <Label htmlFor="bg-color" className="text-base font-semibold text-gray-900 mb-3 block">
+                    Pick a Color
                   </Label>
-                  <div className="flex items-center space-x-3">
-                    <input
-                      id="bg-color"
-                      type="color"
-                      value={backgroundColor}
-                      onChange={(e) => setBackgroundColor(e.target.value)}
-                      className="w-12 h-12 rounded-lg border border-gray-300 cursor-pointer"
-                      disabled={isUpdatingBackgroundColor}
-                    />
+                  <div className="flex items-center space-x-4">
+                    <div className="relative">
+                      <input
+                        id="bg-color"
+                        type="color"
+                        value={backgroundColor}
+                        onChange={(e) => setBackgroundColor(e.target.value)}
+                        className="w-16 h-16 rounded-2xl border-2 border-gray-200 cursor-pointer shadow-lg hover:shadow-xl transition-shadow"
+                        disabled={isUpdatingBackgroundColor}
+                      />
+                      <div className="absolute inset-0 rounded-2xl ring-2 ring-offset-2 ring-gray-900/10"></div>
+                    </div>
                     <div className="flex-1">
                       <Input
                         type="text"
@@ -2408,46 +2443,86 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                         onChange={(e) => setBackgroundColor(e.target.value)}
                         placeholder="#ffffff"
                         pattern="^#[0-9a-fA-F]{6}$"
-                        className="font-mono text-gray-900"
+                        className="font-mono text-lg text-gray-900 bg-gray-50 border-gray-200 h-12 rounded-xl"
                         disabled={isUpdatingBackgroundColor}
                       />
                     </div>
                   </div>
                 </div>
                 
-                {/* Preview */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Preview</Label>
-                  <div 
-                    className="w-full h-16 rounded-lg border border-gray-300 flex items-center justify-center"
-                    style={{ backgroundColor: backgroundColor }}
-                  >
-                    <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded shadow-sm">
-                      <span className="text-xs text-gray-900 font-medium">Page Background</span>
-                    </div>
+                {/* Color Presets */}
+                <div>
+                  <Label className="text-base font-semibold text-gray-900 mb-3 block">
+                    Popular Colors
+                  </Label>
+                  <div className="grid grid-cols-6 gap-2">
+                    {['#ffffff', '#f8fafc', '#f1f5f9', '#e2e8f0', '#cbd5e1', '#94a3b8', 
+                      '#64748b', '#475569', '#334155', '#1e293b', '#0f172a', '#000000',
+                      '#fef2f2', '#fee2e2', '#fecaca', '#f87171', '#ef4444', '#dc2626',
+                      '#fefce8', '#fef3c7', '#fde68a', '#facc15', '#eab308', '#ca8a04',
+                      '#f0fdf4', '#dcfce7', '#bbf7d0', '#4ade80', '#22c55e', '#16a34a',
+                      '#eff6ff', '#dbeafe', '#bfdbfe', '#60a5fa', '#3b82f6', '#2563eb',
+                      '#faf5ff', '#f3e8ff', '#e9d5ff', '#c084fc', '#a855f7', '#9333ea'
+                    ].map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => setBackgroundColor(color)}
+                        className={`w-8 h-8 rounded-lg border-2 transition-all hover:scale-110 ${
+                          backgroundColor === color ? 'border-gray-900 ring-2 ring-gray-900 ring-offset-2' : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        style={{ backgroundColor: color }}
+                        disabled={isUpdatingBackgroundColor}
+                      />
+                    ))}
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <Button
-                    onClick={() => handleBackgroundColorUpdate(backgroundColor)}
-                    disabled={isUpdatingBackgroundColor || backgroundColor === profile.background_color}
-                    className="flex-1 bg-gray-900 hover:bg-gray-800 text-white"
+                {/* Live Preview */}
+                <div>
+                  <Label className="text-base font-semibold text-gray-900 mb-3 block">
+                    Live Preview
+                  </Label>
+                  <div 
+                    className="w-full h-24 rounded-xl border-2 border-gray-200 flex items-center justify-center relative overflow-hidden shadow-inner"
+                    style={{ backgroundColor: backgroundColor }}
                   >
-                    {isUpdatingBackgroundColor ? 'Updating...' : 'Apply'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setBackgroundColor('#ffffff')
-                      handleBackgroundColorUpdate('#ffffff')
-                    }}
-                    disabled={isUpdatingBackgroundColor}
-                    className="border-gray-300"
-                  >
-                    Reset
-                  </Button>
+                    <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-gray-200">
+                      <span className="text-sm text-gray-900 font-medium">Your Page Background</span>
+                    </div>
+                    <div className="absolute top-2 left-2 w-3 h-3 bg-white/50 rounded-full"></div>
+                    <div className="absolute top-2 right-2 w-2 h-2 bg-white/30 rounded-full"></div>
+                    <div className="absolute bottom-2 right-2 w-4 h-4 bg-white/20 rounded-full"></div>
+                  </div>
                 </div>
+              </div>
+                
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-3 pt-2">
+                <Button
+                  onClick={() => handleBackgroundColorUpdate(backgroundColor)}
+                  disabled={isUpdatingBackgroundColor || backgroundColor === profile.background_color}
+                  className="flex-1 h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+                >
+                  {isUpdatingBackgroundColor ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>Applying...</span>
+                    </div>
+                  ) : (
+                    'Apply Changes'
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setBackgroundColor('#ffffff')
+                    handleBackgroundColorUpdate('#ffffff')
+                  }}
+                  disabled={isUpdatingBackgroundColor}
+                  className="h-12 px-6 border-gray-300 hover:bg-gray-50 rounded-xl font-medium"
+                >
+                  Reset
+                </Button>
               </div>
             </CardContent>
           </Card>

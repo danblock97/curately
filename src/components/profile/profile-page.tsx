@@ -1347,13 +1347,17 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 					<div className="w-full max-w-md">
 						{/* Profile Section */}
 						<div className="text-center mb-6">
-							<div className="mb-4">
-								<Avatar className="w-32 h-32 mx-auto mb-4">
+							<div className="mb-6">
+								<Avatar className={`${
+									isMobile ? 'w-24 h-24' : 'w-36 h-36'
+								} mx-auto mb-4 ring-4 ring-white shadow-2xl`}>
 									<AvatarImage
 										src={profile.avatar_url || ""}
 										alt={profile.display_name || profile.username}
 									/>
-									<AvatarFallback className="text-3xl">
+									<AvatarFallback className={`${
+										isMobile ? 'text-2xl' : 'text-4xl'
+									} bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold`}>
 										{(profile.display_name || profile.username)
 											.charAt(0)
 											.toUpperCase()}
@@ -1361,12 +1365,18 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 								</Avatar>
 							</div>
 
-							<h1 className="text-2xl font-bold mb-2 !text-gray-900">
+							<h1 className={`${
+								isMobile ? 'text-2xl' : 'text-4xl'
+							} font-black mb-3 !text-gray-900`}>
 								{profile.display_name || profile.username}
 							</h1>
 
 							{profile.bio && (
-								<p className="!text-gray-600 text-sm mb-4">{profile.bio}</p>
+								<p className={`${
+									isMobile ? 'text-base' : 'text-lg'
+								} !text-gray-700 font-medium mb-6 leading-relaxed max-w-md mx-auto`}>
+									{profile.bio}
+								</p>
 							)}
 						</div>
 
