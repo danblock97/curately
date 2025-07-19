@@ -36,7 +36,7 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-white">
       <DashboardHeader user={user} profile={profile} />
       <div className="flex">
-        <DashboardSidebar />
+        <DashboardSidebar profile={profile} />
         <main className="flex-1 p-6">
           {children}
         </main>

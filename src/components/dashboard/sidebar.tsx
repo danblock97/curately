@@ -4,6 +4,10 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Link as LinkIcon, Palette, Settings, BarChart3 } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Database } from '@/lib/supabase/types'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 const navigation = [
   { name: 'Links', href: '/dashboard', icon: LinkIcon, color: 'text-blue-600' },
@@ -12,12 +16,59 @@ const navigation = [
   { name: 'Settings', href: '/dashboard/settings', icon: Settings, color: 'text-gray-600' },
 ]
 
-export function DashboardSidebar() {
+interface DashboardSidebarProps {
+  profile: Profile | null
+}
+
+export function DashboardSidebar({ profile }: DashboardSidebarProps) {
   const pathname = usePathname()
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 min-h-full">
-      <nav className="mt-8">
+      {/* User Profile Section */}
+      {profile && (
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center space-x-3">
+            <Avatar className="w-10 h-10">
+              <AvatarImage 
+                src={profile.avatar_url || ''} 
+                alt={profile.display_name || profile.username} 
+              />
+              <AvatarFallback className="bg-gray-100 text-gray-600 font-medium">
+                {profile.display_name 
+                  ? getInitials(profile.display_name)
+                  : profile.username.charAt(0).toUpperCase()
+                }
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {profile.display_name || profile.username}
+              </p>
+              <div className="flex items-center space-x-2">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                  profile.tier === 'pro' 
+                    ? 'bg-purple-100 text-purple-800' 
+                    : 'bg-blue-100 text-blue-800'
+                }`}>
+                  {profile.tier === 'pro' ? 'Pro' : 'Free'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <nav className="mt-4">
         <div className="px-4">
           <ul className="space-y-2">
             {navigation.map((item) => {

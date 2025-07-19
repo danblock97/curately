@@ -45,9 +45,6 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
         </div>
         
         <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-700">
-            {user.email}
-          </div>
           <Button
             variant="outline"
             size="sm"
