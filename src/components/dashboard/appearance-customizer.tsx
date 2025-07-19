@@ -259,7 +259,13 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
               // Safe JSON parsing with fallback - position mobile widgets more tightly
               let widgetPosition = { x: 20, y: index * 80 + 20 }
               let webPosition = { x: 20, y: index * 80 + 20 }
-              let mobilePosition = { x: 20, y: index * 60 + 20 } // Tighter spacing for mobile
+              // Mobile position: 2 columns, 128px + 16px margin = 144px spacing
+              const mobileCol = index % 2
+              const mobileRow = Math.floor(index / 2)
+              let mobilePosition = { 
+                x: 20 + mobileCol * 144, // 20px margin + 144px per column (128px widget + 16px margin)
+                y: 20 + mobileRow * 144  // 20px margin + 144px per row (128px widget + 16px margin)
+              }
               
               try {
                 if (link.widget_position && typeof link.widget_position === 'string') {
@@ -323,9 +329,11 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
             })
           )
 
-          setWidgets(linkWidgets)
-          console.log(`Loaded ${linkWidgets.length} existing links as widgets with metadata`)
-          console.log('Widget positions:', linkWidgets.map(w => ({ id: w.id, title: w.data.title, mobile: w.mobilePosition, web: w.webPosition })))
+          // Auto-arrange mobile widgets if they're overlapping (for migration from old data)
+          const arrangedWidgets = autoArrangeMobileWidgets(linkWidgets)
+          setWidgets(arrangedWidgets)
+          console.log(`Loaded ${arrangedWidgets.length} existing links as widgets with metadata`)
+          console.log('Widget positions:', arrangedWidgets.map(w => ({ id: w.id, title: w.data.title, mobile: w.mobilePosition, web: w.webPosition })))
         } else {
           // No links found, start with empty widgets
           setWidgets([])
@@ -1216,9 +1224,50 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
     return { x: 20, y: Math.max(20, maxY + 20) }
   }
 
+  const autoArrangeMobileWidgets = (widgets: Widget[]): Widget[] => {
+    // Check if mobile widgets need to be rearranged (for migration from old data)
+    const mobilePositions = widgets.map(w => w.mobilePosition)
+    const hasOverlaps = mobilePositions.some((pos1, i) => 
+      mobilePositions.some((pos2, j) => i !== j && pos1.x === pos2.x && pos1.y === pos2.y)
+    )
+    
+    if (!hasOverlaps) {
+      return widgets // No overlaps, return as-is
+    }
+    
+    // Rearrange widgets in a 2-column grid
+    return widgets.map((widget, index) => {
+      const mobileCol = index % 2
+      const mobileRow = Math.floor(index / 2)
+      const newMobilePosition = { 
+        x: 20 + mobileCol * 144, 
+        y: 20 + mobileRow * 144  
+      }
+      
+      return {
+        ...widget,
+        mobilePosition: newMobilePosition
+      }
+    })
+  }
+
   const getInitialPosition = (widget: Widget) => {
-    const tempWidget = { ...widget, position: { x: 20, y: 20 }, webPosition: { x: 20, y: 20 }, mobilePosition: { x: 20, y: 20 } }
-    return findValidPosition(tempWidget, { x: 20, y: 20 })
+    if (activeView === 'mobile') {
+      // For mobile, find the next position in the 2-column grid
+      const existingCount = widgets.length
+      const mobileCol = existingCount % 2
+      const mobileRow = Math.floor(existingCount / 2)
+      const initialMobilePos = { 
+        x: 20 + mobileCol * 144, 
+        y: 20 + mobileRow * 144  
+      }
+      const tempWidget = { ...widget, position: initialMobilePos, webPosition: { x: 20, y: 20 }, mobilePosition: initialMobilePos }
+      return findValidPosition(tempWidget, initialMobilePos)
+    } else {
+      // For web, use the existing logic
+      const tempWidget = { ...widget, position: { x: 20, y: 20 }, webPosition: { x: 20, y: 20 }, mobilePosition: { x: 20, y: 20 } }
+      return findValidPosition(tempWidget, { x: 20, y: 20 })
+    }
   }
 
   const handleWidgetMove = async (widgetId: string, newPosition: { x: number; y: number }) => {
@@ -1307,12 +1356,16 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
     setDragPreview(null)
     
     // Add some visual feedback
-    (e.currentTarget as HTMLElement).style.opacity = '0.5'
+    if (e.currentTarget) {
+      (e.currentTarget as HTMLElement).style.opacity = '0.5'
+    }
   }
 
   const handleDragEnd = (e: React.DragEvent) => {
     // Reset opacity
-    (e.currentTarget as HTMLElement).style.opacity = '1'
+    if (e.currentTarget) {
+      (e.currentTarget as HTMLElement).style.opacity = '1'
+    }
     setDraggedWidget(null)
     setDragPreview(null)
     setDragOffset({ x: 0, y: 0 })
