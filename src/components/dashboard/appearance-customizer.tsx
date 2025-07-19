@@ -22,7 +22,8 @@ import {
   ChevronDown,
   Trash2,
   Mic,
-  Package
+  Package,
+  Palette
 } from 'lucide-react'
 import { Database } from '@/lib/supabase/types'
 import { toast } from 'sonner'
@@ -91,10 +92,13 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
   const [showResizeMenu, setShowResizeMenu] = useState<string | null>(null)
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
+  const [backgroundColor, setBackgroundColor] = useState(profile.background_color || '#ffffff')
+  const [showBackgroundPicker, setShowBackgroundPicker] = useState(false)
   
   // Plan limits
   const planUsage = usePlanLimits(links, profile.tier)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [isUpdatingBackgroundColor, setIsUpdatingBackgroundColor] = useState(false)
   const [isLoadingWidgets, setIsLoadingWidgets] = useState(true)
   const [isHydrated, setIsHydrated] = useState(false)
   const [showLinkDialog, setShowLinkDialog] = useState(false)
@@ -135,7 +139,6 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
             )
           `)
           .eq('user_id', profile?.id)
-          .eq('is_active', true)
           .order('order')
 
         if (linksError) {
@@ -262,7 +265,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                 if (link.widget_position && typeof link.widget_position === 'string') {
                   widgetPosition = JSON.parse(link.widget_position)
                 } else if (link.widget_position && typeof link.widget_position === 'object') {
-                  widgetPosition = link.widget_position
+                  widgetPosition = link.widget_position as { x: number; y: number }
                 }
               } catch (error) {
                 console.warn('Failed to parse widget_position:', link.widget_position, error)
@@ -272,7 +275,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                 if (link.web_position && typeof link.web_position === 'string') {
                   webPosition = JSON.parse(link.web_position)
                 } else if (link.web_position && typeof link.web_position === 'object') {
-                  webPosition = link.web_position
+                  webPosition = link.web_position as { x: number; y: number }
                 }
               } catch (error) {
                 console.warn('Failed to parse web_position:', link.web_position, error)
@@ -282,7 +285,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                 if (link.mobile_position && typeof link.mobile_position === 'string') {
                   mobilePosition = JSON.parse(link.mobile_position)
                 } else if (link.mobile_position && typeof link.mobile_position === 'object') {
-                  mobilePosition = link.mobile_position
+                  mobilePosition = link.mobile_position as { x: number; y: number }
                 }
               } catch (error) {
                 console.warn('Failed to parse mobile_position:', link.mobile_position, error)
@@ -749,6 +752,46 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
     }
   }
 
+  const handleBackgroundColorUpdate = async (color: string) => {
+    if (profile.tier && profile.tier !== 'pro') {
+      toast.error('Background color customization is only available for Pro users.')
+      return
+    }
+
+    // Validate hex color format
+    const hexColorRegex = /^#[0-9a-fA-F]{6}$/
+    if (!hexColorRegex.test(color)) {
+      toast.error('Invalid color format. Please use a valid hex color.')
+      return
+    }
+
+    setIsUpdatingBackgroundColor(true)
+
+    try {
+      console.log('Updating background color:', { color, profileId: profile?.id })
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ background_color: color })
+        .eq('id', profile?.id)
+        .select()
+
+      if (error) {
+        console.error('Background color update error:', error)
+        toast.error(`Error updating background color: ${error.message}`)
+        return
+      }
+
+      console.log('Background color update result:', data)
+      setBackgroundColor(color)
+      toast.success('Background color updated successfully!')
+    } catch (error) {
+      console.error('Caught error in background color update:', error)
+      toast.error('An error occurred. Please try again.')
+    } finally {
+      setIsUpdatingBackgroundColor(false)
+    }
+  }
+
   const handleAddWidget = async (widget: Widget) => {
     try {
       if (!profile?.id) {
@@ -790,10 +833,11 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
       }
 
       // Fetch metadata if we have a real URL (not placeholder)
-      let metadata = { title, description: '', favicon: '', isPopularApp: false, appName: '', appLogo: '', profileImage: '' }
+      let metadata = { title, description: '', favicon: '', isPopularApp: false, appName: '', appLogo: '', profileImage: '', displayName: '', fileUrl: '' }
       if (finalUrl && !finalUrl.includes('placeholder.local')) {
         try {
-          metadata = await fetchLinkMetadata(finalUrl)
+          const linkMeta = await fetchLinkMetadata(finalUrl)
+          metadata = { ...linkMeta, profileImage: '', displayName: '', fileUrl: '' }
         } catch (error) {
           console.warn('Failed to fetch metadata:', error)
         }
@@ -818,7 +862,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
           // For Spotify, try to extract display name from metadata description
           if (widget.data.platform === 'spotify' && !metadata.displayName) {
             try {
-              const metadataResponse = await fetch(`/api/metadata?url=${encodeURIComponent(widget.data.url)}`)
+              const metadataResponse = await fetch(`/api/metadata?url=${encodeURIComponent(widget.data.url || '')}`)
               if (metadataResponse.ok) {
                 const metadataData = await metadataResponse.json()
                 if (metadataData.description) {
@@ -966,7 +1010,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
         return
       }
 
-      // Update in database
+      // Update size in database
       const { error } = await supabase
         .from('links')
         .update({ size: newSize })
@@ -1002,8 +1046,8 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
             size: newSize,
             data: {
               ...widget.data,
-              profileImage: updatedWidget.profile_image_url || '',
-              displayName: updatedWidget.display_name || '',
+              profileImage: updatedWidget.profile_image_url || widget.data.profileImage,
+              displayName: updatedWidget.display_name || widget.data.displayName,
               platform: updatedWidget.platform || widget.data.platform,
               username: updatedWidget.username || widget.data.username,
               // Ensure all other fields are preserved
@@ -1184,7 +1228,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
     const validPosition = findValidPosition(widget, newPosition)
     
     try {
-      // Update in database
+      // Update position in database
       const updateData = {
         widget_position: JSON.stringify(validPosition),
         [activeView === 'web' ? 'web_position' : 'mobile_position']: JSON.stringify(validPosition)
@@ -1198,6 +1242,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
 
       if (error) {
         console.error('Error updating widget position:', error)
+        toast.error('Failed to update widget position')
         return
       }
 
@@ -1262,12 +1307,12 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
     setDragPreview(null)
     
     // Add some visual feedback
-    e.currentTarget.style.opacity = '0.5'
+    (e.currentTarget as HTMLElement).style.opacity = '0.5'
   }
 
   const handleDragEnd = (e: React.DragEvent) => {
     // Reset opacity
-    e.currentTarget.style.opacity = '1'
+    (e.currentTarget as HTMLElement).style.opacity = '1'
     setDraggedWidget(null)
     setDragPreview(null)
     setDragOffset({ x: 0, y: 0 })
@@ -2248,6 +2293,17 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
               <Grid3x3 className="w-4 h-4 mr-1" />
               Widgets
             </Button>
+            {(profile.tier === 'pro' || !profile.tier) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowBackgroundPicker(!showBackgroundPicker)}
+                className="rounded-full text-gray-700 hover:bg-gray-100"
+              >
+                <Palette className="w-4 h-4 mr-1" />
+                Background
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -2261,6 +2317,88 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
           socialLinks={socialLinks}
           links={links}
         />
+      )}
+
+      {/* Background Color Picker */}
+      {showBackgroundPicker && (profile.tier === 'pro' || !profile.tier) && (
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
+          <Card className="w-80 bg-white border border-gray-200 shadow-lg">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900 flex items-center space-x-2">
+                  <Palette className="w-4 h-4" />
+                  <span>Background Color</span>
+                </h3>
+                <Button variant="ghost" size="sm" onClick={() => setShowBackgroundPicker(false)}>
+                  <X className="w-4 h-4 text-gray-600" />
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bg-color" className="text-sm font-medium text-gray-700">
+                    Choose Color
+                  </Label>
+                  <div className="flex items-center space-x-3">
+                    <input
+                      id="bg-color"
+                      type="color"
+                      value={backgroundColor}
+                      onChange={(e) => setBackgroundColor(e.target.value)}
+                      className="w-12 h-12 rounded-lg border border-gray-300 cursor-pointer"
+                      disabled={isUpdatingBackgroundColor}
+                    />
+                    <div className="flex-1">
+                      <Input
+                        type="text"
+                        value={backgroundColor}
+                        onChange={(e) => setBackgroundColor(e.target.value)}
+                        placeholder="#ffffff"
+                        pattern="^#[0-9a-fA-F]{6}$"
+                        className="font-mono text-gray-900"
+                        disabled={isUpdatingBackgroundColor}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Preview */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700">Preview</Label>
+                  <div 
+                    className="w-full h-16 rounded-lg border border-gray-300 flex items-center justify-center"
+                    style={{ backgroundColor: backgroundColor }}
+                  >
+                    <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded shadow-sm">
+                      <span className="text-xs text-gray-900 font-medium">Page Background</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Button
+                    onClick={() => handleBackgroundColorUpdate(backgroundColor)}
+                    disabled={isUpdatingBackgroundColor || backgroundColor === profile.background_color}
+                    className="flex-1 bg-gray-900 hover:bg-gray-800 text-white"
+                  >
+                    {isUpdatingBackgroundColor ? 'Updating...' : 'Apply'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setBackgroundColor('#ffffff')
+                      handleBackgroundColorUpdate('#ffffff')
+                    }}
+                    disabled={isUpdatingBackgroundColor}
+                    className="border-gray-300"
+                  >
+                    Reset
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Link Popover */}

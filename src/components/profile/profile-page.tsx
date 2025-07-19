@@ -25,7 +25,7 @@ type Link = Database["public"]["Tables"]["links"]["Row"] & {
 		size: number;
 		foreground_color: string;
 		background_color: string;
-	}[];
+	} | null;
 };
 type SocialLink = Database["public"]["Tables"]["social_media_links"]["Row"];
 
@@ -283,6 +283,8 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 							let webPosition = { x: 20, y: index * 80 + 20 };
 							let mobilePosition = { x: 20, y: index * 80 + 20 };
 
+							// Use default positions for widgets
+
 							try {
 								if (
 									link.widget_position &&
@@ -293,7 +295,7 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 									link.widget_position &&
 									typeof link.widget_position === "object"
 								) {
-									widgetPosition = link.widget_position;
+									widgetPosition = link.widget_position as { x: number; y: number };
 								}
 							} catch (error) {
 								console.warn(
@@ -313,7 +315,7 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 									link.web_position &&
 									typeof link.web_position === "object"
 								) {
-									webPosition = link.web_position;
+									webPosition = link.web_position as { x: number; y: number };
 								}
 							} catch (error) {
 								console.warn(
@@ -333,7 +335,7 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 									link.mobile_position &&
 									typeof link.mobile_position === "object"
 								) {
-									mobilePosition = link.mobile_position;
+									mobilePosition = link.mobile_position as { x: number; y: number };
 								}
 							} catch (error) {
 								console.warn(
@@ -1337,7 +1339,7 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 	}
 
 	return (
-		<div className="min-h-screen !bg-white">
+		<div className="min-h-screen" style={{ backgroundColor: profile.background_color || '#ffffff' }}>
 			{/* Main Content */}
 			<div className={`${isMobile ? 'flex flex-col' : 'flex'} min-h-screen`}>
 				{/* Profile Section */}

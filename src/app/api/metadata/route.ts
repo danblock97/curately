@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
       'soundcloud.com': { name: 'SoundCloud', logo: 'https://logo.clearbit.com/soundcloud.com' }
     }
 
-    const popularApp = popularApps[domain] || popularApps[domain.replace('www.', '')]
+    const popularApp = popularApps[domain as keyof typeof popularApps] || popularApps[domain.replace('www.', '') as keyof typeof popularApps]
     
     // Use popular app info if available
     if (popularApp) {

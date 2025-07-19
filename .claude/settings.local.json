@@ -14,7 +14,8 @@
       "WebFetch(domain:docs.anthropic.com)",
       "Bash(ls:*)",
       "Bash(head:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(npx next build:*)"
     ],
     "deny": []
   }

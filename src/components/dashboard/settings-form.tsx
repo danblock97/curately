@@ -25,8 +25,10 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
   const [username, setUsername] = useState(profile.username)
   const [displayName, setDisplayName] = useState(profile.display_name || '')
   const [bio, setBio] = useState(profile.bio || '')
+  const [backgroundColor, setBackgroundColor] = useState(profile.background_color || '#ffffff')
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
   const [isUpdatingUsername, setIsUpdatingUsername] = useState(false)
+  const [isUpdatingBackgroundColor, setIsUpdatingBackgroundColor] = useState(false)
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
   const supabase = createClient()
 
@@ -80,6 +82,34 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
       toast.error('An error occurred. Please try again.')
     } finally {
       setIsUpdatingUsername(false)
+    }
+  }
+
+  const handleBackgroundColorUpdate = async (color: string) => {
+    if (profile.tier !== 'pro') {
+      toast.error('Background color customization is only available for Pro users.')
+      return
+    }
+
+    setIsUpdatingBackgroundColor(true)
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ background_color: color })
+        .eq('id', profile.id)
+
+      if (error) {
+        toast.error('Error updating background color. Please try again.')
+        return
+      }
+
+      setBackgroundColor(color)
+      toast.success('Background color updated successfully!')
+    } catch (error) {
+      toast.error('An error occurred. Please try again.')
+    } finally {
+      setIsUpdatingBackgroundColor(false)
     }
   }
 
@@ -376,7 +406,8 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
 
       {/* Preferences Tab */}
       <TabsContent value="preferences" className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Analytics Section */}
           <Card className="bg-white border border-gray-200 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-gray-900">
@@ -392,12 +423,56 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium text-gray-900">Data Retention</h4>
-                    <p className="text-sm text-gray-500">Analytics data is kept for 30 days on your current Free plan</p>
+                    <p className="text-sm text-gray-500">
+                      Analytics data is kept for {profile.tier === 'pro' ? 'unlimited time' : '30 days'} on your current {profile.tier === 'pro' ? 'Pro' : 'Free'} plan
+                    </p>
                   </div>
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                    Free Plan: 30 Days
+                  <Badge variant="outline" className={`${
+                    profile.tier === 'pro' 
+                      ? 'bg-purple-50 text-purple-700 border-purple-200' 
+                      : 'bg-blue-50 text-blue-700 border-blue-200'
+                  }`}>
+                    {profile.tier === 'pro' ? 'Pro Plan: Forever' : 'Free Plan: 30 Days'}
                   </Badge>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Background Color Info Card */}
+          <Card className="bg-white border border-gray-200 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-gray-900">
+                <Palette className="w-5 h-5 text-gray-600" />
+                <span>Background Color</span>
+              </CardTitle>
+              <CardDescription>
+                Customize your page background color in the Appearance editor
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <Palette className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                <h4 className="font-medium text-gray-900 mb-1">
+                  {profile.tier === 'pro' ? 'Available in Appearance' : 'Pro Feature'}
+                </h4>
+                <p className="text-sm text-gray-500 mb-3">
+                  {profile.tier === 'pro' 
+                    ? 'Customize your background color in the Appearance editor' 
+                    : 'Upgrade to Pro to customize your background color'
+                  }
+                </p>
+                {profile.tier === 'pro' ? (
+                  <Button asChild variant="outline" size="sm" className="border-gray-300">
+                    <a href="/dashboard/appearance">
+                      Go to Appearance
+                    </a>
+                  </Button>
+                ) : (
+                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                    Upgrade to Pro
+                  </Badge>
+                )}
               </div>
             </CardContent>
           </Card>

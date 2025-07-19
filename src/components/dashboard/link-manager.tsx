@@ -15,7 +15,7 @@ type Link = Database['public']['Tables']['links']['Row'] & {
     size: number
     foreground_color: string
     background_color: string
-  }[]
+  } | null
 }
 
 interface LinkManagerProps {

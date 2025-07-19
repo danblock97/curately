@@ -79,7 +79,7 @@ function parseLinktreeHTML(html: string) {
   }> = []
 
   // Extract JSON-LD data which contains the links
-  const jsonLdMatch = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)
+  const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)
   if (jsonLdMatch) {
     try {
       const jsonData = JSON.parse(jsonLdMatch[1])
@@ -95,7 +95,7 @@ function parseLinktreeHTML(html: string) {
   // Linktree uses different patterns, let's try multiple approaches
   
   // Method 1: Look for link data in script tags
-  const scriptMatches = html.match(/<script[^>]*>(.*?)<\/script>/gs)
+  const scriptMatches = html.match(/<script[^>]*>([\s\S]*?)<\/script>/g)
   if (scriptMatches) {
     console.log('Found script tags:', scriptMatches.length)
     for (const script of scriptMatches) {
@@ -131,7 +131,7 @@ function parseLinktreeHTML(html: string) {
   }
 
   // Method 2: Look for Next.js page props
-  const pagePropsMatch = html.match(/"pageProps":\s*({.*?})\s*,\s*"__N_SSG"/s)
+  const pagePropsMatch = html.match(/"pageProps":\s*({[\s\S]*?})\s*,\s*"__N_SSG"/)
   if (pagePropsMatch) {
     console.log('Found pageProps match')
     try {
@@ -186,7 +186,7 @@ function parseLinktreeHTML(html: string) {
   }
 
   // Method 3: Look for __NEXT_DATA__ script
-  const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/s)
+  const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/)
   if (nextDataMatch) {
     console.log('Found __NEXT_DATA__ match')
     try {

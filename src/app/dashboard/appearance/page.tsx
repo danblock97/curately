@@ -24,7 +24,16 @@ export default async function AppearancePage() {
 
   const { data: links } = await supabase
     .from('links')
-    .select('*')
+    .select(`
+      *,
+      qr_codes (
+        qr_code_data,
+        format,
+        size,
+        foreground_color,
+        background_color
+      )
+    `)
     .eq('user_id', user.id)
     .order('order')
 

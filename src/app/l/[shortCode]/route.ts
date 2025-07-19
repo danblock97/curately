@@ -56,16 +56,15 @@ export async function GET(
           .eq('short_code', resolvedParams.shortCode)
           .single()
 
-        if (link?.deeplinks?.[0]) {
+        if (link?.deeplinks && Array.isArray(link.deeplinks) && link.deeplinks[0]) {
           const deeplink = link.deeplinks[0]
           const redirectUrl = getDeeplinkRedirectUrl(
             {
-              originalUrl: deeplink.original_url,
-              iosUrl: deeplink.ios_url || undefined,
-              androidUrl: deeplink.android_url || undefined,
-              desktopUrl: deeplink.desktop_url || undefined,
-              fallbackUrl: deeplink.fallback_url || undefined,
-              userAgentRules: deeplink.user_agent_rules as Record<string, string> || undefined,
+              original_url: deeplink.original_url,
+              ios_url: deeplink.ios_url || undefined,
+              android_url: deeplink.android_url || undefined,
+              desktop_url: deeplink.desktop_url || undefined,
+              fallback_url: deeplink.fallback_url || undefined,
             },
             userAgent
           )
@@ -98,16 +97,15 @@ export async function GET(
         .eq('id', link.id)
 
       // Handle different link types
-      if (link.link_type === 'deeplink' && link.deeplinks?.[0]) {
+      if (link.link_type === 'deeplink' && link.deeplinks && Array.isArray(link.deeplinks) && link.deeplinks[0]) {
         const deeplink = link.deeplinks[0]
         const redirectUrl = getDeeplinkRedirectUrl(
           {
-            originalUrl: deeplink.original_url,
-            iosUrl: deeplink.ios_url || undefined,
-            androidUrl: deeplink.android_url || undefined,
-            desktopUrl: deeplink.desktop_url || undefined,
-            fallbackUrl: deeplink.fallback_url || undefined,
-            userAgentRules: deeplink.user_agent_rules as Record<string, string> || undefined,
+            original_url: deeplink.original_url,
+            ios_url: deeplink.ios_url || undefined,
+            android_url: deeplink.android_url || undefined,
+            desktop_url: deeplink.desktop_url || undefined,
+            fallback_url: deeplink.fallback_url || undefined,
           },
           userAgent
         )

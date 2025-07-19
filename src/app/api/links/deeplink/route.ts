@@ -6,7 +6,7 @@ import { validateDeeplinkData } from '@/lib/validation'
 import { rateLimiters } from '@/lib/rate-limit'
 import { withSecurity, sanitizeInput, sanitizeUrl, getSecureHeaders } from '@/lib/security'
 
-export const POST = withErrorHandling(withSecurity(async (request: NextRequest) => {
+export const POST = withErrorHandling(withSecurity(async (request: NextRequest, context: { params: Promise<any> }) => {
   // Apply rate limiting
   const rateLimitResult = rateLimiters.linkCreation.check(request)
   if (!rateLimitResult.allowed) {
