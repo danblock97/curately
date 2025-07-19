@@ -28,6 +28,7 @@ import { Database } from '@/lib/supabase/types'
 import { toast } from 'sonner'
 import { WidgetModal } from './widget-modal'
 import { createClient } from '@/lib/supabase/client'
+import { usePlanLimits, checkCanCreateLink } from '@/hooks/use-plan-limits'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 type SocialLink = Database['public']['Tables']['social_media_links']['Row']
@@ -90,6 +91,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
   const [showResizeMenu, setShowResizeMenu] = useState<string | null>(null)
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
+  
+  // Plan limits
+  const planUsage = usePlanLimits(links, profile.tier)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isLoadingWidgets, setIsLoadingWidgets] = useState(true)
   const [isHydrated, setIsHydrated] = useState(false)
@@ -485,9 +489,13 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
 
   const uploadFile = async (file: File): Promise<string> => {
     try {
+      if (!profile?.id) {
+        throw new Error('User not authenticated')
+      }
+
       const fileExt = file.name.split('.').pop()
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-      const filePath = `widgets/${fileName}`
+      const filePath = `${profile.id}/widgets/${fileName}`
 
       const { error: uploadError } = await supabase.storage
         .from('widget-uploads')
@@ -524,6 +532,13 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
   const handleCreateLink = async () => {
     if (!linkUrl.trim()) {
       toast.error('Please enter a valid URL')
+      return
+    }
+
+    // Check plan limits before creating link
+    const canCreate = checkCanCreateLink(links, 'link_in_bio', profile.tier)
+    if (!canCreate.canCreate) {
+      toast.error(canCreate.reason || 'Cannot create link')
       return
     }
 
@@ -741,6 +756,15 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
         return
       }
 
+      // Check plan limits before creating widget
+      const linkTypeForCheck = widget.type === 'media' || widget.type === 'image' ? 'link_in_bio' : 'link_in_bio'
+      const canCreate = checkCanCreateLink(links, linkTypeForCheck, profile.tier)
+      
+      if (!canCreate.canCreate) {
+        toast.error(canCreate.reason || 'Cannot create widget')
+        return
+      }
+
       // Prepare the URL and title
       let finalUrl = widget.data.url || ''
       let title = widget.data.title || widget.data.platform || 'Widget'
@@ -750,14 +774,24 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
         title = widget.data.platform === 'website' ? widget.data.username : `@${widget.data.username}`
       }
 
+      // For media widgets without URL, use a placeholder that satisfies the constraint
+      if (!finalUrl && (widget.type === 'media' || widget.type === 'image')) {
+        finalUrl = 'https://placeholder.local/media'
+      }
+
       // Ensure URL has protocol
       if (finalUrl && !finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
         finalUrl = `https://${finalUrl}`
       }
 
-      // Fetch metadata if we have a URL
+      // Final fallback for empty URLs - use placeholder to satisfy constraint
+      if (!finalUrl) {
+        finalUrl = 'https://placeholder.local/widget'
+      }
+
+      // Fetch metadata if we have a real URL (not placeholder)
       let metadata = { title, description: '', favicon: '', isPopularApp: false, appName: '', appLogo: '', profileImage: '' }
-      if (finalUrl) {
+      if (finalUrl && !finalUrl.includes('placeholder.local')) {
         try {
           metadata = await fetchLinkMetadata(finalUrl)
         } catch (error) {

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Database } from '@/lib/supabase/types'
 
 type Link = Database['public']['Tables']['links']['Row']
+type UserTier = Database['public']['Enums']['user_tier']
 
 interface PlanLimits {
   maxLinks: number
@@ -9,17 +10,36 @@ interface PlanLimits {
   maxQrCodes: number
   analyticsRetentionDays: number
   unlimitedClicks: boolean
+  advancedAnalytics: boolean
+  advancedQrCustomization: boolean
+  prioritySupport: boolean
 }
 
-const FREE_PLAN_LIMITS: PlanLimits = {
-  maxLinks: 5,
-  maxPages: 1,
-  maxQrCodes: 5,
-  analyticsRetentionDays: 30,
-  unlimitedClicks: true
+const PLAN_LIMITS: Record<UserTier, PlanLimits> = {
+  free: {
+    maxLinks: 5,
+    maxPages: 1,
+    maxQrCodes: 5,
+    analyticsRetentionDays: 30,
+    unlimitedClicks: true,
+    advancedAnalytics: false,
+    advancedQrCustomization: false,
+    prioritySupport: false
+  },
+  pro: {
+    maxLinks: 50,
+    maxPages: 2,
+    maxQrCodes: 50,
+    analyticsRetentionDays: -1, // -1 means forever
+    unlimitedClicks: true,
+    advancedAnalytics: true,
+    advancedQrCustomization: true,
+    prioritySupport: true
+  }
 }
 
 export interface PlanUsage {
+  tier: UserTier
   links: {
     current: number
     limit: number
@@ -40,19 +60,20 @@ export interface PlanUsage {
   }
   analytics: {
     retentionDays: number
+    advanced: boolean
   }
   clicks: {
     unlimited: boolean
   }
+  features: {
+    advancedQrCustomization: boolean
+    prioritySupport: boolean
+  }
 }
 
-export function usePlanLimits(links: Link[] = [], currentPlan: string = 'free'): PlanUsage {
+export function usePlanLimits(links: Link[] = [], currentPlan: UserTier = 'free'): PlanUsage {
   const limits = useMemo(() => {
-    switch (currentPlan) {
-      case 'free':
-      default:
-        return FREE_PLAN_LIMITS
-    }
+    return PLAN_LIMITS[currentPlan] || PLAN_LIMITS.free
   }, [currentPlan])
 
   const usage = useMemo(() => {
@@ -61,6 +82,7 @@ export function usePlanLimits(links: Link[] = [], currentPlan: string = 'free'):
     const pagesCount = 1 // Assuming each user has 1 page for now
 
     return {
+      tier: currentPlan,
       links: {
         current: linksCount,
         limit: limits.maxLinks,
@@ -80,24 +102,33 @@ export function usePlanLimits(links: Link[] = [], currentPlan: string = 'free'):
         remainingCount: Math.max(0, limits.maxQrCodes - qrCodesCount)
       },
       analytics: {
-        retentionDays: limits.analyticsRetentionDays
+        retentionDays: limits.analyticsRetentionDays,
+        advanced: limits.advancedAnalytics
       },
       clicks: {
         unlimited: limits.unlimitedClicks
+      },
+      features: {
+        advancedQrCustomization: limits.advancedQrCustomization,
+        prioritySupport: limits.prioritySupport
       }
     }
-  }, [links, limits])
+  }, [links, limits, currentPlan])
 
   return usage
 }
 
-export function checkCanCreateLink(links: Link[], linkType: 'link_in_bio' | 'deeplink' | 'qr_code' = 'link_in_bio'): {
+export function checkCanCreateLink(
+  links: Link[], 
+  linkType: 'link_in_bio' | 'deeplink' | 'qr_code' = 'link_in_bio',
+  currentPlan: UserTier = 'free'
+): {
   canCreate: boolean
   reason?: string
   limit?: number
   current?: number
 } {
-  const limits = FREE_PLAN_LIMITS
+  const limits = PLAN_LIMITS[currentPlan] || PLAN_LIMITS.free
   const linksCount = links.length
   const qrCodesCount = links.filter(link => link.link_type === 'qr_code').length
   
@@ -120,7 +151,7 @@ export function checkCanCreateLink(links: Link[], linkType: 'link_in_bio' | 'dee
   if (!usage.links.canCreate) {
     return {
       canCreate: false,
-      reason: `You've reached the maximum number of links (${usage.links.limit}) for your free plan.`,
+      reason: `You've reached the maximum number of links (${usage.links.limit}) for your ${currentPlan} plan.`,
       limit: usage.links.limit,
       current: usage.links.current
     }
@@ -130,7 +161,7 @@ export function checkCanCreateLink(links: Link[], linkType: 'link_in_bio' | 'dee
   if (linkType === 'qr_code' && !usage.qrCodes.canCreate) {
     return {
       canCreate: false,
-      reason: `You've reached the maximum number of QR codes (${usage.qrCodes.limit}) for your free plan.`,
+      reason: `You've reached the maximum number of QR codes (${usage.qrCodes.limit}) for your ${currentPlan} plan.`,
       limit: usage.qrCodes.limit,
       current: usage.qrCodes.current
     }

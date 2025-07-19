@@ -601,7 +601,9 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 					// Different layouts based on effective size
 					if (effectiveSize === 'thin') {
 						return (
-							<div className="flex items-center h-full space-x-3 px-3">
+							<div className={`flex items-center h-full space-x-3 px-3 ${
+								isMobile ? 'bg-white rounded-lg shadow-sm border border-gray-200' : ''
+							}`}>
 								<div className="w-8 h-8 bg-white border border-gray-300 rounded-lg p-1 flex-shrink-0">
 									{qrData.format === 'SVG' ? (
 										<div 
@@ -630,7 +632,9 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 					
 					// Square layouts - show QR code prominently
 					return (
-						<div className="flex flex-col items-center justify-center h-full p-4 space-y-3">
+						<div className={`flex flex-col items-center justify-center h-full p-4 space-y-3 ${
+							isMobile ? 'bg-white rounded-lg shadow-sm border border-gray-200' : ''
+						}`}>
 							<div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
 								{qrData.format === 'SVG' ? (
 									<div 

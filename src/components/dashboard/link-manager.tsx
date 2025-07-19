@@ -21,6 +21,7 @@ type Link = Database['public']['Tables']['links']['Row'] & {
 interface LinkManagerProps {
   links: Link[]
   userId: string
+  profile: Database['public']['Tables']['profiles']['Row']
 }
 
 interface PlatformType {
@@ -42,14 +43,14 @@ const popularPlatforms: PlatformType[] = [
   { name: 'Website', icon: Globe, color: 'bg-gray-600', url: 'https://', placeholder: 'yourwebsite.com' },
 ]
 
-export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
+export function LinkManager({ links: initialLinks, userId, profile }: LinkManagerProps) {
   const [links, setLinks] = useState<Link[]>([])
   const [showAddForm, setShowAddForm] = useState(false)
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType | null>(null)
   const [isHydrated, setIsHydrated] = useState(false)
   const [selectedTimePeriod, setSelectedTimePeriod] = useState('1W')
   const [selectedSort, setSelectedSort] = useState('Most recent')
-  const planUsage = usePlanLimits(links)
+  const planUsage = usePlanLimits(links, profile.tier)
 
   // Handle hydration and initialize with server data
   useEffect(() => {
@@ -191,7 +192,16 @@ export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
         {/* Left Column - Progress */}
         <div className="space-y-4">
           <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Current Plan Usage</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900">Current Plan Usage</h3>
+              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                profile.tier === 'pro' 
+                  ? 'bg-purple-100 text-purple-800' 
+                  : 'bg-blue-100 text-blue-800'
+              }`}>
+                {profile.tier === 'pro' ? 'Pro' : 'Free'} Plan
+              </span>
+            </div>
             <div className="space-y-3">
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
@@ -223,7 +233,10 @@ export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-900 text-xs font-medium">4. Analytics</span>
-                  <span className="text-gray-500 text-xs">{planUsage.analytics.retentionDays} days</span>
+                  <span className="text-gray-500 text-xs">
+                    {planUsage.analytics.retentionDays === -1 ? 'Forever' : `${planUsage.analytics.retentionDays} days`}
+                    {planUsage.analytics.advanced && <span className="ml-1 text-blue-600">Advanced</span>}
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-1.5">
                   <div className="bg-orange-600 h-1.5 rounded-full" style={{ width: '100%' }}></div>

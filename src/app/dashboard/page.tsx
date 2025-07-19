@@ -40,7 +40,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="w-full">
-      <LinkManager links={links || []} userId={user.id} />
+      <LinkManager links={links || []} userId={user.id} profile={profile} />
     </div>
   )
 }
