@@ -77,6 +77,8 @@ const sizeOptions = [
   { value: 'large-square', label: 'Large Square', icon: <div className="w-3 h-3 bg-white border border-black rounded-sm"></div> }
 ]
 
+// Mobile widgets are always small squares - no size options needed
+
 export function AppearanceCustomizer({ profile, socialLinks, links }: AppearanceCustomizerProps) {
   const [activeView, setActiveView] = useState<'web' | 'mobile'>('web')
   const [showWidgetModal, setShowWidgetModal] = useState(false)
@@ -238,10 +240,10 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                 console.warn('Failed to extract platform info from URL:', link.url, error)
               }
 
-              // Safe JSON parsing with fallback
+              // Safe JSON parsing with fallback - position mobile widgets more tightly
               let widgetPosition = { x: 20, y: index * 80 + 20 }
               let webPosition = { x: 20, y: index * 80 + 20 }
-              let mobilePosition = { x: 20, y: index * 80 + 20 }
+              let mobilePosition = { x: 20, y: index * 60 + 20 } // Tighter spacing for mobile
               
               try {
                 if (link.widget_position && typeof link.widget_position === 'string') {
@@ -305,6 +307,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
 
           setWidgets(linkWidgets)
           console.log(`Loaded ${linkWidgets.length} existing links as widgets with metadata`)
+          console.log('Widget positions:', linkWidgets.map(w => ({ id: w.id, title: w.data.title, mobile: w.mobilePosition, web: w.webPosition })))
         } else {
           // No links found, start with empty widgets
           setWidgets([])
@@ -545,7 +548,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
       const newWidget: Widget = {
         id: linkData.id,
         type: 'link',
-        size: 'thin',
+        size: activeView === 'mobile' ? 'small-square' : 'thin',
         data: {
           title: linkData.title,
           url: linkData.url,
@@ -610,7 +613,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
     const newWidget: Widget = {
       id: `text-${Date.now()}`,
       type: 'text',
-      size: 'wide',
+      size: activeView === 'mobile' ? 'small-square' : 'wide',
       data: {
         title: textContent.trim(),
         type: 'text'
@@ -905,8 +908,19 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
     }
   }
 
+  // Function to handle view switching without automatic conversion
+  const handleViewSwitch = (newView: 'web' | 'mobile') => {
+    setActiveView(newView)
+  }
+
   const handleResizeWidget = async (widgetId: string, newSize: Widget['size']) => {
     try {
+      // In mobile view, only allow small squares
+      if (activeView === 'mobile' && newSize !== 'small-square') {
+        toast.error('Only small squares are allowed in mobile view')
+        return
+      }
+
       // Update in database
       const { error } = await supabase
         .from('links')
@@ -1025,6 +1039,13 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
   }
 
   const getWidgetDimensions = (size: Widget['size']) => {
+    // Mobile view dimensions (smaller to fit phone screen) - only small squares allowed
+    if (activeView === 'mobile') {
+      // All mobile widgets are small squares (128px for 2 per row with margins)
+      return { width: 128, height: 128 }
+    }
+    
+    // Web view dimensions (original sizes)
     switch (size) {
       case 'thin': return { width: 320, height: 48 }
       case 'small-square': return { width: 192, height: 192 }
@@ -1067,8 +1088,8 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
     }
 
     // If collision detected, find the nearest valid position
-    const containerWidth = gridRef.current ? gridRef.current.getBoundingClientRect().width - 48 : 600 // Account for padding
-    const maxSearchDistance = 200
+    const containerWidth = activeView === 'mobile' ? 272 : (gridRef.current ? gridRef.current.getBoundingClientRect().width - 48 : 600) // Mobile: 320-48=272 (2 widgets of 128px + margins), Web: full width minus padding
+    const maxSearchDistance = activeView === 'mobile' ? 100 : 200
     
     for (let distance = GRID_SIZE; distance <= maxSearchDistance; distance += GRID_SIZE) {
       // Try positions in expanding squares around the target
@@ -1103,7 +1124,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
       return Math.max(max, pos.y + dims.height + WIDGET_MARGINS)
     }, 0)
 
-    return { x: 20, y: maxY + 20 }
+    return { x: 20, y: Math.max(20, maxY + 20) }
   }
 
   const getInitialPosition = (widget: Widget) => {
@@ -1227,6 +1248,12 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
       }
     }
     
+    // Mobile view classes - only small squares allowed (2 per row)
+    if (activeView === 'mobile') {
+      return 'w-32 h-32' // ~128px for 2 per row with margins
+    }
+    
+    // Web view classes (original sizes)
     switch (size) {
       case 'thin': return 'w-80 h-12'
       case 'small-square': return 'w-48 h-48'
@@ -1239,7 +1266,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
   }
 
   const renderWidget = (widget: Widget, inRightPanel = false) => {
-    const sizeClass = getWidgetSizeClass(widget.size, inRightPanel)
+    // In mobile view, force all widgets to be treated as small-square for consistent behavior
+    const effectiveSize = activeView === 'mobile' ? 'small-square' : widget.size
+    const sizeClass = getWidgetSizeClass(effectiveSize, inRightPanel)
     const isHovered = hoveredWidget === widget.id
     const isDragged = draggedWidget === widget.id
     const currentPosition = activeView === 'web' ? widget.webPosition : widget.mobilePosition
@@ -1270,28 +1299,54 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
           try {
             const urlObj = new URL(widget.data.url)
             const hostname = urlObj.hostname.toLowerCase()
-            if (hostname.includes('github.com')) platform = 'github'
-            else if (hostname.includes('twitter.com') || hostname.includes('x.com')) platform = 'twitter'
-            else if (hostname.includes('instagram.com')) platform = 'instagram'
-            else if (hostname.includes('facebook.com')) platform = 'facebook'
-            else if (hostname.includes('linkedin.com')) platform = 'linkedin'
-            else if (hostname.includes('youtube.com')) platform = 'youtube'
-            else if (hostname.includes('tiktok.com')) platform = 'tiktok'
-            else if (hostname.includes('spotify.com')) platform = 'spotify'
-            else if (hostname.includes('music.apple.com')) platform = 'apple_music'
-            else if (hostname.includes('soundcloud.com')) platform = 'soundcloud'
+            if (hostname.includes('github.com')) platform = 'GitHub'
+            else if (hostname.includes('twitter.com') || hostname.includes('x.com')) platform = 'Twitter'
+            else if (hostname.includes('instagram.com')) platform = 'Instagram'
+            else if (hostname.includes('facebook.com')) platform = 'Facebook'
+            else if (hostname.includes('linkedin.com')) platform = 'LinkedIn'
+            else if (hostname.includes('youtube.com')) platform = 'YouTube'
+            else if (hostname.includes('tiktok.com')) platform = 'TikTok'
+            else if (hostname.includes('spotify.com')) platform = 'Spotify'
+            else if (hostname.includes('music.apple.com')) platform = 'Apple Music'
+            else if (hostname.includes('soundcloud.com')) platform = 'SoundCloud'
           } catch (e) {
             // Invalid URL, use default
           }
         }
         
+        // Ensure platform name is properly capitalized
+        const getCapitalizedPlatform = (platformName: string) => {
+          const platformMap: { [key: string]: string } = {
+            'github': 'GitHub',
+            'twitter': 'Twitter', 
+            'x': 'X',
+            'instagram': 'Instagram',
+            'facebook': 'Facebook',
+            'linkedin': 'LinkedIn',
+            'youtube': 'YouTube',
+            'tiktok': 'TikTok',
+            'spotify': 'Spotify',
+            'apple_music': 'Apple Music',
+            'soundcloud': 'SoundCloud',
+            'website': 'Website'
+          }
+          return platformMap[platformName.toLowerCase()] || platformName.charAt(0).toUpperCase() + platformName.slice(1)
+        }
+        
+        const capitalizedPlatform = getCapitalizedPlatform(platform)
         const socialInfo = getSocialInfo(platform)
         
-        // Different layouts based on size
-        if (widget.size === 'thin') {
+        // Different layouts based on effective size (mobile view forces small-square)
+        if (effectiveSize === 'thin') {
           return (
-            <div className="flex items-center space-x-3 h-full">
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden bg-gradient-to-br ${socialInfo.gradient} p-1.5`}>
+            <div className={`flex items-center h-full ${
+              activeView === 'mobile' ? 'space-x-2 px-2' : 'space-x-3'
+            }`}>
+              <div className={`${
+                activeView === 'mobile' ? 'w-6 h-6 rounded-lg' : 'w-8 h-8 rounded-xl'
+              } flex items-center justify-center overflow-hidden bg-gradient-to-br ${socialInfo.gradient} ${
+                activeView === 'mobile' ? 'p-1' : 'p-1.5'
+              }`}>
                 {widget.data.appLogo || socialInfo.logo ? (
                   <img 
                     src={widget.data.appLogo || socialInfo.logo} 
@@ -1302,28 +1357,37 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                       target.style.display = 'none';
                       const parent = target.parentElement;
                       if (parent) {
-                        parent.innerHTML = `<span class="text-white text-sm font-bold">${socialInfo.fallback || (platform || widget.data.title || 'L').charAt(0).toUpperCase()}</span>`;
+                        parent.innerHTML = `<span class="text-white text-xs font-bold">${socialInfo.fallback || (platform || widget.data.title || 'L').charAt(0).toUpperCase()}</span>`;
                       }
                     }}
                   />
                 ) : (
-                  <span className="text-white text-sm font-bold">
+                  <span className={`text-white ${
+                    activeView === 'mobile' ? 'text-xs' : 'text-sm'
+                  } font-bold`}>
                     {(platform || widget.data.title || 'L').charAt(0).toUpperCase()}
                   </span>
                 )}
               </div>
-              <div className="flex-1">
-                <div className="font-medium text-gray-900 text-sm">
-                  {widget.data.displayName || (widget.data.username ? `@${widget.data.username}` : widget.data.title || platform || 'Link')}
+              <div className="flex-1 min-w-0">
+                <div className={`font-medium ${
+                  activeView === 'mobile' ? 'text-gray-900 text-xs' : 'text-gray-900 text-sm'
+                } truncate`}>
+                  {activeView === 'mobile'
+                    ? (capitalizedPlatform || 'Link')
+                    : (widget.data.displayName || (widget.data.username ? `@${widget.data.username}` : widget.data.title || capitalizedPlatform || 'Link'))
+                  }
                 </div>
               </div>
             </div>
           )
         }
         
-        if (widget.size === 'small-square') {
+        if (effectiveSize === 'small-square') {
           return (
-            <div className="relative h-full w-full overflow-hidden rounded-xl">
+            <div className={`relative h-full w-full overflow-hidden ${
+              activeView === 'mobile' ? 'rounded-lg' : 'rounded-xl'
+            }`}>
               {/* Background - Profile Picture or Platform Logo */}
               {widget.data.profileImage ? (
                 <div className="absolute inset-0">
@@ -1335,7 +1399,11 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                       (e.target as HTMLImageElement).style.display = 'none';
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                  <div className={`absolute inset-0 ${
+                    activeView === 'mobile' 
+                      ? 'bg-gradient-to-t from-black/80 to-transparent' 
+                      : 'bg-gradient-to-t from-black/60 to-transparent'
+                  }`}></div>
                 </div>
               ) : (
                 <div className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}>
@@ -1343,7 +1411,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                     <img 
                       src={socialInfo.logo} 
                       alt={platform}
-                      className={`w-8 h-8 object-contain ${socialInfo.logoStyle || ''}`}
+                      className={`${
+                        activeView === 'mobile' ? 'w-6 h-6' : 'w-8 h-8'
+                      } object-contain ${socialInfo.logoStyle || ''}`}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
@@ -1352,18 +1422,27 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                       }}
                     />
                   ) : null}
-                  <span className={`fallback-text text-lg font-bold text-white ${socialInfo.logo ? 'hidden' : ''}`}>
+                  <span className={`fallback-text ${
+                    activeView === 'mobile' ? 'text-sm' : 'text-lg'
+                  } font-bold text-white ${socialInfo.logo ? 'hidden' : ''}`}>
                     {socialInfo.fallback}
                   </span>
                 </div>
               )}
               
               {/* Content */}
-              <div className="absolute bottom-2 left-2 right-2">
-                <div className="text-xs font-medium text-white">
-                  {widget.data.displayName || (widget.data.username ? `@${widget.data.username}` : widget.data.title || platform || 'Link')}
+              <div className={`absolute ${
+                activeView === 'mobile' ? 'bottom-1 left-1 right-1' : 'bottom-2 left-2 right-2'
+              }`}>
+                <div className={`${
+                  activeView === 'mobile' ? 'text-xs' : 'text-xs'
+                } font-medium text-white leading-tight`}>
+                  {activeView === 'mobile'
+                    ? (capitalizedPlatform || 'Link')
+                    : (widget.data.displayName || (widget.data.username ? `@${widget.data.username}` : widget.data.title || capitalizedPlatform || 'Link'))
+                  }
                 </div>
-                {widget.data.username && platform && (
+                {widget.data.username && platform && activeView !== 'mobile' && (
                   <div className="text-xs text-white/80 mt-0.5 capitalize">
                     {platform}
                   </div>
@@ -1373,7 +1452,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
           )
         }
         
-        if (widget.size === 'medium-square') {
+        if (effectiveSize === 'medium-square') {
           return (
             <div className="relative h-full w-full overflow-hidden rounded-2xl">
               {/* Background - Profile Picture or Platform Logo */}
@@ -1425,7 +1504,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
           )
         }
         
-        if (widget.size === 'large-square') {
+        if (effectiveSize === 'large-square') {
           return (
             <div className="relative h-full w-full overflow-hidden rounded-3xl">
               {/* Background - Profile Picture or Platform Logo */}
@@ -1654,13 +1733,14 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
             
             {isHovered && (
               <div className="absolute -top-2 -right-2 bg-white border border-gray-200 rounded-lg p-1 shadow-lg flex items-center space-x-1">
-                {sizeOptions.map(size => (
+                {/* Only show resize options in web view */}
+                {activeView === 'web' && sizeOptions.map(size => (
                   <Button
                     key={size.value}
-                    variant={widget.size === size.value ? 'default' : 'ghost'}
+                    variant={effectiveSize === size.value ? 'default' : 'ghost'}
                     size="sm"
                     className="w-6 h-6 p-0"
-                    onClick={() => handleWidgetResize(widget.id, size.value as Widget['size'])}
+                    onClick={() => handleResizeWidget(widget.id, size.value as Widget['size'])}
                     title={size.label}
                   >
                     {size.icon}
@@ -1695,18 +1775,25 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
         onDragStart={(e) => handleDragStart(e, widget.id)}
         onDragEnd={handleDragEnd}
       >
-        <Card className="h-full relative cursor-move bg-white border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-150">
-          <CardContent className="p-4 h-full flex items-center justify-center">
+        <Card className={`h-full relative cursor-move ${
+          activeView === 'mobile' 
+            ? 'bg-transparent border-none shadow-none' 
+            : 'bg-white border border-gray-200 hover:shadow-lg hover:border-gray-300'
+        } transition-all duration-150`}>
+          <CardContent className={`h-full flex items-center justify-center ${
+            activeView === 'mobile' ? 'p-0' : 'p-4'
+          }`}>
             {widgetContent()}
           </CardContent>
           
           {/* Hover Controls */}
           {isHovered && (
             <div className="absolute -top-2 -right-2 bg-white border border-gray-200 rounded-lg p-1 shadow-lg flex items-center space-x-1">
-              {sizeOptions.map(size => (
+              {/* Only show resize options in web view */}
+              {activeView === 'web' && sizeOptions.map(size => (
                 <Button
                   key={size.value}
-                  variant={widget.size === size.value ? 'default' : 'ghost'}
+                  variant={effectiveSize === size.value ? 'default' : 'ghost'}
                   size="sm"
                   className="w-6 h-6 p-0"
                   onClick={() => handleResizeWidget(widget.id, size.value as Widget['size'])}
@@ -1807,7 +1894,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setActiveView('web')}
+              onClick={() => handleViewSwitch('web')}
               className={activeView === 'web' ? 'bg-gray-900 text-white' : 'text-gray-900 hover:bg-gray-100'}
             >
               <Monitor className="w-4 h-4 mr-2" />
@@ -1816,7 +1903,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setActiveView('mobile')}
+              onClick={() => handleViewSwitch('mobile')}
               className={activeView === 'mobile' ? 'bg-gray-900 text-white' : 'text-gray-900 hover:bg-gray-100'}
             >
               <Smartphone className="w-4 h-4 mr-2" />
@@ -1881,20 +1968,22 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
 
             {/* Widgets Area - Only for mobile view */}
             {activeView === 'mobile' && (
-              <div 
-                ref={gridRef}
-                className={`relative min-h-[calc(100vh-250px)] w-full bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${
-                  draggedWidget ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
-                }`}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                onDragLeave={handleDragLeave}
-                style={{
-                  backgroundImage: `radial-gradient(circle at ${GRID_SIZE/2}px ${GRID_SIZE/2}px, rgba(0,0,0,0.08) 1px, transparent 1px)`,
-                  backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
-                  maxWidth: '100%',
-                  overflow: 'hidden'
-                }}
+              <div className="flex justify-center">
+                <div 
+                  ref={gridRef}
+                  className={`relative min-h-[calc(100vh-250px)] w-80 bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${
+                    draggedWidget ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onDragLeave={handleDragLeave}
+                  style={{
+                    backgroundImage: `radial-gradient(circle at ${GRID_SIZE/2}px ${GRID_SIZE/2}px, rgba(0,0,0,0.08) 1px, transparent 1px)`,
+                    backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
+                    maxWidth: '320px',
+                    overflow: 'visible',
+                    minHeight: '600px'
+                  }}
               >
                 {!isHydrated || isLoadingWidgets ? (
                   <div className="flex items-center justify-center h-40">
@@ -1920,7 +2009,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                           zIndex: 100
                         }}
                       >
-                        <div className={`${getWidgetSizeClass(dragPreview.widget.size)} opacity-60`}>
+                        <div className={`${getWidgetSizeClass(activeView === 'mobile' ? 'small-square' : dragPreview.widget.size)} opacity-60`}>
                           <Card className="h-full relative bg-blue-100 border-2 border-blue-400 border-dashed shadow-lg">
                             <CardContent className="p-4 h-full flex items-center justify-center">
                               <div className="text-blue-600 font-medium animate-pulse">Drop here</div>
@@ -1931,6 +2020,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                     )}
                   </div>
                 )}
+              </div>
               </div>
             )}
           </div>

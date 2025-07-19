@@ -86,9 +86,20 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 	const [widgets, setWidgets] = useState<Widget[]>([]);
 	const [isLoadingWidgets, setIsLoadingWidgets] = useState(true);
 	const [isHydrated, setIsHydrated] = useState(false);
+	const [isMobile, setIsMobile] = useState(false);
 
 	useEffect(() => {
 		setIsHydrated(true);
+		
+		// Mobile detection
+		const checkMobile = () => {
+			setIsMobile(window.innerWidth <= 768);
+		};
+		
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+		
+		return () => window.removeEventListener('resize', checkMobile);
 	}, []);
 
 	// Memoize links to prevent unnecessary re-renders
@@ -533,6 +544,27 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 	};
 
 	const getWidgetSizeClass = (size: Widget["size"]) => {
+		// Mobile view classes (smaller sizes)
+		if (isMobile) {
+			switch (size) {
+				case "thin":
+					return "w-full h-12"; // Full width of mobile container
+				case "small-square":
+					return "w-32 h-32"; // ~128px for 2 per row with margins
+				case "medium-square":
+					return "w-32 h-32"; // Convert to small for mobile
+				case "large-square":
+					return "w-32 h-32"; // Convert to small for mobile
+				case "wide":
+					return "w-full h-12"; // Convert to thin for mobile
+				case "tall":
+					return "w-full h-12"; // Convert to thin for mobile
+				default:
+					return "w-full h-12";
+			}
+		}
+
+		// Web view classes (original sizes)
 		switch (size) {
 			case "thin":
 				return "w-80 h-14";
@@ -552,7 +584,9 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 	};
 
 	const renderWidget = (widget: Widget) => {
-		const sizeClass = getWidgetSizeClass(widget.size);
+		// In mobile view, force all widgets to be treated as small-square for consistent behavior
+		const effectiveSize = isMobile ? 'small-square' : widget.size;
+		const sizeClass = getWidgetSizeClass(effectiveSize);
 		const currentPosition = widget.webPosition;
 
 		const widgetContent = () => {
@@ -668,35 +702,61 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 					try {
 						const urlObj = new URL(widget.data.url);
 						const hostname = urlObj.hostname.toLowerCase();
-						if (hostname.includes("github.com")) platform = "github";
+						if (hostname.includes("github.com")) platform = "GitHub";
 						else if (
 							hostname.includes("twitter.com") ||
 							hostname.includes("x.com")
 						)
-							platform = "twitter";
-						else if (hostname.includes("instagram.com")) platform = "instagram";
-						else if (hostname.includes("facebook.com")) platform = "facebook";
-						else if (hostname.includes("linkedin.com")) platform = "linkedin";
-						else if (hostname.includes("youtube.com")) platform = "youtube";
-						else if (hostname.includes("tiktok.com")) platform = "tiktok";
-						else if (hostname.includes("spotify.com")) platform = "spotify";
+							platform = "Twitter";
+						else if (hostname.includes("instagram.com")) platform = "Instagram";
+						else if (hostname.includes("facebook.com")) platform = "Facebook";
+						else if (hostname.includes("linkedin.com")) platform = "LinkedIn";
+						else if (hostname.includes("youtube.com")) platform = "YouTube";
+						else if (hostname.includes("tiktok.com")) platform = "TikTok";
+						else if (hostname.includes("spotify.com")) platform = "Spotify";
 						else if (hostname.includes("music.apple.com"))
-							platform = "apple_music";
+							platform = "Apple Music";
 						else if (hostname.includes("soundcloud.com"))
-							platform = "soundcloud";
+							platform = "SoundCloud";
 					} catch (e) {
 						// Invalid URL, use default
 					}
 				}
-
+				
+				// Ensure platform name is properly capitalized
+				const getCapitalizedPlatform = (platformName: string) => {
+					const platformMap: { [key: string]: string } = {
+						'github': 'GitHub',
+						'twitter': 'Twitter', 
+						'x': 'X',
+						'instagram': 'Instagram',
+						'facebook': 'Facebook',
+						'linkedin': 'LinkedIn',
+						'youtube': 'YouTube',
+						'tiktok': 'TikTok',
+						'spotify': 'Spotify',
+						'apple_music': 'Apple Music',
+						'soundcloud': 'SoundCloud',
+						'website': 'Website'
+					}
+					return platformMap[platformName.toLowerCase()] || platformName.charAt(0).toUpperCase() + platformName.slice(1)
+				}
+				
+				const capitalizedPlatform = getCapitalizedPlatform(platform)
 				const socialInfo = getSocialInfo(platform);
 
-				// Different layouts based on size
-				if (widget.size === "thin") {
+				// Different layouts based on effective size (mobile view forces small-square)
+				if (effectiveSize === "thin") {
 					return (
-						<div className="flex items-center space-x-3 h-full">
+						<div className={`flex items-center h-full ${
+							isMobile ? 'space-x-2 px-2' : 'space-x-3'
+						}`}>
 							<div
-								className={`w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden bg-gradient-to-br ${socialInfo.gradient} p-1.5`}
+								className={`${
+									isMobile ? 'w-6 h-6 rounded-lg' : 'w-8 h-8 rounded-xl'
+								} flex items-center justify-center overflow-hidden bg-gradient-to-br ${socialInfo.gradient} ${
+									isMobile ? 'p-1' : 'p-1.5'
+								}`}
 							>
 								{widget.data.appLogo || socialInfo.logo ? (
 									<img
@@ -710,7 +770,7 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 											target.style.display = "none";
 											const parent = target.parentElement;
 											if (parent) {
-												parent.innerHTML = `<span class="text-white text-sm font-bold">${
+												parent.innerHTML = `<span class="text-white text-xs font-bold">${
 													socialInfo.fallback ||
 													(platform || widget.data.title || "L")
 														.charAt(0)
@@ -720,28 +780,37 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 										}}
 									/>
 								) : (
-									<span className="text-white text-sm font-bold">
+									<span className={`text-white ${
+										isMobile ? 'text-xs' : 'text-sm'
+									} font-bold`}>
 										{(platform || widget.data.title || "L")
 											.charAt(0)
 											.toUpperCase()}
 									</span>
 								)}
 							</div>
-							<div className="flex-1">
-								<div className="font-medium text-gray-900 text-sm">
-									{widget.data.displayName ||
-										(widget.data.username
-											? `@${widget.data.username}`
-											: widget.data.title || platform || "Link")}
+							<div className="flex-1 min-w-0">
+								<div className={`font-medium ${
+									isMobile ? 'text-gray-900 text-xs' : 'text-gray-900 text-sm'
+								} truncate`}>
+									{isMobile
+										? (capitalizedPlatform || 'Link')
+										: (widget.data.displayName ||
+											(widget.data.username
+												? `@${widget.data.username}`
+												: widget.data.title || capitalizedPlatform || "Link"))
+									}
 								</div>
 							</div>
 						</div>
 					);
 				}
 
-				if (widget.size === "small-square") {
+				if (effectiveSize === "small-square") {
 					return (
-						<div className="relative h-full w-full overflow-hidden rounded-xl">
+						<div className={`relative h-full w-full overflow-hidden ${
+							isMobile ? 'rounded-lg' : 'rounded-xl'
+						}`}>
 							{/* Background - Profile Picture or Platform Logo */}
 							{widget.data.profileImage ? (
 								<div className="absolute inset-0">
@@ -753,7 +822,11 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 											(e.target as HTMLImageElement).style.display = "none";
 										}}
 									/>
-									<div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+									<div className={`absolute inset-0 ${
+										isMobile 
+											? 'bg-gradient-to-t from-black/80 to-transparent' 
+											: 'bg-gradient-to-t from-black/60 to-transparent'
+									}`}></div>
 								</div>
 							) : (
 								<div
@@ -763,7 +836,9 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 										<img
 											src={socialInfo.logo}
 											alt={platform}
-											className={`w-8 h-8 object-contain ${
+											className={`${
+												isMobile ? 'w-6 h-6' : 'w-8 h-8'
+											} object-contain ${
 												socialInfo.logoStyle || ""
 											}`}
 											onError={(e) => {
@@ -776,7 +851,9 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 										/>
 									) : null}
 									<span
-										className={`fallback-text text-lg font-bold text-white ${
+										className={`fallback-text ${
+											isMobile ? 'text-sm' : 'text-lg'
+										} font-bold text-white ${
 											socialInfo.logo ? "hidden" : ""
 										}`}
 									>
@@ -786,14 +863,21 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 							)}
 
 							{/* Content */}
-							<div className="absolute bottom-2 left-2 right-2">
-								<div className="text-xs font-medium text-white">
-									{widget.data.displayName ||
-										(widget.data.username
-											? `@${widget.data.username}`
-											: widget.data.title || platform || "Link")}
+							<div className={`absolute ${
+								isMobile ? 'bottom-1 left-1 right-1' : 'bottom-2 left-2 right-2'
+							}`}>
+								<div className={`${
+									isMobile ? 'text-xs' : 'text-xs'
+								} font-medium text-white leading-tight`}>
+									{isMobile
+										? (capitalizedPlatform || 'Link')
+										: (widget.data.displayName ||
+											(widget.data.username
+												? `@${widget.data.username}`
+												: widget.data.title || capitalizedPlatform || "Link"))
+									}
 								</div>
-								{widget.data.username && platform && (
+								{widget.data.username && platform && !isMobile && (
 									<div className="text-xs text-white/80 mt-0.5 capitalize">
 										{platform}
 									</div>
@@ -803,7 +887,7 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 					);
 				}
 
-				if (widget.size === "medium-square") {
+				if (effectiveSize === "medium-square") {
 					return (
 						<div className="relative h-full w-full overflow-hidden rounded-2xl">
 							{/* Background - Profile Picture or Platform Logo */}
@@ -867,7 +951,7 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 					);
 				}
 
-				if (widget.size === "large-square") {
+				if (effectiveSize === "large-square") {
 					return (
 						<div className="relative h-full w-full overflow-hidden rounded-3xl">
 							{/* Background - Profile Picture or Platform Logo */}
@@ -1054,7 +1138,7 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 											alt={widget.data.caption || "Media"}
 											className="w-full h-full object-cover rounded"
 										/>
-										{widget.data.caption && widget.size !== "thin" && (
+										{widget.data.caption && effectiveSize !== "thin" && (
 											<div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
 												<div className="text-white text-xs">
 													{widget.data.caption}
@@ -1098,7 +1182,7 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 											{widget.data.price}
 										</div>
 									)}
-									{widget.size !== "thin" && (
+									{effectiveSize !== "thin" && (
 										<div className="text-xs text-gray-500">Product</div>
 									)}
 								</div>
@@ -1114,7 +1198,7 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 									<div className="font-medium text-gray-900 text-sm">
 										{widget.data.title || "App"}
 									</div>
-									{widget.size !== "thin" && (
+									{effectiveSize !== "thin" && (
 										<div className="text-xs text-gray-500">Download App</div>
 									)}
 								</div>
@@ -1138,15 +1222,28 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 		return (
 			<div
 				key={widget.id}
-				className={`absolute ${sizeClass} transition-all duration-150 ease-out cursor-pointer`}
-				style={{
+				className={`${
+					isMobile 
+						? `${sizeClass} transition-all duration-150 ease-out cursor-pointer mb-2 ${
+							effectiveSize === 'small-square' || effectiveSize === 'medium-square' || effectiveSize === 'large-square' 
+								? 'mr-2' : ''
+						}` 
+						: `absolute ${sizeClass} transition-all duration-150 ease-out cursor-pointer`
+				}`}
+				style={isMobile ? {} : {
 					transform: `translate(${currentPosition.x}px, ${currentPosition.y}px)`,
 					zIndex: 1,
 				}}
 				onClick={() => handleLinkClick(widget.id, widget.data.url || "")}
 			>
-				<Card className="h-full relative !bg-white border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-150">
-					<CardContent className="p-4 h-full flex items-center justify-center">
+				<Card className={`h-full relative ${
+					isMobile 
+						? 'bg-transparent border-none shadow-none' 
+						: '!bg-white border border-gray-200 hover:shadow-lg hover:border-gray-300'
+				} transition-all duration-150`}>
+					<CardContent className={`h-full flex items-center justify-center ${
+						isMobile ? 'p-0' : 'p-4'
+					}`}>
 						{widgetContent()}
 					</CardContent>
 				</Card>
@@ -1158,9 +1255,9 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 		<div className="min-h-screen !bg-white">
 			<Navbar />
 			{/* Main Content */}
-			<div className="flex min-h-screen pt-16">
-				{/* Left Side - Profile Preview */}
-				<div className="w-1/2 p-8 flex flex-col items-center">
+			<div className={`${isMobile ? 'flex flex-col' : 'flex'} min-h-screen pt-16`}>
+				{/* Profile Section */}
+				<div className={`${isMobile ? 'w-full p-4' : 'w-1/2 p-8'} flex flex-col items-center`}>
 					<div className="w-full max-w-md">
 						{/* Profile Section */}
 						<div className="text-center mb-6">
@@ -1209,34 +1306,65 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 					</div>
 				</div>
 
-				{/* Right Side - Widget Grid */}
-				<div className="w-1/2 p-8">
-					<div
-						className="relative min-h-[calc(100vh-250px)] w-full rounded-lg p-6"
-						style={{
-							maxWidth: "100%",
-							overflow: "hidden",
-						}}
-					>
-						{!isHydrated || isLoadingWidgets ? (
-							<div className="flex items-center justify-center h-40">
-								<div className="!text-gray-500">Loading widgets...</div>
+				{/* Widgets Section */}
+				<div className={`${isMobile ? 'w-full p-4' : 'w-1/2 p-8'}`}>
+					{isMobile ? (
+						<div className="flex justify-center">
+							<div
+								className="relative min-h-[calc(100vh-250px)] w-80 rounded-lg p-6"
+								style={{
+									maxWidth: "320px",
+									overflow: "hidden",
+								}}
+							>
+								{!isHydrated || isLoadingWidgets ? (
+									<div className="flex items-center justify-center h-40">
+										<div className="!text-gray-500">Loading widgets...</div>
+									</div>
+								) : widgets.length === 0 ? (
+									<div className="flex items-center justify-center h-40">
+										<div className="text-center !text-gray-500">
+											<div className="text-lg font-medium mb-2">No widgets yet</div>
+											<div className="text-sm">
+												This profile has no links to display
+											</div>
+										</div>
+									</div>
+								) : (
+									<div className="flex flex-wrap justify-start" suppressHydrationWarning>
+										{widgets.map((widget) => renderWidget(widget))}
+									</div>
+								)}
 							</div>
-						) : widgets.length === 0 ? (
-							<div className="flex items-center justify-center h-40">
-								<div className="text-center !text-gray-500">
-									<div className="text-lg font-medium mb-2">No widgets yet</div>
-									<div className="text-sm">
-										This profile has no links to display
+						</div>
+					) : (
+						<div
+							className="relative min-h-[calc(100vh-250px)] w-full rounded-lg p-6"
+							style={{
+								maxWidth: "100%",
+								overflow: "hidden",
+							}}
+						>
+							{!isHydrated || isLoadingWidgets ? (
+								<div className="flex items-center justify-center h-40">
+									<div className="!text-gray-500">Loading widgets...</div>
+								</div>
+							) : widgets.length === 0 ? (
+								<div className="flex items-center justify-center h-40">
+									<div className="text-center !text-gray-500">
+										<div className="text-lg font-medium mb-2">No widgets yet</div>
+										<div className="text-sm">
+											This profile has no links to display
+										</div>
 									</div>
 								</div>
-							</div>
-						) : (
-							<div suppressHydrationWarning>
-								{widgets.map((widget) => renderWidget(widget))}
-							</div>
-						)}
-					</div>
+							) : (
+								<div suppressHydrationWarning>
+									{widgets.map((widget) => renderWidget(widget))}
+								</div>
+							)}
+						</div>
+					)}
 				</div>
 			</div>
 			<Footer />
