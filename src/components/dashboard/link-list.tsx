@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Edit2, Trash2, ExternalLink, Save, X, GripVertical, QrCode } from 'lucide-react'
+import { Edit2, Trash2, ExternalLink, Save, X, GripVertical, QrCode, Download, Eye } from 'lucide-react'
 import { Database } from '@/lib/supabase/types'
 import {
   DndContext,
@@ -124,33 +125,87 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
               {link.link_type === 'qr_code' && link.qr_codes && link.qr_codes[0] ? (
                 <div className="mt-2">
                   <div className="flex items-start space-x-3">
-                    <div className="bg-white border border-gray-300 rounded-lg p-3 flex-shrink-0 shadow-sm">
-                      {link.qr_codes[0].format === 'SVG' ? (
-                        <div 
-                          className="w-16 h-16 [&>svg]:w-full [&>svg]:h-full"
-                          dangerouslySetInnerHTML={{ __html: link.qr_codes[0].qr_code_data }}
-                        />
-                      ) : (
-                        <img 
-                          src={link.qr_codes[0].qr_code_data}
-                          alt={`QR Code for ${link.title}`}
-                          className="w-16 h-16 object-contain"
-                          onError={(e) => {
-                            console.error('QR Code image failed to load:', {
-                              format: link.qr_codes[0].format,
-                              dataStart: link.qr_codes[0].qr_code_data.substring(0, 50),
-                              linkType: link.link_type,
-                              title: link.title
-                            })
-                            // Show fallback
-                            const fallback = document.createElement('div')
-                            fallback.className = 'w-16 h-16 bg-gray-100 border border-gray-300 rounded flex items-center justify-center'
-                            fallback.innerHTML = '<span class="text-xs text-gray-500">QR Error</span>'
-                            e.currentTarget.parentNode.replaceChild(fallback, e.currentTarget)
-                          }}
-                        />
-                      )}
-                    </div>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <div className="bg-white border border-gray-300 rounded-lg p-3 flex-shrink-0 shadow-sm cursor-pointer hover:border-gray-400 transition-colors group relative">
+                          {link.qr_codes[0].format === 'SVG' ? (
+                            <div 
+                              className="w-16 h-16 [&>svg]:w-full [&>svg]:h-full"
+                              dangerouslySetInnerHTML={{ __html: link.qr_codes[0].qr_code_data }}
+                            />
+                          ) : (
+                            <img 
+                              src={link.qr_codes[0].qr_code_data}
+                              alt={`QR Code for ${link.title}`}
+                              className="w-16 h-16 object-contain"
+                              onError={(e) => {
+                                console.error('QR Code image failed to load:', {
+                                  format: link.qr_codes[0].format,
+                                  dataStart: link.qr_codes[0].qr_code_data.substring(0, 50),
+                                  linkType: link.link_type,
+                                  title: link.title
+                                })
+                                // Show fallback
+                                const fallback = document.createElement('div')
+                                fallback.className = 'w-16 h-16 bg-gray-100 border border-gray-300 rounded flex items-center justify-center'
+                                fallback.innerHTML = '<span class="text-xs text-gray-500">QR Error</span>'
+                                e.currentTarget.parentNode.replaceChild(fallback, e.currentTarget)
+                              }}
+                            />
+                          )}
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all duration-200 flex items-center justify-center">
+                            <Eye className="w-5 h-5 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                          </div>
+                        </div>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md bg-white">
+                        <DialogHeader>
+                          <DialogTitle className="text-gray-900">QR Code - {link.title}</DialogTitle>
+                          <DialogDescription className="text-gray-600">
+                            Scan this QR code or download it for later use
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex flex-col items-center space-y-4">
+                          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                            {link.qr_codes[0].format === 'SVG' ? (
+                              <div 
+                                className="w-48 h-48 [&>svg]:w-full [&>svg]:h-full"
+                                dangerouslySetInnerHTML={{ __html: link.qr_codes[0].qr_code_data }}
+                              />
+                            ) : (
+                              <img 
+                                src={link.qr_codes[0].qr_code_data}
+                                alt={`QR Code for ${link.title}`}
+                                className="w-48 h-48 object-contain"
+                              />
+                            )}
+                          </div>
+                          <div className="text-center space-y-2">
+                            <p className="text-sm text-gray-600">
+                              Target URL: <span className="font-mono text-gray-900">{link.url}</span>
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Format: {link.qr_codes[0].format} | Size: {link.qr_codes[0].size}x{link.qr_codes[0].size}
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => {
+                              const element = document.createElement('a')
+                              element.href = link.qr_codes[0].qr_code_data
+                              element.download = `qr-code-${link.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.${link.qr_codes[0].format.toLowerCase()}`
+                              document.body.appendChild(element)
+                              element.click()
+                              document.body.removeChild(element)
+                              toast.success('QR code downloaded!')
+                            }}
+                            className="bg-gray-900 hover:bg-gray-800 text-white"
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Download QR Code
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-600 mb-1">
                         Scan this QR code to access: {link.url}
@@ -164,10 +219,9 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                         <span className="truncate">{link.url}</span>
                         <ExternalLink className="w-3 h-3 flex-shrink-0" />
                       </a>
-                      {/* Debug info - remove this in production */}
-                      <div className="text-xs text-gray-400 mt-1">
-                        Format: {link.qr_codes[0].format} | Data: {link.qr_codes[0].qr_code_data.substring(0, 30)}...
-                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Click QR code to view and download
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -326,7 +380,16 @@ export function LinkList({ links, onLinkUpdated, onLinkDeleted, onLinksReordered
           url: validUrl
         })
         .eq('id', linkId)
-        .select()
+        .select(`
+          *,
+          qr_codes (
+            qr_code_data,
+            format,
+            size,
+            foreground_color,
+            background_color
+          )
+        `)
         .single()
 
       if (error) {
@@ -356,7 +419,16 @@ export function LinkList({ links, onLinkUpdated, onLinkDeleted, onLinksReordered
         .from('links')
         .update({ is_active: !link.is_active })
         .eq('id', link.id)
-        .select()
+        .select(`
+          *,
+          qr_codes (
+            qr_code_data,
+            format,
+            size,
+            foreground_color,
+            background_color
+          )
+        `)
         .single()
 
       if (error) {

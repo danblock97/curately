@@ -391,7 +391,7 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
           <TabsContent value="deeplink" className="space-y-4">
             <form onSubmit={handleDeeplinkSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="deeplink-title">Title *</Label>
+                <Label htmlFor="deeplink-title" className="text-gray-900">Title *</Label>
                 <Input
                   id="deeplink-title"
                   type="text"
@@ -400,11 +400,12 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
                   onChange={(e) => setTitle(e.target.value)}
                   required
                   maxLength={100}
+                  className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="deeplink-url">Original URL *</Label>
+                <Label htmlFor="deeplink-url" className="text-gray-900">Original URL *</Label>
                 <Input
                   id="deeplink-url"
                   type="url"
@@ -412,52 +413,57 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   required
+                  className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="ios-url">iOS URL</Label>
+                  <Label htmlFor="ios-url" className="text-gray-900">iOS URL</Label>
                   <Input
                     id="ios-url"
                     type="url"
                     placeholder="https://apps.apple.com/..."
                     value={iosUrl}
                     onChange={(e) => setIosUrl(e.target.value)}
+                    className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="android-url">Android URL</Label>
+                  <Label htmlFor="android-url" className="text-gray-900">Android URL</Label>
                   <Input
                     id="android-url"
                     type="url"
                     placeholder="https://play.google.com/..."
                     value={androidUrl}
                     onChange={(e) => setAndroidUrl(e.target.value)}
+                    className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="desktop-url">Desktop URL</Label>
+                <Label htmlFor="desktop-url" className="text-gray-900">Desktop URL</Label>
                 <Input
                   id="desktop-url"
                   type="url"
                   placeholder="https://web.example.com"
                   value={desktopUrl}
                   onChange={(e) => setDesktopUrl(e.target.value)}
+                  className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="fallback-url">Fallback URL</Label>
+                <Label htmlFor="fallback-url" className="text-gray-900">Fallback URL</Label>
                 <Input
                   id="fallback-url"
                   type="url"
                   placeholder="https://fallback.example.com"
                   value={fallbackUrl}
                   onChange={(e) => setFallbackUrl(e.target.value)}
+                  className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
                 />
               </div>
 
@@ -465,6 +471,7 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
                 <Button
                   type="submit"
                   disabled={isLoading || !title.trim() || !url.trim()}
+                  className="bg-gray-900 hover:bg-gray-800 text-white"
                 >
                   <LoadingButton isLoading={isLoading} loadingText="Creating...">
                     Create Deeplink
@@ -475,6 +482,7 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
                   variant="outline"
                   onClick={onCancel}
                   disabled={isLoading}
+                  className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </Button>
@@ -485,7 +493,7 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
           <TabsContent value="qr_code" className="space-y-4">
             <form onSubmit={handleQRCodeSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="qr-title">Title *</Label>
+                <Label htmlFor="qr-title" className="text-gray-900">Title *</Label>
                 <Input
                   id="qr-title"
                   type="text"
@@ -494,11 +502,12 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
                   onChange={(e) => setTitle(e.target.value)}
                   required
                   maxLength={100}
+                  className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="qr-url">URL *</Label>
+                <Label htmlFor="qr-url" className="text-gray-900">URL *</Label>
                 <Input
                   id="qr-url"
                   type="url"
@@ -506,35 +515,36 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   required
+                  className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="qr-size">Size</Label>
+                  <Label htmlFor="qr-size" className="text-gray-900">Size</Label>
                   <Select value={qrSize.toString()} onValueChange={(value) => setQrSize(Number(value))}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white border-gray-300 text-gray-900 focus:border-gray-900 focus:ring-gray-900/20">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="100">100x100</SelectItem>
-                      <SelectItem value="200">200x200</SelectItem>
-                      <SelectItem value="300">300x300</SelectItem>
-                      <SelectItem value="400">400x400</SelectItem>
-                      <SelectItem value="500">500x500</SelectItem>
+                    <SelectContent className="bg-white border-gray-300">
+                      <SelectItem value="100" className="text-gray-900 hover:bg-gray-50">100x100</SelectItem>
+                      <SelectItem value="200" className="text-gray-900 hover:bg-gray-50">200x200</SelectItem>
+                      <SelectItem value="300" className="text-gray-900 hover:bg-gray-50">300x300</SelectItem>
+                      <SelectItem value="400" className="text-gray-900 hover:bg-gray-50">400x400</SelectItem>
+                      <SelectItem value="500" className="text-gray-900 hover:bg-gray-50">500x500</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="qr-format">Format</Label>
+                  <Label htmlFor="qr-format" className="text-gray-900">Format</Label>
                   <Select value={qrFormat} onValueChange={setQrFormat}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white border-gray-300 text-gray-900 focus:border-gray-900 focus:ring-gray-900/20">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PNG">PNG</SelectItem>
-                      <SelectItem value="SVG">SVG</SelectItem>
+                    <SelectContent className="bg-white border-gray-300">
+                      <SelectItem value="PNG" className="text-gray-900 hover:bg-gray-50">PNG</SelectItem>
+                      <SelectItem value="SVG" className="text-gray-900 hover:bg-gray-50">SVG</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -542,22 +552,24 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="qr-foreground">Foreground Color</Label>
+                  <Label htmlFor="qr-foreground" className="text-gray-900">Foreground Color</Label>
                   <Input
                     id="qr-foreground"
                     type="color"
                     value={qrForeground}
                     onChange={(e) => setQrForeground(e.target.value)}
+                    className="bg-white border-gray-300 h-10 w-full cursor-pointer"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="qr-background">Background Color</Label>
+                  <Label htmlFor="qr-background" className="text-gray-900">Background Color</Label>
                   <Input
                     id="qr-background"
                     type="color"
                     value={qrBackground}
                     onChange={(e) => setQrBackground(e.target.value)}
+                    className="bg-white border-gray-300 h-10 w-full cursor-pointer"
                   />
                 </div>
               </div>
@@ -566,6 +578,7 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
                 <Button
                   type="submit"
                   disabled={isLoading || !title.trim() || !url.trim()}
+                  className="bg-gray-900 hover:bg-gray-800 text-white"
                 >
                   <LoadingButton isLoading={isLoading} loadingText="Creating...">
                     Create QR Code
@@ -576,6 +589,7 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
                   variant="outline"
                   onClick={onCancel}
                   disabled={isLoading}
+                  className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </Button>

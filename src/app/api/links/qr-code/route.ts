@@ -156,8 +156,31 @@ export const POST = withErrorHandling(withSecurity(async (request: NextRequest) 
         link_type: 'qr_code',
       })
 
+    // Fetch the complete link with QR code data
+    const { data: completeLink, error: fetchError } = await supabase
+      .from('links')
+      .select(`
+        *,
+        qr_codes (
+          qr_code_data,
+          format,
+          size,
+          foreground_color,
+          background_color
+        )
+      `)
+      .eq('id', link.id)
+      .single()
+
+    if (fetchError) {
+      return NextResponse.json(
+        { error: 'Failed to fetch created QR code' },
+        { status: 500 }
+      )
+    }
+
   const response = createSuccessResponse({
-    link,
+    link: completeLink,
     shortUrl,
     shortCode,
     qrCodeData,

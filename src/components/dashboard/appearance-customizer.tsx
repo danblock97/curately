@@ -120,7 +120,16 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
         // Load links that can be converted to widgets
         const { data: linksData, error: linksError } = await supabase
           .from('links')
-          .select('*')
+          .select(`
+            *,
+            qr_codes (
+              qr_code_data,
+              format,
+              size,
+              foreground_color,
+              background_color
+            )
+          `)
           .eq('user_id', profile?.id)
           .eq('is_active', true)
           .order('order')
@@ -296,7 +305,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                   price: link.price || '',
                   appStoreUrl: link.app_store_url || '',
                   playStoreUrl: link.play_store_url || '',
-                  fileUrl: link.file_url || ''
+                  fileUrl: link.file_url || '',
+                  link_type: link.link_type || undefined,
+                  qr_codes: link.qr_codes || undefined
                 },
                 position: widgetPosition,
                 webPosition: webPosition,
@@ -1275,6 +1286,75 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
 
     const widgetContent = () => {
       const renderSocialWidget = () => {
+        // Handle QR Code widgets first
+        if (widget.data.link_type === 'qr_code' && widget.data.qr_codes && widget.data.qr_codes[0]) {
+          const qrData = widget.data.qr_codes[0]
+          
+          // Different layouts based on effective size
+          if (effectiveSize === 'thin') {
+            return (
+              <div className="flex items-center h-full space-x-3 px-3">
+                <div className="w-8 h-8 bg-white border border-gray-300 rounded-lg p-1 flex-shrink-0">
+                  {qrData.format === 'SVG' ? (
+                    <div 
+                      className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
+                      dangerouslySetInnerHTML={{ __html: qrData.qr_code_data }}
+                    />
+                  ) : (
+                    <img 
+                      src={qrData.qr_code_data}
+                      alt={`QR Code for ${widget.data.title}`}
+                      className="w-full h-full object-contain"
+                    />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-900 text-sm truncate">
+                    {widget.data.title || 'QR Code'}
+                  </div>
+                  <div className="text-xs text-gray-500 truncate">
+                    Scan to visit
+                  </div>
+                </div>
+              </div>
+            )
+          }
+          
+          // Square layouts - show QR code prominently
+          return (
+            <div className="flex flex-col items-center justify-center h-full p-4 space-y-3">
+              <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+                {qrData.format === 'SVG' ? (
+                  <div 
+                    className={`${
+                      effectiveSize === 'small-square' ? 'w-20 h-20' : 
+                      effectiveSize === 'medium-square' ? 'w-28 h-28' : 'w-36 h-36'
+                    } [&>svg]:w-full [&>svg]:h-full`}
+                    dangerouslySetInnerHTML={{ __html: qrData.qr_code_data }}
+                  />
+                ) : (
+                  <img 
+                    src={qrData.qr_code_data}
+                    alt={`QR Code for ${widget.data.title}`}
+                    className={`${
+                      effectiveSize === 'small-square' ? 'w-20 h-20' : 
+                      effectiveSize === 'medium-square' ? 'w-28 h-28' : 'w-36 h-36'
+                    } object-contain`}
+                  />
+                )}
+              </div>
+              <div className="text-center">
+                <div className="font-medium text-gray-900 text-sm truncate max-w-full">
+                  {widget.data.title || 'QR Code'}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Scan with camera
+                </div>
+              </div>
+            </div>
+          )
+        }
+        
         const getSocialInfo = (platform: string) => {
           const socialIcons: { [key: string]: { bg: string; logo: string; gradient: string; logoStyle?: string; fallback: string } } = {
             twitter: { bg: 'bg-black', logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg', gradient: 'from-gray-700 to-gray-900', logoStyle: 'invert', fallback: '𝕏' },
