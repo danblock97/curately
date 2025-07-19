@@ -1,8 +1,6 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Database } from "@/lib/supabase/types";
@@ -91,15 +89,18 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 	useEffect(() => {
 		setIsHydrated(true);
 		
-		// Mobile detection
+		// Mobile detection - only on client side to prevent hydration mismatch
 		const checkMobile = () => {
-			setIsMobile(window.innerWidth <= 768);
+			if (typeof window !== 'undefined') {
+				setIsMobile(window.innerWidth <= 768);
+			}
 		};
 		
 		checkMobile();
-		window.addEventListener('resize', checkMobile);
-		
-		return () => window.removeEventListener('resize', checkMobile);
+		if (typeof window !== 'undefined') {
+			window.addEventListener('resize', checkMobile);
+			return () => window.removeEventListener('resize', checkMobile);
+		}
 	}, []);
 
 	// Memoize links to prevent unnecessary re-renders
@@ -1251,11 +1252,19 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 		);
 	};
 
+	// Prevent hydration mismatch by ensuring client-side rendering for mobile detection
+	if (!isHydrated) {
+		return (
+			<div className="min-h-screen !bg-white flex items-center justify-center">
+				<div className="text-gray-500">Loading...</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="min-h-screen !bg-white">
-			<Navbar />
 			{/* Main Content */}
-			<div className={`${isMobile ? 'flex flex-col' : 'flex'} min-h-screen pt-16`}>
+			<div className={`${isMobile ? 'flex flex-col' : 'flex'} min-h-screen`}>
 				{/* Profile Section */}
 				<div className={`${isMobile ? 'w-full p-4' : 'w-1/2 p-8'} flex flex-col items-center`}>
 					<div className="w-full max-w-md">
@@ -1290,24 +1299,27 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 							</div>
 						)}
 
-						<div className="text-center mt-8 pt-8 border-t border-gray-200">
-							<p className="text-xs !text-gray-500">
-								Created with{" "}
-								<a
-									href="https://curately.co.uk"
-									target="_blank"
-									rel="noopener noreferrer"
-									className="underline !text-gray-700 hover:!text-gray-900"
-								>
-									Curately
-								</a>
-							</p>
-						</div>
+						{/* Branding - only show on desktop */}
+						{!isMobile && (
+							<div className="text-center mt-8 pt-8 border-t border-gray-200">
+								<p className="text-xs !text-gray-500">
+									Created with{" "}
+									<a
+										href="https://curately.co.uk"
+										target="_blank"
+										rel="noopener noreferrer"
+										className="underline !text-gray-700 hover:!text-gray-900"
+									>
+										Curately
+									</a>
+								</p>
+							</div>
+						)}
 					</div>
 				</div>
 
 				{/* Widgets Section */}
-				<div className={`${isMobile ? 'w-full p-4' : 'w-1/2 p-8'}`}>
+				<div className={`${isMobile ? 'w-full p-4' : 'w-1/2 p-8 relative'}`}>
 					{isMobile ? (
 						<div className="flex justify-center">
 							<div
@@ -1335,6 +1347,21 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 										{widgets.map((widget) => renderWidget(widget))}
 									</div>
 								)}
+								
+								{/* CTA Button - Mobile */}
+								<div className="mt-6 pt-6 border-t border-gray-200">
+									<div className="text-center space-y-3">
+										<p className="text-sm font-medium !text-gray-900">
+											Create your own link-in-bio page
+										</p>
+										<Button 
+											className="w-full bg-black hover:bg-gray-800 text-white"
+											onClick={() => window.open('https://curately.co.uk', '_blank', 'noopener,noreferrer')}
+										>
+											Get Started Free
+										</Button>
+									</div>
+								</div>
 							</div>
 						</div>
 					) : (
@@ -1367,7 +1394,58 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 					)}
 				</div>
 			</div>
-			<Footer />
+			
+			{/* CTA Button - Web (bottom-left of entire page) */}
+			{!isMobile && (
+				<div className="fixed bottom-6 left-6 z-10 group">
+					<div className="relative">
+						{/* Pulse animation background */}
+						<div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full animate-pulse opacity-75 group-hover:opacity-100 transition-opacity"></div>
+						
+						{/* Main button */}
+						<Button 
+							className="relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 font-semibold text-base border-2 border-white/20"
+							onClick={() => window.open('https://curately.co.uk', '_blank', 'noopener,noreferrer')}
+						>
+							<span className="flex items-center gap-2">
+								✨ Create Your Page
+								<svg 
+									className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" 
+									fill="none" 
+									stroke="currentColor" 
+									viewBox="0 0 24 24"
+								>
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+								</svg>
+							</span>
+						</Button>
+						
+						{/* Floating badge */}
+						<div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-bounce">
+							FREE
+						</div>
+					</div>
+				</div>
+			)}
+			
+			{/* Mobile Branding Credit - Bottom */}
+			{isMobile && (
+				<div className="w-full p-4 bg-gray-50 border-t border-gray-200">
+					<div className="text-center">
+						<p className="text-xs !text-gray-500">
+							Created with{" "}
+							<a
+								href="https://curately.co.uk"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="underline !text-gray-700 hover:!text-gray-900"
+							>
+								Curately
+							</a>
+						</p>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

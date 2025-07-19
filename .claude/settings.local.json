@@ -12,7 +12,8 @@
       "Bash(node:*)",
       "Bash(rm:*)",
       "WebFetch(domain:docs.anthropic.com)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(head:*)"
     ],
     "deny": []
   }
