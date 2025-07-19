@@ -54,10 +54,9 @@ const essentialWidgets = [
   { name: 'Photo / Video', icon: ImageIcon, value: 'media', description: 'Show an image or video on your page', color: 'bg-green-500' },
   { name: 'Voice', icon: Mic, value: 'voice', description: 'Add a voice message', color: 'bg-purple-500' },
   { name: 'Product', icon: Package, value: 'product', description: 'Highlight a product', color: 'bg-orange-500' },
-  { name: 'One Link (App)', icon: Smartphone, value: 'app', description: 'A single link that redirects to App Store or Play Store', color: 'bg-indigo-500' },
 ]
 
-export function WidgetModal({ isOpen, onClose, onAddWidget }: WidgetModalProps) {
+export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links }: WidgetModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedWidget, setSelectedWidget] = useState<string | null>(null)
   const [isConverting, setIsConverting] = useState(false)
@@ -202,7 +201,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget }: WidgetModalProps) 
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">Add a widget</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button variant="ghost" size="sm" onClick={onClose} className="text-black hover:text-black">
             <X className="w-4 h-4" />
           </Button>
         </div>
@@ -255,6 +254,65 @@ export function WidgetModal({ isOpen, onClose, onAddWidget }: WidgetModalProps) 
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Existing Links & QR Codes */}
+              {(links && links.length > 0) && (
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-3">Your Existing Links</h3>
+                  <div className="grid grid-cols-1 gap-3">
+                    {links.map((link) => (
+                      <Card
+                        key={link.id}
+                        className="cursor-pointer bg-white hover:bg-gray-50 transition-colors border border-gray-200"
+                        onClick={() => {
+                          const widget: Widget = {
+                            id: `existing-${link.id}`,
+                            type: 'link',
+                            size: 'small-square',
+                            data: {
+                              title: link.title || link.url,
+                              url: link.url,
+                              description: link.link_type === 'qr_code' ? 'QR Code Link' : link.link_type === 'deeplink' ? 'Deep Link' : 'Link'
+                            },
+                            position: { x: 0, y: 0 },
+                            webPosition: { x: 0, y: 0 },
+                            mobilePosition: { x: 0, y: 0 }
+                          }
+                          onAddWidget(widget)
+                          onClose()
+                        }}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className={`w-8 h-8 rounded flex items-center justify-center ${
+                                link.link_type === 'qr_code' ? 'bg-green-500' : 
+                                link.link_type === 'deeplink' ? 'bg-blue-500' : 'bg-gray-500'
+                              }`}>
+                                {link.link_type === 'qr_code' ? (
+                                  <Package className="w-4 h-4 text-white" />
+                                ) : (
+                                  <Link className="w-4 h-4 text-white" />
+                                )}
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900">{link.title || 'Untitled Link'}</div>
+                                <div className="text-sm text-gray-500">
+                                  {link.link_type === 'qr_code' ? 'QR Code' : 
+                                   link.link_type === 'deeplink' ? 'Deep Link' : 'Link'}
+                                </div>
+                              </div>
+                            </div>
+                            <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50">
+                              Add
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Essentials */}
               <div>
@@ -403,11 +461,6 @@ export function WidgetModal({ isOpen, onClose, onAddWidget }: WidgetModalProps) 
                 </div>
               </div>
 
-              <div className="text-center">
-                <Button variant="link" className="text-green-600">
-                  See more
-                </Button>
-              </div>
             </div>
           </div>
 

@@ -14,6 +14,7 @@ import { Link2, ExternalLink, QrCode, AlertCircle } from 'lucide-react'
 import { LoadingButton } from '@/components/ui/loading'
 import { useFormValidation, linkInBioSchema, deeplinkSchema, qrCodeSchema } from '@/lib/validation'
 import { handleClientError } from '@/lib/error-handler'
+import { checkCanCreateLink } from '@/hooks/use-plan-limits'
 
 type Link = Database['public']['Tables']['links']['Row']
 
@@ -31,9 +32,10 @@ interface AddLinkFormProps {
   onCancel: () => void
   nextOrder: number
   selectedPlatform?: PlatformType | null
+  existingLinks?: Link[]
 }
 
-export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selectedPlatform }: AddLinkFormProps) {
+export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selectedPlatform, existingLinks = [] }: AddLinkFormProps) {
   const [activeTab, setActiveTab] = useState('link_in_bio')
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -70,6 +72,14 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
 
   const handleLinkInBioSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Check plan limits first
+    const limitCheck = checkCanCreateLink(existingLinks, 'link_in_bio')
+    if (!limitCheck.canCreate) {
+      toast.error(limitCheck.reason || 'Cannot create more links')
+      return
+    }
+    
     setIsLoading(true)
 
     try {
@@ -118,6 +128,14 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
 
   const handleDeeplinkSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Check plan limits first
+    const limitCheck = checkCanCreateLink(existingLinks, 'deeplink')
+    if (!limitCheck.canCreate) {
+      toast.error(limitCheck.reason || 'Cannot create more links')
+      return
+    }
+    
     setIsLoading(true)
 
     try {
@@ -156,6 +174,14 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
 
   const handleQRCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Check plan limits first
+    const limitCheck = checkCanCreateLink(existingLinks, 'qr_code')
+    if (!limitCheck.canCreate) {
+      toast.error(limitCheck.reason || 'Cannot create more QR codes')
+      return
+    }
+    
     setIsLoading(true)
 
     try {

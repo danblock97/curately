@@ -9,9 +9,10 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { Database } from '@/lib/supabase/types'
-import { ExternalLink, Github, AlertTriangle } from 'lucide-react'
+import { ExternalLink, Github, AlertTriangle, User as UserIcon, Shield, Bell, Palette, Link2, BarChart3, Globe } from 'lucide-react'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 
@@ -22,9 +23,38 @@ interface SettingsFormProps {
 
 export function SettingsForm({ user, profile }: SettingsFormProps) {
   const [username, setUsername] = useState(profile.username)
+  const [displayName, setDisplayName] = useState(profile.display_name || '')
+  const [bio, setBio] = useState(profile.bio || '')
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
   const [isUpdatingUsername, setIsUpdatingUsername] = useState(false)
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
   const supabase = createClient()
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsUpdatingProfile(true)
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          display_name: displayName.trim(),
+          bio: bio.trim()
+        })
+        .eq('id', profile.id)
+
+      if (error) {
+        toast.error('Error updating profile. Please try again.')
+        return
+      }
+
+      toast.success('Profile updated successfully!')
+    } catch (error) {
+      toast.error('An error occurred. Please try again.')
+    } finally {
+      setIsUpdatingProfile(false)
+    }
+  }
 
   const handleUsernameUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -117,125 +147,307 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Information</CardTitle>
-          <CardDescription>
-            View and manage your account details
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm font-medium text-gray-700">Email</Label>
-              <p className="text-sm text-gray-900">{user.email}</p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-gray-700">Account Created</Label>
-              <p className="text-sm text-gray-900">
-                {new Date(user.created_at).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
+    <Tabs defaultValue="profile" className="space-y-6">
+      <TabsList className="grid grid-cols-4 w-full max-w-md bg-gray-100">
+        <TabsTrigger value="profile" className="flex items-center space-x-2">
+          <UserIcon className="w-4 h-4" />
+          <span>Profile</span>
+        </TabsTrigger>
+        <TabsTrigger value="account" className="flex items-center space-x-2">
+          <Shield className="w-4 h-4" />
+          <span>Account</span>
+        </TabsTrigger>
+        <TabsTrigger value="preferences" className="flex items-center space-x-2">
+          <Palette className="w-4 h-4" />
+          <span>Preferences</span>
+        </TabsTrigger>
+        <TabsTrigger value="advanced" className="flex items-center space-x-2">
+          <AlertTriangle className="w-4 h-4" />
+          <span>Advanced</span>
+        </TabsTrigger>
+      </TabsList>
 
-          {user.app_metadata?.providers && user.app_metadata.providers.length > 0 && (
-            <div>
-              <Label className="text-sm font-medium text-gray-700">Connected Accounts</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {user.app_metadata.providers.map((provider: string) => (
-                  <Badge key={provider} variant="outline" className="flex items-center space-x-1">
-                    {getProviderIcon(provider)}
-                    <span className="capitalize">{provider}</span>
+      {/* Profile Tab */}
+      <TabsContent value="profile" className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="bg-white border border-gray-200 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-gray-900">
+                <UserIcon className="w-5 h-5 text-gray-600" />
+                <span>Profile Information</span>
+              </CardTitle>
+              <CardDescription>
+                Update your public profile information
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleProfileUpdate} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="display-name" className="text-gray-900">Display Name</Label>
+                  <Input
+                    id="display-name"
+                    type="text"
+                    placeholder="Your display name"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    maxLength={50}
+                    className="text-gray-900 bg-white"
+                  />
+                  <p className="text-xs text-gray-500">
+                    This name will be displayed on your public profile
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bio" className="text-gray-900">Bio</Label>
+                  <Input
+                    id="bio"
+                    type="text"
+                    placeholder="Tell people about yourself"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    maxLength={160}
+                    className="text-gray-900 bg-white"
+                  />
+                  <p className="text-xs text-gray-500">
+                    {bio.length}/160 characters
+                  </p>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isUpdatingProfile}
+                  className="bg-gray-900 hover:bg-gray-800 text-white"
+                >
+                  {isUpdatingProfile ? 'Updating...' : 'Update Profile'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border border-gray-200 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-gray-900">
+                <Globe className="w-5 h-5 text-gray-600" />
+                <span>Public Profile</span>
+              </CardTitle>
+              <CardDescription>
+                Your public profile information
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-900">Username</Label>
+                <div className="flex items-center space-x-2 mt-1">
+                  <span className="text-sm text-gray-900 font-mono">@{profile.username}</span>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-gray-900">Public URL</Label>
+                <div className="flex items-center space-x-2 mt-1">
+                  <span className="text-sm text-gray-900">curately.co.uk/{profile.username}</span>
+                  <a
+                    href={`/${profile.username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-gray-900">Profile Stats</Label>
+                <div className="grid grid-cols-2 gap-4 mt-2">
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="text-lg font-semibold text-gray-900">0</div>
+                    <div className="text-sm text-gray-500">Total Visits</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="text-lg font-semibold text-gray-900">0</div>
+                    <div className="text-sm text-gray-500">Total Clicks</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </TabsContent>
+
+      {/* Account Tab */}
+      <TabsContent value="account" className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="bg-white border border-gray-200 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-gray-900">
+                <Shield className="w-5 h-5 text-gray-600" />
+                <span>Account Information</span>
+              </CardTitle>
+              <CardDescription>
+                Your account details and security information
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-900">Email Address</Label>
+                  <p className="text-sm text-gray-900 font-mono">{user.email}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-900">Account Created</Label>
+                  <p className="text-sm text-gray-900">
+                    {new Date(user.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-900">Account Type</Label>
+                  <Badge variant="outline" className="mt-1 text-gray-900 border-gray-300">
+                    Free Plan
                   </Badge>
-                ))}
+                </div>
+              </div>
+
+              {user.app_metadata?.providers && user.app_metadata.providers.length > 0 && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-900">Connected Accounts</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {user.app_metadata.providers.map((provider: string) => (
+                      <Badge key={provider} variant="outline" className="flex items-center space-x-1 text-gray-900 border-gray-300">
+                        {getProviderIcon(provider)}
+                        <span className="capitalize">{provider}</span>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border border-gray-200 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-gray-900">
+                <Link2 className="w-5 h-5 text-gray-600" />
+                <span>Username Settings</span>
+              </CardTitle>
+              <CardDescription>
+                Change your username and public profile URL
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUsernameUpdate} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="text-gray-900">Username</Label>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-500 font-mono">curately.co.uk/</span>
+                    <Input
+                      id="username"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                      required
+                      minLength={3}
+                      maxLength={30}
+                      className="font-mono text-gray-900 bg-white"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    3-30 characters. Letters, numbers, and underscores only.
+                  </p>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isUpdatingUsername || username === profile.username || !username.trim()}
+                  className="bg-gray-900 hover:bg-gray-800 text-white"
+                >
+                  {isUpdatingUsername ? 'Updating...' : 'Update Username'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </TabsContent>
+
+      {/* Preferences Tab */}
+      <TabsContent value="preferences" className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+          <Card className="bg-white border border-gray-200 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-gray-900">
+                <BarChart3 className="w-5 h-5 text-gray-600" />
+                <span>Analytics Preferences</span>
+              </CardTitle>
+              <CardDescription>
+                Configure your analytics and data settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-gray-900">Data Retention</h4>
+                    <p className="text-sm text-gray-500">Analytics data is kept for 30 days on your current Free plan</p>
+                  </div>
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    Free Plan: 30 Days
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </TabsContent>
+
+      {/* Advanced Tab */}
+      <TabsContent value="advanced" className="space-y-6">
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="text-red-600 flex items-center space-x-2">
+              <AlertTriangle className="w-5 h-5" />
+              <span>Danger Zone</span>
+            </CardTitle>
+            <CardDescription className="text-red-600">
+              Irreversible and destructive actions. Proceed with caution.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg p-6 border border-red-200">
+                <h4 className="font-semibold text-gray-900 mb-2 flex items-center space-x-2">
+                  <AlertTriangle className="w-4 h-4 text-red-500" />
+                  <span>Delete Account</span>
+                </h4>
+                <p className="text-sm text-gray-600 mb-4">
+                  Permanently delete your account and all associated data including:
+                </p>
+                <ul className="text-sm text-gray-600 mb-4 space-y-1 ml-4">
+                  <li>• Your profile and all links</li>
+                  <li>• All analytics data</li>
+                  <li>• QR codes and deep links</li>
+                  <li>• Custom appearance settings</li>
+                </ul>
+                <p className="text-sm font-medium text-red-600 mb-4">
+                  This action cannot be undone.
+                </p>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteAccount}
+                  disabled={isDeletingAccount}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {isDeletingAccount ? 'Deleting Account...' : 'Delete My Account'}
+                </Button>
               </div>
             </div>
-          )}
-
-          <div>
-            <Label className="text-sm font-medium text-gray-700">Public Profile</Label>
-            <div className="flex items-center space-x-2 mt-1">
-              <span className="text-sm text-gray-900">curately.co.uk/{profile.username}</span>
-              <a
-                href={`/${profile.username}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800"
-              >
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Username</CardTitle>
-          <CardDescription>
-            Update your username. This will change your public profile URL.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleUsernameUpdate} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-500">curately.co.uk/</span>
-                <Input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
-                  required
-                  minLength={3}
-                  maxLength={30}
-                />
-              </div>
-              <p className="text-xs text-gray-500">
-                3-30 characters. Letters, numbers, and underscores only.
-              </p>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isUpdatingUsername || username === profile.username || !username.trim()}
-            >
-              {isUpdatingUsername ? 'Updating...' : 'Update Username'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card className="border-red-200">
-        <CardHeader>
-          <CardTitle className="text-red-600 flex items-center space-x-2">
-            <AlertTriangle className="w-5 h-5" />
-            <span>Danger Zone</span>
-          </CardTitle>
-          <CardDescription>
-            Irreversible and destructive actions
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Delete Account</h4>
-              <p className="text-sm text-gray-600 mb-4">
-                Permanently delete your account and all associated data. This action cannot be undone.
-              </p>
-              <Button
-                variant="destructive"
-                onClick={handleDeleteAccount}
-                disabled={isDeletingAccount}
-              >
-                {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
   )
 }

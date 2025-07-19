@@ -6,6 +6,7 @@ import { AddLinkForm } from './add-link-form'
 import { LinkList } from './link-list'
 import { Plus, Instagram, Youtube, Twitter, Github, Linkedin, Globe, Music, MessageCircle, Phone, Mail, Sparkles, Zap, Link2, TrendingUp, ExternalLink, QrCode } from 'lucide-react'
 import { Database } from '@/lib/supabase/types'
+import { usePlanLimits } from '@/hooks/use-plan-limits'
 
 type Link = Database['public']['Tables']['links']['Row'] & {
   qr_codes?: {
@@ -46,6 +47,9 @@ export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
   const [showAddForm, setShowAddForm] = useState(false)
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType | null>(null)
   const [isHydrated, setIsHydrated] = useState(false)
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState('1W')
+  const [selectedSort, setSelectedSort] = useState('Most recent')
+  const planUsage = usePlanLimits(links)
 
   // Handle hydration and initialize with server data
   useEffect(() => {
@@ -134,7 +138,7 @@ export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
     <>
     <div className="space-y-6">
       {/* Quick Actions Cards at Top */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
           <div className="mb-4">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl mx-auto flex items-center justify-center shadow-lg">
@@ -180,20 +184,6 @@ export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
           </Button>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
-          <div className="mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl mx-auto flex items-center justify-center shadow-lg">
-              <Globe className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <h3 className="text-sm font-semibold text-gray-900 mb-2">Your domain name on your links</h3>
-          <Button 
-            onClick={handleCustomLinkClick}
-            className="bg-gray-900 hover:bg-gray-800 text-white text-xs px-4 py-2 h-8"
-          >
-            Brand your link
-          </Button>
-        </div>
       </div>
 
       {/* Main Content Grid */}
@@ -201,50 +191,54 @@ export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
         {/* Left Column - Progress */}
         <div className="space-y-4">
           <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Take curately in hand</h3>
-            <div className="space-y-2">
-            <div className="flex items-center justify-between py-1">
-              <div className="flex items-center space-x-2">
-                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">✓</span>
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Current Plan Usage</h3>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-900 text-xs font-medium">1. Links</span>
+                  <span className="text-gray-500 text-xs">{planUsage.links.current}/{planUsage.links.limit}</span>
                 </div>
-                <span className="text-gray-900 text-xs">Create a deeplink</span>
-              </div>
-              <span className="text-gray-500 text-xs">1/5</span>
-            </div>
-            <div className="flex items-center justify-between py-1">
-              <div className="flex items-center space-x-2">
-                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">✓</span>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: `${(planUsage.links.current / planUsage.links.limit) * 100}%` }}></div>
                 </div>
-                <span className="text-gray-900 text-xs">Create a link in bio</span>
               </div>
-              <span className="text-gray-500 text-xs">2/5</span>
-            </div>
-            <div className="flex items-center justify-between py-1">
-              <div className="flex items-center space-x-2">
-                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">✓</span>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-900 text-xs font-medium">2. Pages</span>
+                  <span className="text-gray-500 text-xs">{planUsage.pages.current}/{planUsage.pages.limit}</span>
                 </div>
-                <span className="text-gray-900 text-xs">Create a QR code</span>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div className="bg-green-600 h-1.5 rounded-full" style={{ width: `${(planUsage.pages.current / planUsage.pages.limit) * 100}%` }}></div>
+                </div>
               </div>
-              <span className="text-gray-500 text-xs">3/5</span>
-            </div>
-            <div className="flex items-center justify-between py-1">
-              <div className="flex items-center space-x-2">
-                <div className="w-5 h-5 border border-gray-300 rounded-full"></div>
-                <span className="text-gray-500 text-xs">Share your link in bio</span>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-900 text-xs font-medium">3. QR Codes</span>
+                  <span className="text-gray-500 text-xs">{planUsage.qrCodes.current}/{planUsage.qrCodes.limit}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${(planUsage.qrCodes.current / planUsage.qrCodes.limit) * 100}%` }}></div>
+                </div>
               </div>
-              <span className="text-gray-500 text-xs">4/5</span>
-            </div>
-            <div className="flex items-center justify-between py-1">
-              <div className="flex items-center space-x-2">
-                <div className="w-5 h-5 border border-gray-300 rounded-full"></div>
-                <span className="text-gray-500 text-xs">View analytics</span>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-900 text-xs font-medium">4. Analytics</span>
+                  <span className="text-gray-500 text-xs">{planUsage.analytics.retentionDays} days</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div className="bg-orange-600 h-1.5 rounded-full" style={{ width: '100%' }}></div>
+                </div>
               </div>
-              <span className="text-gray-500 text-xs">5/5</span>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-900 text-xs font-medium">5. Clicks & Scans</span>
+                  <span className="text-gray-500 text-xs">{planUsage.clicks.unlimited ? 'Unlimited' : 'Limited'}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div className="bg-yellow-600 h-1.5 rounded-full" style={{ width: '100%' }}></div>
+                </div>
+              </div>
             </div>
-          </div>
         </div>
         </div>
 
@@ -258,7 +252,12 @@ export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
               <p className="text-xs text-gray-500">Recent clicks</p>
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" className="border-gray-300 text-gray-600 h-7 text-xs hover:bg-gray-50">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-white border border-gray-300 text-gray-600 h-7 text-xs hover:bg-gray-50"
+                onClick={() => window.location.href = '/dashboard/analytics'}
+              >
                 View analytics
               </Button>
             </div>
@@ -266,12 +265,20 @@ export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
           
           {/* Time period selector */}
           <div className="flex items-center space-x-1 mb-3">
-            <Button size="sm" variant="outline" className="border-gray-300 text-gray-600 h-6 text-xs px-2 hover:bg-gray-50">ALL</Button>
-            <Button size="sm" variant="outline" className="border-gray-300 text-gray-600 h-6 text-xs px-2 hover:bg-gray-50">1Y</Button>
-            <Button size="sm" variant="outline" className="border-gray-300 text-gray-600 h-6 text-xs px-2 hover:bg-gray-50">3M</Button>
-            <Button size="sm" variant="outline" className="border-gray-300 text-gray-600 h-6 text-xs px-2 hover:bg-gray-50">1M</Button>
-            <Button size="sm" className="bg-gray-900 text-white h-6 text-xs px-2 hover:bg-gray-800">1W</Button>
-            <Button size="sm" variant="outline" className="border-gray-300 text-gray-600 h-6 text-xs px-2 hover:bg-gray-50">1D</Button>
+            {['ALL', '1Y', '3M', '1M', '1W', '1D'].map((period) => (
+              <Button
+                key={period}
+                size="sm"
+                onClick={() => setSelectedTimePeriod(period)}
+                className={`h-6 text-xs px-2 ${
+                  selectedTimePeriod === period
+                    ? 'bg-gray-900 text-white hover:bg-gray-800'
+                    : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {period}
+              </Button>
+            ))}
           </div>
 
           {/* Line Chart */}
@@ -290,17 +297,17 @@ export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
               <rect width="100%" height="100%" fill="url(#grid)" />
               
               {/* X-axis labels */}
-              <text x="20" y="75" fill="#6B7280" fontSize="8" textAnchor="middle">08/07</text>
-              <text x="80" y="75" fill="#6B7280" fontSize="8" textAnchor="middle">09/07</text>
-              <text x="140" y="75" fill="#6B7280" fontSize="8" textAnchor="middle">10/07</text>
-              <text x="200" y="75" fill="#6B7280" fontSize="8" textAnchor="middle">11/07</text>
-              <text x="260" y="75" fill="#6B7280" fontSize="8" textAnchor="middle">12/07</text>
-              <text x="320" y="75" fill="#6B7280" fontSize="8" textAnchor="middle">13/07</text>
-              <text x="380" y="75" fill="#6B7280" fontSize="8" textAnchor="middle">14/07</text>
+              <text x="20" y="75" fill="#6B7280" fontSize="8" textAnchor="middle">13/07</text>
+              <text x="80" y="75" fill="#6B7280" fontSize="8" textAnchor="middle">14/07</text>
+              <text x="140" y="75" fill="#6B7280" fontSize="8" textAnchor="middle">15/07</text>
+              <text x="200" y="75" fill="#6B7280" fontSize="8" textAnchor="middle">16/07</text>
+              <text x="260" y="75" fill="#6B7280" fontSize="8" textAnchor="middle">17/07</text>
+              <text x="320" y="75" fill="#6B7280" fontSize="8" textAnchor="middle">18/07</text>
+              <text x="380" y="75" fill="#6B7280" fontSize="8" textAnchor="middle">19/07</text>
               
               {/* Area under the line */}
               <path
-                d="M 20,50 L 80,45 L 140,35 L 200,30 L 260,25 L 320,20 L 380,15 L 380,70 L 20,70 Z"
+                d="M 20,60 L 80,60 L 140,60 L 200,60 L 260,60 L 320,60 L 380,50 L 380,70 L 20,70 Z"
                 fill="url(#gradient)"
                 opacity="0.4"
               />
@@ -310,17 +317,17 @@ export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
                 fill="none"
                 stroke="#10B981"
                 strokeWidth="2"
-                points="20,50 80,45 140,35 200,30 260,25 320,20 380,15"
+                points="20,60 80,60 140,60 200,60 260,60 320,60 380,50"
               />
               
               {/* Data points */}
-              <circle cx="20" cy="50" r="2" fill="#10B981"/>
-              <circle cx="80" cy="45" r="2" fill="#10B981"/>
-              <circle cx="140" cy="35" r="2" fill="#10B981"/>
-              <circle cx="200" cy="30" r="2" fill="#10B981"/>
-              <circle cx="260" cy="25" r="2" fill="#10B981"/>
-              <circle cx="320" cy="20" r="2" fill="#10B981"/>
-              <circle cx="380" cy="15" r="2" fill="#10B981"/>
+              <circle cx="20" cy="60" r="2" fill="#10B981"/>
+              <circle cx="80" cy="60" r="2" fill="#10B981"/>
+              <circle cx="140" cy="60" r="2" fill="#10B981"/>
+              <circle cx="200" cy="60" r="2" fill="#10B981"/>
+              <circle cx="260" cy="60" r="2" fill="#10B981"/>
+              <circle cx="320" cy="60" r="2" fill="#10B981"/>
+              <circle cx="380" cy="50" r="2" fill="#10B981"/>
             </svg>
           </div>
         </div>
@@ -330,9 +337,20 @@ export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-900">My links</h3>
             <div className="flex items-center space-x-1">
-              <Button size="sm" className="bg-gray-900 text-white h-6 text-xs px-2 hover:bg-gray-800">Most recent</Button>
-              <Button size="sm" variant="outline" className="border-gray-300 text-gray-600 h-6 text-xs px-2 hover:bg-gray-50">Performance</Button>
-              <Button size="sm" variant="outline" className="border-gray-300 text-gray-600 h-6 text-xs px-2 hover:bg-gray-50">Most old</Button>
+              {['Most recent', 'Performance', 'Oldest'].map((sortOption) => (
+                <Button
+                  key={sortOption}
+                  size="sm"
+                  onClick={() => setSelectedSort(sortOption)}
+                  className={`h-6 text-xs px-2 ${
+                    selectedSort === sortOption
+                      ? 'bg-gray-900 text-white hover:bg-gray-800'
+                      : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {sortOption}
+                </Button>
+              ))}
             </div>
           </div>
           
@@ -387,6 +405,7 @@ export function LinkManager({ links: initialLinks, userId }: LinkManagerProps) {
                 }}
                 nextOrder={Array.isArray(links) ? links.length : 0}
                 selectedPlatform={selectedPlatform}
+                existingLinks={links}
               />
             </div>
           </div>
