@@ -152,21 +152,20 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
       try {
         setIsLoadingWidgets(true)
         console.log('Loading widgets for page:', currentPage?.id, 'with', links?.length, 'links')
-        // Load links that can be converted to widgets
+        
+        // Load regular links
         const { data: linksData, error: linksError } = await supabase
           .from('links')
-          .select(`
-            *,
-            qr_codes (
-              qr_code_data,
-              format,
-              size,
-              foreground_color,
-              background_color
-            )
-          `)
+          .select('*')
           .eq('user_id', profile?.id)
           .order('order')
+        
+        // Load QR codes separately (they're now independent)
+        const { data: qrCodesData, error: qrCodesError } = await supabase
+          .from('qr_codes')
+          .select('*')
+          .eq('user_id', profile?.id)
+          .order('order_index')
 
         if (linksError) {
           console.error('Error loading links:', linksError)
@@ -174,24 +173,40 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
           setIsLoadingWidgets(false)
           return
         }
+        
+        if (qrCodesError) {
+          console.error('Error loading QR codes:', qrCodesError)
+          toast.error('Failed to load existing QR codes')
+          setIsLoadingWidgets(false)
+          return
+        }
 
-        if (linksData && linksData.length > 0) {
-          // Convert links to widgets with proper positioning and fetch metadata
+        // Combine and process both regular links and QR codes
+        const allItems = [
+          ...(linksData || []).map(link => ({ ...link, type: 'link' })),
+          ...(qrCodesData || []).map(qr => ({ ...qr, type: 'qr_code' }))
+        ]
+        
+        if (allItems.length > 0) {
+          // Convert all items to widgets with proper positioning and fetch metadata
           const linkWidgets: Widget[] = await Promise.all(
-            linksData.map(async (link, index) => {
-              console.log('Processing link:', link)
+            allItems.map(async (item, index) => {
+              console.log('Processing item:', item)
               let metadata = { description: '', favicon: '', isPopularApp: false, appName: '', appLogo: '' }
               
-              try {
-                // Only fetch metadata if URL exists and is valid
-                if (link.url && typeof link.url === 'string') {
-                  const metadataResponse = await fetch(`/api/metadata?url=${encodeURIComponent(link.url)}`)
-                  if (metadataResponse.ok) {
-                    metadata = await metadataResponse.json()
+              // For regular links, fetch metadata
+              if (item.type === 'link') {
+                try {
+                  // Only fetch metadata if URL exists and is valid
+                  if (item.url && typeof item.url === 'string') {
+                    const metadataResponse = await fetch(`/api/metadata?url=${encodeURIComponent(item.url)}`)
+                    if (metadataResponse.ok) {
+                      metadata = await metadataResponse.json()
+                    }
                   }
+                } catch (error) {
+                  console.error('Failed to fetch metadata for item:', item.url, error)
                 }
-              } catch (error) {
-                console.error('Failed to fetch metadata for link:', link.url, error)
               }
 
               // Extract platform and username from URL to fetch display name
@@ -201,8 +216,8 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
               
               try {
                 // Only process URL if it exists and is valid
-                if (link.url && typeof link.url === 'string') {
-                  const urlObj = new URL(link.url)
+                if (item.url && typeof item.url === 'string') {
+                  const urlObj = new URL(item.url)
                   const hostname = urlObj.hostname.toLowerCase()
                 
                   if (hostname.includes('github.com')) {
@@ -280,7 +295,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
                   }
                 }
               } catch (error) {
-                console.warn('Failed to extract platform info from URL:', link.url, error)
+                console.warn('Failed to extract platform info from URL:', item.url, error)
               }
 
               // Safe JSON parsing with fallback - position mobile widgets more tightly
@@ -295,59 +310,66 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
               }
               
               try {
-                if (link.widget_position && typeof link.widget_position === 'string') {
-                  widgetPosition = JSON.parse(link.widget_position)
-                } else if (link.widget_position && typeof link.widget_position === 'object') {
-                  widgetPosition = link.widget_position as { x: number; y: number }
+                if (item.widget_position && typeof item.widget_position === 'string') {
+                  widgetPosition = JSON.parse(item.widget_position)
+                } else if (item.widget_position && typeof item.widget_position === 'object') {
+                  widgetPosition = item.widget_position as { x: number; y: number }
                 }
               } catch (error) {
-                console.warn('Failed to parse widget_position:', link.widget_position, error)
+                console.warn('Failed to parse widget_position:', item.widget_position, error)
               }
               
               try {
-                if (link.web_position && typeof link.web_position === 'string') {
-                  webPosition = JSON.parse(link.web_position)
-                } else if (link.web_position && typeof link.web_position === 'object') {
-                  webPosition = link.web_position as { x: number; y: number }
+                if (item.web_position && typeof item.web_position === 'string') {
+                  webPosition = JSON.parse(item.web_position)
+                } else if (item.web_position && typeof item.web_position === 'object') {
+                  webPosition = item.web_position as { x: number; y: number }
                 }
               } catch (error) {
-                console.warn('Failed to parse web_position:', link.web_position, error)
+                console.warn('Failed to parse web_position:', item.web_position, error)
               }
               
               try {
-                if (link.mobile_position && typeof link.mobile_position === 'string') {
-                  mobilePosition = JSON.parse(link.mobile_position)
-                } else if (link.mobile_position && typeof link.mobile_position === 'object') {
-                  mobilePosition = link.mobile_position as { x: number; y: number }
+                if (item.mobile_position && typeof item.mobile_position === 'string') {
+                  mobilePosition = JSON.parse(item.mobile_position)
+                } else if (item.mobile_position && typeof item.mobile_position === 'object') {
+                  mobilePosition = item.mobile_position as { x: number; y: number }
                 }
               } catch (error) {
-                console.warn('Failed to parse mobile_position:', link.mobile_position, error)
+                console.warn('Failed to parse mobile_position:', item.mobile_position, error)
               }
 
               return {
-                id: link.id,
-                type: (link.widget_type || 'link') as const,
-                size: (link.size || 'thin') as const,
+                id: item.id,
+                type: item.type === 'qr_code' ? 'link' : (item.widget_type || 'link') as const,
+                size: (item.size || 'thin') as const,
                 data: {
-                  title: link.title || '',
-                  url: link.url || '',
+                  title: item.title || '',
+                  url: item.url || '',
                   description: metadata.description || '',
                   favicon: metadata.favicon || '',
                   isPopularApp: metadata.isPopularApp || false,
                   appName: metadata.appName || '',
                   appLogo: metadata.appLogo || metadata.favicon || '',
-                  platform: link.platform || platform || undefined,
-                  username: link.username || username || undefined,
-                  displayName: link.display_name || displayName || '',
-                  profileImage: link.profile_image_url || '',
-                  content: link.content || '',
-                  caption: link.caption || '',
-                  price: link.price || '',
-                  appStoreUrl: link.app_store_url || '',
-                  playStoreUrl: link.play_store_url || '',
-                  fileUrl: link.file_url || '',
-                  link_type: link.link_type || undefined,
-                  qr_codes: link.qr_codes || undefined
+                  platform: item.platform || platform || undefined,
+                  username: item.username || username || undefined,
+                  displayName: item.display_name || displayName || '',
+                  profileImage: item.profile_image_url || '',
+                  content: item.content || '',
+                  caption: item.caption || '',
+                  price: item.price || '',
+                  appStoreUrl: item.app_store_url || '',
+                  playStoreUrl: item.play_store_url || '',
+                  fileUrl: item.file_url || '',
+                  link_type: item.type === 'qr_code' ? 'qr_code' : (item.link_type || undefined),
+                  // For QR codes, include QR-specific data
+                  qr_codes: item.type === 'qr_code' ? [{
+                    qr_code_data: item.qr_code_data,
+                    format: item.format,
+                    size: item.size,
+                    foreground_color: item.foreground_color,
+                    background_color: item.background_color
+                  }] : undefined
                 },
                 position: widgetPosition,
                 webPosition: webPosition,

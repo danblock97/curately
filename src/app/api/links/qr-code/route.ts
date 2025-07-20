@@ -78,6 +78,26 @@ export const POST = withErrorHandling(withSecurity(async (request: NextRequest) 
   // Sanitize inputs
   const title = sanitizeInput(rawTitle)
   const url = sanitizeUrl(rawUrl)
+  
+  // Ensure we have a page_id - use provided or fallback to user's primary page
+  let finalPageId = pageId
+  if (!finalPageId) {
+    const { data: primaryPage } = await supabase
+      .from('pages')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('is_primary', true)
+      .single()
+    
+    if (!primaryPage) {
+      return NextResponse.json(
+        { error: 'No page found. Please create a page first.' },
+        { status: 400 }
+      )
+    }
+    
+    finalPageId = primaryPage.id
+  }
 
     // Generate unique short code
     let shortCode = generateShortCode()
@@ -128,34 +148,17 @@ export const POST = withErrorHandling(withSecurity(async (request: NextRequest) 
           backgroundColor,
         })
 
-    // Create the link
-    const { data: link, error: linkError } = await supabase
-      .from('links')
-      .insert({
-        user_id: user.id,
-        page_id: pageId,
-        title,
-        url: formatUrl(url),
-        order: count || 0,
-        link_type: 'qr_code',
-        short_code: shortCode,
-        is_active: true,
-      })
-      .select()
-      .single()
-
-    if (linkError) {
-      return NextResponse.json(
-        { error: 'Failed to create QR code link' },
-        { status: 500 }
-      )
-    }
-
-    // Create QR code configuration
-    const { error: qrCodeError } = await supabase
+    // Create QR code directly in qr_codes table (no links table needed)
+    const { data: qrCode, error: qrCodeError } = await supabase
       .from('qr_codes')
       .insert({
-        link_id: link.id,
+        user_id: user.id,
+        page_id: finalPageId,
+        title,
+        url: formatUrl(url),
+        order_index: count || 0,
+        short_code: shortCode,
+        is_active: true,
         qr_code_data: qrCodeData,
         format,
         size,
@@ -163,51 +166,27 @@ export const POST = withErrorHandling(withSecurity(async (request: NextRequest) 
         foreground_color: foregroundColor,
         background_color: backgroundColor,
       })
+      .select()
+      .single()
 
     if (qrCodeError) {
-      // Clean up the link if QR code creation fails
-      await supabase.from('links').delete().eq('id', link.id)
+      console.error('QR Code creation error:', qrCodeError)
       return NextResponse.json(
-        { error: 'Failed to create QR code configuration' },
+        { error: 'Failed to create QR code', details: qrCodeError.message },
         { status: 500 }
       )
     }
 
-    // Create short link entry
-    await supabase
-      .from('short_links')
-      .insert({
-        user_id: user.id,
-        short_code: shortCode,
-        original_url: formatUrl(url),
-        link_type: 'qr_code',
-      })
-
-    // Fetch the complete link with QR code data
-    const { data: completeLink, error: fetchError } = await supabase
-      .from('links')
-      .select(`
-        *,
-        qr_codes (
-          qr_code_data,
-          format,
-          size,
-          foreground_color,
-          background_color
-        )
-      `)
-      .eq('id', link.id)
-      .single()
-
-    if (fetchError) {
+    if (!qrCode) {
+      console.error('QR Code creation returned null data')
       return NextResponse.json(
-        { error: 'Failed to fetch created QR code' },
+        { error: 'QR code creation failed - no data returned' },
         { status: 500 }
       )
     }
 
   const response = createSuccessResponse({
-    link: completeLink,
+    qrCode: qrCode,
     shortUrl,
     shortCode,
     qrCodeData,

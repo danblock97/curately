@@ -82,12 +82,32 @@ export async function GET(
       .from('links')
       .select(`
         *,
-        deeplinks (*),
-        qr_codes (*)
+        deeplinks (*)
       `)
       .eq('short_code', resolvedParams.shortCode)
       .eq('is_active', true)
       .single()
+
+    // If not found in links, check qr_codes table
+    if (!link) {
+      const { data: qrCode } = await supabase
+        .from('qr_codes')
+        .select('*')
+        .eq('short_code', resolvedParams.shortCode)
+        .eq('is_active', true)
+        .single()
+
+      if (qrCode) {
+        // Increment click count for QR code
+        await supabase
+          .from('qr_codes')
+          .update({ clicks: qrCode.clicks + 1 })
+          .eq('id', qrCode.id)
+
+        // Redirect to QR code URL
+        return NextResponse.redirect(qrCode.url)
+      }
+    }
 
     if (link) {
       // Increment click count

@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { AddLinkForm } from './add-link-form'
 import { LinkList } from './link-list'
-import { Plus, Instagram, Youtube, Twitter, Github, Linkedin, Globe, Music, MessageCircle, Phone, Mail, Sparkles, Zap, Link2, TrendingUp, ExternalLink, QrCode, ChevronDown, User } from 'lucide-react'
+import { Plus, Instagram, Youtube, Twitter, Github, Linkedin, Globe, Music, MessageCircle, Phone, Mail, Sparkles, Zap, Link2, TrendingUp, ExternalLink, QrCode, ChevronDown, User, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Database } from '@/lib/supabase/types'
 import { usePlanLimits } from '@/hooks/use-plan-limits'
 import { toast } from 'sonner'
@@ -21,6 +21,7 @@ type Link = Database['public']['Tables']['links']['Row'] & {
 
 interface LinkManagerProps {
   links: Link[]
+  qrCodes: any[]
   userId: string
   profile: Database['public']['Tables']['profiles']['Row']
   pages: Database['public']['Tables']['pages']['Row'][]
@@ -45,8 +46,9 @@ const popularPlatforms: PlatformType[] = [
   { name: 'Website', icon: Globe, color: 'bg-gray-600', url: 'https://', placeholder: 'yourwebsite.com' },
 ]
 
-export function LinkManager({ links: initialLinks, userId, profile, pages }: LinkManagerProps) {
+export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, userId, profile, pages }: LinkManagerProps) {
   const [links, setLinks] = useState<Link[]>([])
+  const [qrCodes, setQrCodes] = useState<any[]>([])
   const [showAddForm, setShowAddForm] = useState(false)
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType | null>(null)
   const [defaultTab, setDefaultTab] = useState<'link_in_bio' | 'deeplink' | 'qr_code'>('link_in_bio')
@@ -54,26 +56,54 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
   const [selectedTimePeriod, setSelectedTimePeriod] = useState('1W')
   const [selectedSort, setSelectedSort] = useState('Most recent')
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
+  const [currentPageNum, setCurrentPageNum] = useState(1)
+  const [itemsPerPage] = useState(10)
   
   // Get the current page (default to primary page)
   const currentPage = selectedPageId 
     ? pages.find(p => p.id === selectedPageId) 
     : pages.find(p => p.is_primary) || pages[0]
   
-  // Filter links for the current page
-  console.log('DEBUG: All links:', links)
-  console.log('DEBUG: Current page ID:', currentPage?.id)
-  console.log('DEBUG: Link page_ids:', links.map(l => ({ title: l.title, page_id: l.page_id })))
-  const pageLinks = links.filter(link => link.page_id === currentPage?.id)
-  console.log('DEBUG: Filtered page links:', pageLinks)
+  // Filter and combine links and QR codes for the current page
+  const pageLinks = links.filter(link => link && link.page_id === currentPage?.id)
+  const pageQrCodes = qrCodes.filter(qr => qr && qr.page_id === currentPage?.id)
   
-  const planUsage = usePlanLimits(links, profile.tier)
+  // Debug logging
+  console.log('DEBUG: Current page ID:', currentPage?.id)
+  console.log('DEBUG: All links:', links)
+  console.log('DEBUG: All QR codes:', qrCodes)
+  console.log('DEBUG: Filtered page links:', pageLinks)
+  console.log('DEBUG: Filtered page QR codes:', pageQrCodes)
+  // Combine and sort by order/created_at for unified display
+  const pageItems = [
+    ...pageLinks.filter(link => link).map(link => ({ ...link, type: 'link' })),
+    ...pageQrCodes.filter(qr => qr).map(qr => ({ ...qr, type: 'qr_code' }))
+  ].sort((a, b) => {
+    const orderA = (a?.order || a?.order_index || 0)
+    const orderB = (b?.order || b?.order_index || 0)
+    return orderA - orderB
+  })
+  
+  // Pagination logic
+  const totalItems = pageItems.length
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
+  const startIndex = (currentPageNum - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedItems = pageItems.slice(startIndex, endIndex)
+  
+  const planUsage = usePlanLimits(links, profile.tier, pages.length, qrCodes)
 
   // Handle hydration and initialize with server data
   useEffect(() => {
     setIsHydrated(true)
     setLinks(initialLinks)
-  }, [initialLinks])
+    setQrCodes(initialQrCodes)
+  }, [initialLinks, initialQrCodes])
+  
+  // Reset pagination when page or items change
+  useEffect(() => {
+    setCurrentPageNum(1)
+  }, [selectedPageId, pageItems.length, links.length, qrCodes.length])
 
   const handleLinkAdded = (newLink: Link) => {
     setLinks(prev => [...prev, newLink])
@@ -128,11 +158,7 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
   }
 
   const handleQRCodeClick = () => {
-    // Check plan limits before allowing QR code creation
-    if (!planUsage.links.canCreate) {
-      toast.error(`You've reached the maximum number of links (${planUsage.links.limit}) for your ${profile.tier} plan.`)
-      return
-    }
+    // Check QR code plan limits before allowing QR code creation
     if (!planUsage.qrCodes.canCreate) {
       toast.error(`You've reached the maximum number of QR codes (${planUsage.qrCodes.limit}) for your ${profile.tier} plan.`)
       return
@@ -143,14 +169,22 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
   }
 
   const totalClicks = useMemo(() => {
-    if (!isHydrated || !Array.isArray(pageLinks) || pageLinks.length === 0) return 0
+    if (!isHydrated) return 0
     
-    return pageLinks.reduce((sum, link) => {
+    const linkClicks = pageLinks.reduce((sum, link) => {
       if (!link || typeof link !== 'object') return sum
       const clicks = typeof link.clicks === 'number' && !isNaN(link.clicks) ? link.clicks : 0
       return sum + clicks
     }, 0)
-  }, [pageLinks, isHydrated])
+    
+    const qrClicks = pageQrCodes.reduce((sum, qr) => {
+      if (!qr || typeof qr !== 'object') return sum
+      const clicks = typeof qr.clicks === 'number' && !isNaN(qr.clicks) ? qr.clicks : 0
+      return sum + clicks
+    }, 0)
+    
+    return linkClicks + qrClicks
+  }, [pageLinks, pageQrCodes, isHydrated])
 
   // Show loading state until hydration is complete
   if (!isHydrated) {
@@ -222,7 +256,7 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
                   Page URL: <span className="font-mono text-blue-600">/{currentPage.username}</span>
                 </span>
                 <span className="text-gray-600">
-                  Links: <span className="font-semibold text-gray-900">{pageLinks.length}</span>
+                  All Items: <span className="font-semibold text-gray-900">{pageItems.length}</span>
                 </span>
               </div>
             </div>
@@ -281,9 +315,9 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
           <h3 className="text-sm font-semibold text-gray-900 mb-2">A QR code that redirects to the app</h3>
           <Button 
             onClick={handleQRCodeClick}
-            disabled={!planUsage.links.canCreate || !planUsage.qrCodes.canCreate}
+            disabled={!planUsage.qrCodes.canCreate}
             className={`text-white text-xs px-4 py-2 h-8 ${
-              (planUsage.links.canCreate && planUsage.qrCodes.canCreate)
+              planUsage.qrCodes.canCreate
                 ? 'bg-gray-900 hover:bg-gray-800' 
                 : 'bg-gray-400 cursor-not-allowed'
             }`}
@@ -455,7 +489,7 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
         {/* Links List */}
         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900">My links</h3>
+            <h3 className="text-sm font-semibold text-gray-900">My Links & QR Codes</h3>
             <div className="flex items-center space-x-1">
               {['Most recent', 'Performance', 'Oldest'].map((sortOption) => (
                 <Button
@@ -474,16 +508,48 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
             </div>
           </div>
           
-          {Array.isArray(pageLinks) && pageLinks.length > 0 ? (
+          {Array.isArray(paginatedItems) && paginatedItems.length > 0 ? (
             <LinkList
-              links={pageLinks}
+              links={paginatedItems}
               onLinkUpdated={handleLinkUpdated}
               onLinkDeleted={handleLinkDeleted}
               onLinksReordered={handleLinksReordered}
             />
           ) : (
             <div className="text-center py-4 text-gray-500">
-              <p className="text-xs">No links yet. Create your first link to get started!</p>
+              <p className="text-xs">No items yet. Create your first link or QR code to get started!</p>
+            </div>
+          )}
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6 px-4">
+              <div className="text-sm text-gray-500">
+                Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} items
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPageNum(prev => Math.max(1, prev - 1))}
+                  disabled={currentPageNum === 1}
+                  className="h-8"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-gray-600">
+                  {currentPageNum} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPageNum(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPageNum === totalPages}
+                  className="h-8"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           )}
         </div>
@@ -522,7 +588,7 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
                   setShowAddForm(false)
                   setSelectedPlatform(null)
                 }}
-                nextOrder={Array.isArray(pageLinks) ? pageLinks.length : 0}
+                nextOrder={Array.isArray(pageItems) ? pageItems.length : 0}
                 selectedPlatform={selectedPlatform}
                 existingLinks={links}
                 pageId={currentPage?.id}
@@ -534,7 +600,7 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
       )}
 
       {/* Empty State Modal for initial setup */}
-      {Array.isArray(links) && links.length === 0 && !showAddForm && (
+      {Array.isArray(links) && Array.isArray(qrCodes) && links.length === 0 && qrCodes.length === 0 && !showAddForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center p-4">
           <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center max-w-2xl shadow-xl">
             <div className="space-y-6">

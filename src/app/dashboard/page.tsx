@@ -26,18 +26,15 @@ export default async function DashboardPage() {
 
   const { data: links } = await supabase
     .from('links')
-    .select(`
-      *,
-      qr_codes (
-        qr_code_data,
-        format,
-        size,
-        foreground_color,
-        background_color
-      )
-    `)
+    .select('*')
     .eq('user_id', user.id)
     .order('order', { ascending: true })
+
+  const { data: qrCodes } = await supabase
+    .from('qr_codes')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('order_index', { ascending: true })
 
   // If no profile exists, show profile setup
   if (!profile) {
@@ -47,7 +44,8 @@ export default async function DashboardPage() {
   return (
     <div className="w-full">
       <LinkManager 
-        links={links || []} 
+        links={(links || []).filter(Boolean)} 
+        qrCodes={(qrCodes || []).filter(Boolean)}
         userId={user.id} 
         profile={profile} 
         pages={pages || []}

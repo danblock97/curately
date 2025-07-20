@@ -71,14 +71,14 @@ export interface PlanUsage {
   }
 }
 
-export function usePlanLimits(links: Link[] = [], currentPlan: UserTier = 'free', pagesCount: number = 1): PlanUsage {
+export function usePlanLimits(links: Link[] = [], currentPlan: UserTier = 'free', pagesCount: number = 1, qrCodes: any[] = []): PlanUsage {
   const limits = useMemo(() => {
     return PLAN_LIMITS[currentPlan] || PLAN_LIMITS.free
   }, [currentPlan])
 
   const usage = useMemo(() => {
-    const linksCount = links.length
-    const qrCodesCount = links.filter(link => link.link_type === 'qr_code').length
+    const qrCodesCount = qrCodes.length
+    const linksCount = links.length // All links are now regular links
 
     return {
       tier: currentPlan,
@@ -120,7 +120,8 @@ export function usePlanLimits(links: Link[] = [], currentPlan: UserTier = 'free'
 export function checkCanCreateLink(
   links: Link[], 
   linkType: 'link_in_bio' | 'deeplink' | 'qr_code' = 'link_in_bio',
-  currentPlan: UserTier = 'free'
+  currentPlan: UserTier = 'free',
+  qrCodes: any[] = []
 ): {
   canCreate: boolean
   reason?: string
@@ -128,8 +129,8 @@ export function checkCanCreateLink(
   current?: number
 } {
   const limits = PLAN_LIMITS[currentPlan] || PLAN_LIMITS.free
-  const linksCount = links.length
-  const qrCodesCount = links.filter(link => link.link_type === 'qr_code').length
+  const qrCodesCount = qrCodes.length
+  const linksCount = links.length // All links are now regular links
   
   const usage = {
     links: {
@@ -146,23 +147,26 @@ export function checkCanCreateLink(
     }
   }
 
-  // Check general link limit
+  // For QR codes, only check QR code specific limit
+  if (linkType === 'qr_code') {
+    if (!usage.qrCodes.canCreate) {
+      return {
+        canCreate: false,
+        reason: `You've reached the maximum number of QR codes (${usage.qrCodes.limit}) for your ${currentPlan} plan.`,
+        limit: usage.qrCodes.limit,
+        current: usage.qrCodes.current
+      }
+    }
+    return { canCreate: true }
+  }
+
+  // For regular links, check general link limit
   if (!usage.links.canCreate) {
     return {
       canCreate: false,
       reason: `You've reached the maximum number of links (${usage.links.limit}) for your ${currentPlan} plan.`,
       limit: usage.links.limit,
       current: usage.links.current
-    }
-  }
-
-  // Check QR code specific limit
-  if (linkType === 'qr_code' && !usage.qrCodes.canCreate) {
-    return {
-      canCreate: false,
-      reason: `You've reached the maximum number of QR codes (${usage.qrCodes.limit}) for your ${currentPlan} plan.`,
-      limit: usage.qrCodes.limit,
-      current: usage.qrCodes.current
     }
   }
 
