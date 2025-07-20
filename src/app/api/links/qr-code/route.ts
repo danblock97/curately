@@ -161,7 +161,8 @@ export const POST = withErrorHandling(withSecurity(async (request: NextRequest) 
         is_active: true,
         qr_code_data: qrCodeData,
         format,
-        size,
+        qr_size: size, // Rename to qr_size for the pixel dimensions
+        size: 'thin', // Default widget size
         error_correction: errorCorrection,
         foreground_color: foregroundColor,
         background_color: backgroundColor,
