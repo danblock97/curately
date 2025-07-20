@@ -1077,9 +1077,19 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
         return
       }
 
-      // Update size in database
+      // Find the widget to determine if it's a QR code or regular link
+      const widget = widgets.find(w => w.id === widgetId)
+      if (!widget) {
+        toast.error('Widget not found')
+        return
+      }
+
+      // Check if this is a QR code widget
+      const isQRCode = widget.data?.link_type === 'qr_code'
+      
+      // Update size in appropriate database table
       const { error } = await supabase
-        .from('links')
+        .from(isQRCode ? 'qr_codes' : 'links')
         .update({ size: newSize })
         .eq('id', widgetId)
         .eq('user_id', profile?.id)
@@ -1090,46 +1100,10 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
         return
       }
 
-      // Fetch the updated widget data from database to ensure we have all fields
-      const { data: updatedWidget, error: fetchError } = await supabase
-        .from('links')
-        .select('*')
-        .eq('id', widgetId)
-        .eq('user_id', profile?.id)
-        .single()
-
-      if (fetchError) {
-        console.error('Error fetching updated widget:', fetchError)
-        // Fallback to simple size update
-        setWidgets(prev => prev.map(widget => 
-          widget.id === widgetId ? { ...widget, size: newSize } : widget
-        ))
-      } else {
-        console.log('Updated widget data from database:', updatedWidget)
-        // Update with complete data from database
-        setWidgets(prev => prev.map(widget => 
-          widget.id === widgetId ? {
-            ...widget,
-            size: newSize,
-            data: {
-              ...widget.data,
-              profileImage: updatedWidget.profile_image_url || widget.data.profileImage,
-              displayName: updatedWidget.display_name || widget.data.displayName,
-              platform: updatedWidget.platform || widget.data.platform,
-              username: updatedWidget.username || widget.data.username,
-              // Ensure all other fields are preserved
-              title: updatedWidget.title || widget.data.title,
-              url: updatedWidget.url || widget.data.url,
-              content: updatedWidget.content || widget.data.content,
-              caption: updatedWidget.caption || widget.data.caption,
-              price: updatedWidget.price || widget.data.price,
-              appStoreUrl: updatedWidget.app_store_url || widget.data.appStoreUrl,
-              playStoreUrl: updatedWidget.play_store_url || widget.data.playStoreUrl,
-              fileUrl: updatedWidget.file_url || widget.data.fileUrl
-            }
-          } : widget
-        ))
-      }
+      // Update widget state with new size
+      setWidgets(prev => prev.map(w => 
+        w.id === widgetId ? { ...w, size: newSize } : w
+      ))
 
       setShowResizeMenu(null)
       toast.success('Widget size updated')
@@ -1481,11 +1455,31 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
         if (widget.data.link_type === 'qr_code' && widget.data.qr_codes && widget.data.qr_codes[0]) {
           const qrData = widget.data.qr_codes[0]
           
+          // Get QR code size based on widget size and view - make it fill most of the space
+          const getQRSize = () => {
+            if (effectiveSize === 'thin') {
+              return activeView === 'mobile' ? 'w-10 h-10' : 'w-12 h-12'
+            }
+            
+            switch (effectiveSize) {
+              case 'small-square':
+                return activeView === 'mobile' ? 'w-20 h-20' : 'w-28 h-28'
+              case 'medium-square':
+                return activeView === 'mobile' ? 'w-32 h-32' : 'w-44 h-44'
+              case 'large-square':
+                return activeView === 'mobile' ? 'w-40 h-40' : 'w-56 h-56'
+              default:
+                return activeView === 'mobile' ? 'w-20 h-20' : 'w-28 h-28'
+            }
+          }
+          
+          const qrSizeClass = getQRSize()
+          
           // Different layouts based on effective size
           if (effectiveSize === 'thin') {
             return (
               <div className="flex items-center h-full space-x-3 px-3">
-                <div className="w-8 h-8 bg-white border border-gray-300 rounded-lg p-1 flex-shrink-0">
+                <div className={`${qrSizeClass} bg-white border border-gray-300 rounded-lg p-1 flex-shrink-0`}>
                   {qrData.format === 'SVG' ? (
                     <div 
                       className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
@@ -1511,35 +1505,35 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
             )
           }
           
-          // Square layouts - show QR code prominently
+          // Square layouts - match exact social widget styling
           return (
-            <div className="flex flex-col items-center justify-center h-full p-4 space-y-3">
-              <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+            <div className={`relative h-full w-full overflow-hidden ${
+              activeView === 'mobile' ? 'rounded-lg' : 'rounded-xl'
+            }`}>
+              {/* QR Code with white background */}
+              <div className="absolute inset-0 bg-white flex items-center justify-center">
                 {qrData.format === 'SVG' ? (
                   <div 
-                    className={`${
-                      effectiveSize === 'small-square' ? 'w-20 h-20' : 
-                      effectiveSize === 'medium-square' ? 'w-28 h-28' : 'w-36 h-36'
-                    } [&>svg]:w-full [&>svg]:h-full`}
+                    className={`${qrSizeClass} [&>svg]:w-full [&>svg]:h-full`}
                     dangerouslySetInnerHTML={{ __html: qrData.qr_code_data }}
                   />
                 ) : (
                   <img 
                     src={qrData.qr_code_data}
                     alt={`QR Code for ${widget.data.title}`}
-                    className={`${
-                      effectiveSize === 'small-square' ? 'w-20 h-20' : 
-                      effectiveSize === 'medium-square' ? 'w-28 h-28' : 'w-36 h-36'
-                    } object-contain`}
+                    className={`${qrSizeClass} object-contain`}
                   />
                 )}
               </div>
-              <div className="text-center">
-                <div className="font-medium text-gray-900 text-sm truncate max-w-full">
+              
+              {/* Text overlay - compact and positioned to minimize QR code coverage */}
+              <div className={`absolute z-10 ${
+                activeView === 'mobile' ? 'bottom-1 left-1 right-1' : 'bottom-1 left-1 right-1'
+              }`}>
+                <div className={`${
+                  activeView === 'mobile' ? 'text-xs' : 'text-xs'
+                } font-medium text-black bg-white/90 px-1.5 py-0.5 rounded text-center truncate`}>
                   {widget.data.title || 'QR Code'}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Scan with camera
                 </div>
               </div>
             </div>
