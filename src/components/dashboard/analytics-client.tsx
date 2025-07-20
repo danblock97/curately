@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ExternalLink, TrendingUp, MousePointer, Eye, Calendar, BarChart3, Globe, Smartphone, QrCode, Download } from 'lucide-react'
+import { ExternalLink, TrendingUp, MousePointer, Eye, Calendar, BarChart3, Globe, Smartphone, QrCode, ChevronDown } from 'lucide-react'
 import { Database } from '@/lib/supabase/types'
 import { toast } from 'sonner'
 
@@ -20,11 +20,24 @@ type Link = Database['public']['Tables']['links']['Row'] & {
 
 interface AnalyticsClientProps {
   links: Link[]
+  profile: any
 }
 
-export function AnalyticsClient({ links }: AnalyticsClientProps) {
-  const [selectedTimePeriod, setSelectedTimePeriod] = useState('Last 30 days')
+export function AnalyticsClient({ links, profile }: AnalyticsClientProps) {
   const [selectedChartPeriod, setSelectedChartPeriod] = useState('7D')
+  const [showTimePeriodDropdown, setShowTimePeriodDropdown] = useState(false)
+
+  const timePeriods = profile?.tier === 'pro' 
+    ? ['Last 7 days', 'Last 30 days', 'Last 90 days', 'All time']
+    : ['Last 7 days', 'Last 30 days']
+  
+  // Ensure free users can only see 30 days max
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState(() => {
+    if (profile?.tier === 'free' || !profile?.tier) {
+      return 'Last 30 days'
+    }
+    return 'Last 30 days'
+  })
 
   const totalClicks = links?.reduce((sum, link) => sum + link.clicks, 0) || 0
   const activeLinks = links?.filter(link => link.is_active).length || 0
@@ -35,14 +48,15 @@ export function AnalyticsClient({ links }: AnalyticsClientProps) {
   const avgClicksPerLink = totalClicks > 0 && activeLinks > 0 ? Math.round(totalClicks / activeLinks) : 0
 
   const handleTimePeriodChange = (period: string) => {
+    // Check if user has access to this time period
+    if (profile?.tier !== 'pro' && (period === 'Last 90 days' || period === 'All time')) {
+      toast.error('Upgrade to Pro to access longer time periods')
+      return
+    }
     setSelectedTimePeriod(period)
     toast.success(`Viewing analytics for ${period}`)
   }
 
-  const handleExportData = () => {
-    toast.success('Analytics data exported successfully!')
-    // Here you would implement actual export functionality
-  }
 
   const handleChartPeriodChange = (period: string) => {
     setSelectedChartPeriod(period)
@@ -91,29 +105,40 @@ export function AnalyticsClient({ links }: AnalyticsClientProps) {
             Comprehensive insights into your link performance and audience engagement
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 relative">
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => handleTimePeriodChange('Last 30 days')}
-            className={`${
-              selectedTimePeriod === 'Last 30 days'
-                ? 'bg-gray-900 text-white hover:bg-gray-800'
-                : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-50'
-            }`}
+            onClick={() => setShowTimePeriodDropdown(!showTimePeriodDropdown)}
+            className="bg-gray-900 text-white hover:bg-gray-800"
           >
             <Calendar className="w-4 h-4 mr-2" />
             {selectedTimePeriod}
+            <ChevronDown className="w-4 h-4 ml-2" />
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleExportData}
-            className="bg-white border border-gray-300 text-gray-600 hover:bg-gray-50"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export Data
-          </Button>
+          
+          {showTimePeriodDropdown && (
+            <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+              <div className="py-1">
+                {timePeriods.map((period) => (
+                  <button
+                    key={period}
+                    onClick={() => {
+                      handleTimePeriodChange(period)
+                      setShowTimePeriodDropdown(false)
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                      selectedTimePeriod === period 
+                        ? 'bg-gray-100 text-gray-900 font-medium' 
+                        : 'text-gray-700'
+                    }`}
+                  >
+                    {period}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

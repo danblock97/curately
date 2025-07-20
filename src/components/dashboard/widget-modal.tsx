@@ -260,7 +260,8 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links }
                 <div>
                   <h3 className="font-medium text-gray-900 mb-3">Your Existing Links</h3>
                   <div className="grid grid-cols-1 gap-3">
-                    {links.map((link) => (
+                    {/* Active Links */}
+                    {links.filter(link => link.is_active).map((link) => (
                       <Card
                         key={link.id}
                         className="cursor-pointer bg-white hover:bg-gray-50 transition-colors border border-gray-200"
@@ -310,6 +311,54 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links }
                         </CardContent>
                       </Card>
                     ))}
+                    
+                    {/* Inactive Links */}
+                    {links.filter(link => !link.is_active).length > 0 && (
+                      <>
+                        <div className="mt-4">
+                          <h4 className="text-sm font-medium text-gray-600 mb-2">Inactive Links</h4>
+                          <p className="text-xs text-gray-500 mb-3">These links are currently inactive and cannot be added to your page.</p>
+                        </div>
+                        {links.filter(link => !link.is_active).map((link) => (
+                          <Card
+                            key={link.id}
+                            className="cursor-not-allowed bg-gray-50 border border-gray-200 opacity-60"
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <div className={`w-8 h-8 rounded flex items-center justify-center ${
+                                    link.link_type === 'qr_code' ? 'bg-gray-400' : 
+                                    link.link_type === 'deeplink' ? 'bg-gray-400' : 'bg-gray-400'
+                                  }`}>
+                                    {link.link_type === 'qr_code' ? (
+                                      <Package className="w-4 h-4 text-white" />
+                                    ) : (
+                                      <Link className="w-4 h-4 text-white" />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-gray-600">{link.title || 'Untitled Link'}</div>
+                                    <div className="text-sm text-gray-400">
+                                      {link.link_type === 'qr_code' ? 'QR Code' : 
+                                       link.link_type === 'deeplink' ? 'Deep Link' : 'Link'} - Inactive
+                                    </div>
+                                  </div>
+                                </div>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  disabled
+                                  className="bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                >
+                                  Inactive
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </>
+                    )}
                   </div>
                 </div>
               )}

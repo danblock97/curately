@@ -11,6 +11,12 @@ export default async function AnalyticsPage() {
     redirect('/auth')
   }
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+
   const { data: links } = await supabase
     .from('links')
     .select(`
@@ -26,5 +32,5 @@ export default async function AnalyticsPage() {
     .eq('user_id', user.id)
     .order('clicks', { ascending: false })
 
-  return <AnalyticsClient links={links || []} />
+  return <AnalyticsClient links={links || []} profile={profile} />
 }

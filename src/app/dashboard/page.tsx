@@ -14,9 +14,15 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, tier, display_name, bio, avatar_url, created_at, updated_at')
     .eq('id', user.id)
     .single()
+
+  const { data: pages } = await supabase
+    .from('pages')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('is_primary', { ascending: false })
 
   const { data: links } = await supabase
     .from('links')
@@ -40,7 +46,12 @@ export default async function DashboardPage() {
 
   return (
     <div className="w-full">
-      <LinkManager links={links || []} userId={user.id} profile={profile} />
+      <LinkManager 
+        links={links || []} 
+        userId={user.id} 
+        profile={profile} 
+        pages={pages || []}
+      />
     </div>
   )
 }

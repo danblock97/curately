@@ -17,6 +17,12 @@ export default async function SettingsPage() {
     .eq('id', user.id)
     .single()
 
+  const { data: pages } = await supabase
+    .from('pages')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('is_primary', { ascending: false })
+
   if (!profile) {
     redirect('/dashboard')
   }
@@ -32,7 +38,7 @@ export default async function SettingsPage() {
         </div>
       </div>
       
-      <SettingsForm user={user} profile={profile} />
+      <SettingsForm user={user} profile={profile} pages={pages || []} />
     </div>
   )
 }

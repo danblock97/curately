@@ -8,15 +8,19 @@ import { LogOut, ExternalLink } from 'lucide-react'
 import { Database } from '@/lib/supabase/types'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
+type Page = Database['public']['Tables']['pages']['Row']
 
 interface DashboardHeaderProps {
   user: User
   profile: Profile | null
+  primaryPage?: Page | null
 }
 
-export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
+export function DashboardHeader({ user, profile, primaryPage }: DashboardHeaderProps) {
   const router = useRouter()
   const supabase = createClient()
+  
+  console.log('DashboardHeader rendering with:', { user: user?.email, profile: profile?.id, primaryPage: primaryPage?.id })
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -28,16 +32,16 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <h1 className="text-2xl font-bold text-gray-900">Curately</h1>
-          {profile && profile.username && (
+          {primaryPage && primaryPage.username && (
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Your page:</span>
               <a
-                href={`/${profile.username}`}
+                href={`/${primaryPage.username}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-blue-600 hover:text-blue-700 flex items-center space-x-1"
               >
-                <span>curately.co.uk/{profile.username}</span>
+                <span>curately.co.uk/{primaryPage.username}</span>
                 <ExternalLink className="w-3 h-3" />
               </a>
             </div>

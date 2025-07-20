@@ -13,9 +13,15 @@ export default async function AppearancePage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, tier, display_name, bio, avatar_url, created_at, updated_at')
     .eq('id', user.id)
     .single()
+
+  const { data: pages } = await supabase
+    .from('pages')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('is_primary', { ascending: false })
 
   const { data: socialLinks } = await supabase
     .from('social_media_links')
@@ -46,6 +52,7 @@ export default async function AppearancePage() {
       profile={profile} 
       socialLinks={socialLinks || []} 
       links={links || []}
+      pages={pages || []}
     />
   )
 }

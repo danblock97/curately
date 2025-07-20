@@ -3,14 +3,16 @@
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { Link as LinkIcon, Palette, Settings, BarChart3 } from 'lucide-react'
+import { Link as LinkIcon, Palette, Settings, BarChart3, Globe } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Database } from '@/lib/supabase/types'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
+type Page = Database['public']['Tables']['pages']['Row']
 
 const navigation = [
   { name: 'Links', href: '/dashboard', icon: LinkIcon, color: 'text-blue-600' },
+  { name: 'Pages', href: '/dashboard/pages', icon: Globe, color: 'text-indigo-600' },
   { name: 'Appearance', href: '/dashboard/appearance', icon: Palette, color: 'text-purple-600' },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, color: 'text-green-600' },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings, color: 'text-gray-600' },
@@ -18,10 +20,13 @@ const navigation = [
 
 interface DashboardSidebarProps {
   profile: Profile | null
+  primaryPage?: Page | null
 }
 
-export function DashboardSidebar({ profile }: DashboardSidebarProps) {
+export function DashboardSidebar({ profile, primaryPage }: DashboardSidebarProps) {
   const pathname = usePathname()
+  
+  console.log('DashboardSidebar rendering with:', { profile: profile?.id, primaryPage: primaryPage?.id })
 
   const getInitials = (name: string) => {
     return name
@@ -41,18 +46,18 @@ export function DashboardSidebar({ profile }: DashboardSidebarProps) {
             <Avatar className="w-10 h-10">
               <AvatarImage 
                 src={profile.avatar_url || ''} 
-                alt={profile.display_name || profile.username} 
+                alt={profile.display_name || 'User'} 
               />
               <AvatarFallback className="bg-gray-100 text-gray-600 font-medium">
                 {profile.display_name 
                   ? getInitials(profile.display_name)
-                  : profile.username.charAt(0).toUpperCase()
+                  : 'U'
                 }
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
-                {profile.display_name || profile.username}
+                {profile.display_name || 'User'}
               </p>
               <div className="flex items-center space-x-2">
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${

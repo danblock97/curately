@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { AddLinkForm } from './add-link-form'
 import { LinkList } from './link-list'
-import { Plus, Instagram, Youtube, Twitter, Github, Linkedin, Globe, Music, MessageCircle, Phone, Mail, Sparkles, Zap, Link2, TrendingUp, ExternalLink, QrCode } from 'lucide-react'
+import { Plus, Instagram, Youtube, Twitter, Github, Linkedin, Globe, Music, MessageCircle, Phone, Mail, Sparkles, Zap, Link2, TrendingUp, ExternalLink, QrCode, ChevronDown, User } from 'lucide-react'
 import { Database } from '@/lib/supabase/types'
 import { usePlanLimits } from '@/hooks/use-plan-limits'
 
@@ -22,6 +22,7 @@ interface LinkManagerProps {
   links: Link[]
   userId: string
   profile: Database['public']['Tables']['profiles']['Row']
+  pages: Database['public']['Tables']['pages']['Row'][]
 }
 
 interface PlatformType {
@@ -43,13 +44,24 @@ const popularPlatforms: PlatformType[] = [
   { name: 'Website', icon: Globe, color: 'bg-gray-600', url: 'https://', placeholder: 'yourwebsite.com' },
 ]
 
-export function LinkManager({ links: initialLinks, userId, profile }: LinkManagerProps) {
+export function LinkManager({ links: initialLinks, userId, profile, pages }: LinkManagerProps) {
   const [links, setLinks] = useState<Link[]>([])
   const [showAddForm, setShowAddForm] = useState(false)
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType | null>(null)
+  const [defaultTab, setDefaultTab] = useState<'link_in_bio' | 'deeplink' | 'qr_code'>('link_in_bio')
   const [isHydrated, setIsHydrated] = useState(false)
   const [selectedTimePeriod, setSelectedTimePeriod] = useState('1W')
   const [selectedSort, setSelectedSort] = useState('Most recent')
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
+  
+  // Get the current page (default to primary page)
+  const currentPage = selectedPageId 
+    ? pages.find(p => p.id === selectedPageId) 
+    : pages.find(p => p.is_primary) || pages[0]
+  
+  // Filter links for the current page
+  const pageLinks = links.filter(link => link.page_id === currentPage?.id)
+  
   const planUsage = usePlanLimits(links, profile.tier)
 
   // Handle hydration and initialize with server data
@@ -85,18 +97,31 @@ export function LinkManager({ links: initialLinks, userId, profile }: LinkManage
 
   const handleCustomLinkClick = () => {
     setSelectedPlatform(null)
+    setDefaultTab('link_in_bio')
+    setShowAddForm(true)
+  }
+
+  const handleDeeplinkClick = () => {
+    setSelectedPlatform(null)
+    setDefaultTab('deeplink')
+    setShowAddForm(true)
+  }
+
+  const handleQRCodeClick = () => {
+    setSelectedPlatform(null)
+    setDefaultTab('qr_code')
     setShowAddForm(true)
   }
 
   const totalClicks = useMemo(() => {
-    if (!isHydrated || !Array.isArray(links) || links.length === 0) return 0
+    if (!isHydrated || !Array.isArray(pageLinks) || pageLinks.length === 0) return 0
     
-    return links.reduce((sum, link) => {
+    return pageLinks.reduce((sum, link) => {
       if (!link || typeof link !== 'object') return sum
       const clicks = typeof link.clicks === 'number' && !isNaN(link.clicks) ? link.clicks : 0
       return sum + clicks
     }, 0)
-  }, [links, isHydrated])
+  }, [pageLinks, isHydrated])
 
   // Show loading state until hydration is complete
   if (!isHydrated) {
@@ -138,6 +163,44 @@ export function LinkManager({ links: initialLinks, userId, profile }: LinkManage
   return (
     <>
     <div className="space-y-6">
+      {/* Page Switcher */}
+      {pages.length > 1 && (
+        <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <User className="w-5 h-5 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">Current Page:</span>
+            </div>
+            <div className="relative">
+              <select
+                value={currentPage?.id || ''}
+                onChange={(e) => setSelectedPageId(e.target.value || null)}
+                className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {pages.map((page) => (
+                  <option key={page.id} value={page.id}>
+                    {page.display_name || page.username} {page.is_primary ? '(Primary)' : ''}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            </div>
+          </div>
+          {currentPage && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">
+                  Page URL: <span className="font-mono text-blue-600">/{currentPage.username}</span>
+                </span>
+                <span className="text-gray-600">
+                  Links: <span className="font-semibold text-gray-900">{pageLinks.length}</span>
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Quick Actions Cards at Top */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
@@ -151,7 +214,7 @@ export function LinkManager({ links: initialLinks, userId, profile }: LinkManage
             onClick={handleCustomLinkClick}
             className="bg-gray-900 hover:bg-gray-800 text-white text-xs px-4 py-2 h-8"
           >
-            Create a link in bio
+            Add a link
           </Button>
         </div>
 
@@ -163,7 +226,7 @@ export function LinkManager({ links: initialLinks, userId, profile }: LinkManage
           </div>
           <h3 className="text-sm font-semibold text-gray-900 mb-2">Redirect your visitors to the app</h3>
           <Button 
-            onClick={handleCustomLinkClick}
+            onClick={handleDeeplinkClick}
             className="bg-gray-900 hover:bg-gray-800 text-white text-xs px-4 py-2 h-8"
           >
             Create a deeplink
@@ -178,10 +241,10 @@ export function LinkManager({ links: initialLinks, userId, profile }: LinkManage
           </div>
           <h3 className="text-sm font-semibold text-gray-900 mb-2">A QR code that redirects to the app</h3>
           <Button 
-            onClick={handleCustomLinkClick}
+            onClick={handleQRCodeClick}
             className="bg-gray-900 hover:bg-gray-800 text-white text-xs px-4 py-2 h-8"
           >
-            Create a onelink
+            Create a QR Code
           </Button>
         </div>
 
@@ -367,9 +430,9 @@ export function LinkManager({ links: initialLinks, userId, profile }: LinkManage
             </div>
           </div>
           
-          {Array.isArray(links) && links.length > 0 ? (
+          {Array.isArray(pageLinks) && pageLinks.length > 0 ? (
             <LinkList
-              links={links}
+              links={pageLinks}
               onLinkUpdated={handleLinkUpdated}
               onLinkDeleted={handleLinkDeleted}
               onLinksReordered={handleLinksReordered}
@@ -416,9 +479,11 @@ export function LinkManager({ links: initialLinks, userId, profile }: LinkManage
                   setShowAddForm(false)
                   setSelectedPlatform(null)
                 }}
-                nextOrder={Array.isArray(links) ? links.length : 0}
+                nextOrder={Array.isArray(pageLinks) ? pageLinks.length : 0}
                 selectedPlatform={selectedPlatform}
-                existingLinks={links}
+                existingLinks={pageLinks}
+                pageId={currentPage?.id}
+                defaultTab={defaultTab}
               />
             </div>
           </div>

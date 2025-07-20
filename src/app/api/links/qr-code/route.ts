@@ -72,6 +72,7 @@ export const POST = withErrorHandling(withSecurity(async (request: NextRequest, 
     foregroundColor = '#000000',
     backgroundColor = '#FFFFFF',
     format = 'PNG',
+    pageId,
   } = validation.data
 
   // Sanitize inputs
@@ -132,6 +133,7 @@ export const POST = withErrorHandling(withSecurity(async (request: NextRequest, 
       .from('links')
       .insert({
         user_id: user.id,
+        page_id: pageId,
         title,
         url: formatUrl(url),
         order: count || 0,

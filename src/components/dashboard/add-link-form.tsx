@@ -33,10 +33,12 @@ interface AddLinkFormProps {
   nextOrder: number
   selectedPlatform?: PlatformType | null
   existingLinks?: Link[]
+  defaultTab?: 'link_in_bio' | 'deeplink' | 'qr_code'
+  pageId?: string
 }
 
-export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selectedPlatform, existingLinks = [] }: AddLinkFormProps) {
-  const [activeTab, setActiveTab] = useState('link_in_bio')
+export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selectedPlatform, existingLinks = [], defaultTab = 'link_in_bio', pageId }: AddLinkFormProps) {
+  const [activeTab, setActiveTab] = useState(defaultTab)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   
@@ -102,6 +104,7 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
         .from('links')
         .insert({
           user_id: userId,
+          page_id: pageId,
           title: title.trim(),
           url: validUrl,
           order: nextOrder,
@@ -151,6 +154,7 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
           androidUrl: androidUrl.trim() || undefined,
           desktopUrl: desktopUrl.trim() || undefined,
           fallbackUrl: fallbackUrl.trim() || undefined,
+          pageId: pageId,
         }),
       })
 
@@ -198,6 +202,7 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
           errorCorrection: qrErrorCorrection,
           foregroundColor: qrForeground,
           backgroundColor: qrBackground,
+          pageId: pageId,
         }),
       })
 

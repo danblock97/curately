@@ -18,6 +18,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+type Page = Database["public"]["Tables"]["pages"]["Row"];
 type Link = Database["public"]["Tables"]["links"]["Row"] & {
 	qr_codes?: {
 		qr_code_data: string;
@@ -30,6 +31,7 @@ type Link = Database["public"]["Tables"]["links"]["Row"] & {
 type SocialLink = Database["public"]["Tables"]["social_media_links"]["Row"];
 
 interface ProfilePageProps {
+	page: Page;
 	profile: Profile;
 	links: Link[];
 	socialLinks: SocialLink[];
@@ -79,7 +81,7 @@ export interface Widget {
 	mobilePosition: { x: number; y: number };
 }
 
-export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
+export function ProfilePage({ page, profile, links, socialLinks }: ProfilePageProps) {
 	const supabase = createClient();
 	const [widgets, setWidgets] = useState<Widget[]>([]);
 	const [isLoadingWidgets, setIsLoadingWidgets] = useState(true);
@@ -1339,7 +1341,7 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 	}
 
 	return (
-		<div className="min-h-screen" style={{ backgroundColor: profile.background_color || '#ffffff' }}>
+		<div className="min-h-screen" style={{ backgroundColor: page.background_color || '#ffffff' }}>
 			{/* Main Content */}
 			<div className={`${isMobile ? 'flex flex-col' : 'flex'} min-h-screen`}>
 				{/* Profile Section */}
@@ -1352,13 +1354,13 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 									isMobile ? 'w-24 h-24' : 'w-36 h-36'
 								} mx-auto mb-4 ring-4 ring-white shadow-2xl`}>
 									<AvatarImage
-										src={profile.avatar_url || ""}
-										alt={profile.display_name || profile.username}
+										src={page.profiles?.avatar_url || ""}
+										alt={page.profiles?.display_name || page.page_title}
 									/>
 									<AvatarFallback className={`${
 										isMobile ? 'text-2xl' : 'text-4xl'
 									} bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold`}>
-										{(profile.display_name || profile.username)
+										{(page.profiles?.display_name || page.page_title || page.username)
 											.charAt(0)
 											.toUpperCase()}
 									</AvatarFallback>
@@ -1368,14 +1370,14 @@ export function ProfilePage({ profile, links, socialLinks }: ProfilePageProps) {
 							<h1 className={`${
 								isMobile ? 'text-2xl' : 'text-4xl'
 							} font-black mb-3 !text-gray-900`}>
-								{profile.display_name || profile.username}
+								{page.page_title || page.profiles?.display_name || page.username}
 							</h1>
 
-							{profile.bio && (
+							{page.profiles?.bio && (
 								<p className={`${
 									isMobile ? 'text-base' : 'text-lg'
 								} !text-gray-700 font-medium mb-6 leading-relaxed max-w-md mx-auto`}>
-									{profile.bio}
+									{page.profiles.bio}
 								</p>
 							)}
 						</div>

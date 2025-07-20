@@ -71,7 +71,7 @@ export interface PlanUsage {
   }
 }
 
-export function usePlanLimits(links: Link[] = [], currentPlan: UserTier = 'free'): PlanUsage {
+export function usePlanLimits(links: Link[] = [], currentPlan: UserTier = 'free', pagesCount: number = 1): PlanUsage {
   const limits = useMemo(() => {
     return PLAN_LIMITS[currentPlan] || PLAN_LIMITS.free
   }, [currentPlan])
@@ -79,7 +79,6 @@ export function usePlanLimits(links: Link[] = [], currentPlan: UserTier = 'free'
   const usage = useMemo(() => {
     const linksCount = links.length
     const qrCodesCount = links.filter(link => link.link_type === 'qr_code').length
-    const pagesCount = 1 // Assuming each user has 1 page for now
 
     return {
       tier: currentPlan,
@@ -113,7 +112,7 @@ export function usePlanLimits(links: Link[] = [], currentPlan: UserTier = 'free'
         prioritySupport: limits.prioritySupport
       }
     }
-  }, [links, limits, currentPlan])
+  }, [links, limits, currentPlan, pagesCount])
 
   return usage
 }

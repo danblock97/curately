@@ -45,6 +45,7 @@ export const POST = withErrorHandling(withSecurity(async (request: NextRequest, 
     androidUrl: rawAndroidUrl,
     desktopUrl: rawDesktopUrl,
     fallbackUrl: rawFallbackUrl,
+    pageId,
   } = validation.data
 
   // Sanitize all inputs
@@ -106,6 +107,7 @@ export const POST = withErrorHandling(withSecurity(async (request: NextRequest, 
       .from('links')
       .insert({
         user_id: user.id,
+        page_id: pageId,
         title,
         url: formatUrl(originalUrl),
         order: count || 0,

@@ -15,17 +15,22 @@ import { Database } from '@/lib/supabase/types'
 import { ExternalLink, Github, AlertTriangle, User as UserIcon, Shield, Bell, Palette, Link2, BarChart3, Globe } from 'lucide-react'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
+type Page = Database['public']['Tables']['pages']['Row']
 
 interface SettingsFormProps {
   user: User
   profile: Profile
+  pages: Page[]
 }
 
-export function SettingsForm({ user, profile }: SettingsFormProps) {
-  const [username, setUsername] = useState(profile.username)
+export function SettingsForm({ user, profile, pages }: SettingsFormProps) {
+  // Get current page (primary page)
+  const currentPage = pages.find(p => p.is_primary) || pages[0]
+  
+  const [username, setUsername] = useState(currentPage?.username || '')
   const [displayName, setDisplayName] = useState(profile.display_name || '')
   const [bio, setBio] = useState(profile.bio || '')
-  const [backgroundColor, setBackgroundColor] = useState(profile.background_color || '#ffffff')
+  const [backgroundColor, setBackgroundColor] = useState(currentPage?.background_color || '#ffffff')
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
   const [isUpdatingUsername, setIsUpdatingUsername] = useState(false)
   const [isUpdatingBackgroundColor, setIsUpdatingBackgroundColor] = useState(false)
@@ -95,9 +100,9 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
 
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from('pages')
         .update({ background_color: color })
-        .eq('id', profile.id)
+        .eq('id', currentPage?.id)
 
       if (error) {
         toast.error('Error updating background color. Please try again.')

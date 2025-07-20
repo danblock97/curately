@@ -34,11 +34,13 @@ import { usePlanLimits, checkCanCreateLink } from '@/hooks/use-plan-limits'
 type Profile = Database['public']['Tables']['profiles']['Row']
 type SocialLink = Database['public']['Tables']['social_media_links']['Row']
 type Link = Database['public']['Tables']['links']['Row']
+type Page = Database['public']['Tables']['pages']['Row']
 
 interface AppearanceCustomizerProps {
   profile: Profile
   socialLinks: SocialLink[]
   links: Link[]
+  pages: Page[]
 }
 
 export interface Widget {
@@ -81,7 +83,7 @@ const sizeOptions = [
 
 // Mobile widgets are always small squares - no size options needed
 
-export function AppearanceCustomizer({ profile, socialLinks, links }: AppearanceCustomizerProps) {
+export function AppearanceCustomizer({ profile, socialLinks, links, pages }: AppearanceCustomizerProps) {
   const [activeView, setActiveView] = useState<'web' | 'mobile'>('web')
   const [showWidgetModal, setShowWidgetModal] = useState(false)
   const [widgets, setWidgets] = useState<Widget[]>([])
@@ -92,14 +94,15 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
   const [showResizeMenu, setShowResizeMenu] = useState<string | null>(null)
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
-  const [backgroundColor, setBackgroundColor] = useState(profile.background_color || '#ffffff')
+  const [currentPage, setCurrentPage] = useState<Page | null>(null)
+  const [backgroundColor, setBackgroundColor] = useState('#ffffff')
   const [showBackgroundPicker, setShowBackgroundPicker] = useState(false)
   
   // Plan limits
   const planUsage = usePlanLimits(links, profile.tier)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isUpdatingBackgroundColor, setIsUpdatingBackgroundColor] = useState(false)
-  const [isLoadingWidgets, setIsLoadingWidgets] = useState(true)
+  const [isLoadingWidgets, setIsLoadingWidgets] = useState(false)
   const [isHydrated, setIsHydrated] = useState(false)
   const [showLinkDialog, setShowLinkDialog] = useState(false)
   const [showImageDialog, setShowImageDialog] = useState(false)
@@ -116,15 +119,39 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
   // Handle hydration and initialize profile data
   useEffect(() => {
     setIsHydrated(true)
-    setDisplayName(profile?.display_name || profile?.username || '')
+    setDisplayName(profile?.display_name || '')
     setBio(profile?.bio || '')
-  }, [])
+    
+    // Initialize current page and background color
+    const initialPage = pages?.find(p => p.is_primary) || pages?.[0] || null
+    setCurrentPage(initialPage)
+    setBackgroundColor(initialPage?.background_color || '#ffffff')
+  }, [profile, pages])
+
+  // Update background color when current page changes
+  useEffect(() => {
+    if (currentPage?.background_color) {
+      setBackgroundColor(currentPage.background_color)
+    }
+  }, [currentPage?.id, currentPage?.background_color])
 
   // Load existing widgets from database on component mount
   useEffect(() => {
     const loadWidgets = async () => {
+      // Prevent multiple concurrent loads
+      if (isLoadingWidgets) {
+        console.log('Already loading widgets, skipping...')
+        return
+      }
+      
+      if (!profile?.id) {
+        console.log('No profile ID, skipping widget load')
+        return
+      }
+      
       try {
         setIsLoadingWidgets(true)
+        console.log('Loading widgets for page:', currentPage?.id, 'with', links?.length, 'links')
         // Load links that can be converted to widgets
         const { data: linksData, error: linksError } = await supabase
           .from('links')
@@ -353,7 +380,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
       // If no profile, just finish loading
       setIsLoadingWidgets(false)
     }
-  }, [profile?.id, supabase])
+  }, [links?.length, currentPage?.id, profile?.id])
 
   const fetchLinkMetadata = async (url: string) => {
     try {
@@ -776,11 +803,15 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
     setIsUpdatingBackgroundColor(true)
 
     try {
-      console.log('Updating background color:', { color, profileId: profile?.id })
+      if (!currentPage) {
+        toast.error('No page selected')
+        return
+      }
+      console.log('Updating background color:', { color, pageId: currentPage.id })
       const { data, error } = await supabase
-        .from('profiles')
+        .from('pages')
         .update({ background_color: color })
-        .eq('id', profile?.id)
+        .eq('id', currentPage.id)
         .select()
 
       if (error) {
@@ -791,6 +822,10 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
 
       console.log('Background color update result:', data)
       setBackgroundColor(color)
+      // Update current page state with new background color
+      if (data && data[0]) {
+        setCurrentPage(data[0])
+      }
       toast.success('Background color updated successfully!')
     } catch (error) {
       console.error('Caught error in background color update:', error)
@@ -2484,7 +2519,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
                   </Label>
                   <div 
                     className="w-full h-24 rounded-xl border-2 border-gray-200 flex items-center justify-center relative overflow-hidden shadow-inner"
-                    style={{ backgroundColor: backgroundColor }}
+                    style={{ backgroundColor: backgroundColor || '#ffffff' }}
                   >
                     <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-gray-200">
                       <span className="text-sm text-gray-900 font-medium">Your Page Background</span>
@@ -2500,7 +2535,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links }: Appearance
               <div className="flex items-center space-x-3 pt-2">
                 <Button
                   onClick={() => handleBackgroundColorUpdate(backgroundColor)}
-                  disabled={isUpdatingBackgroundColor || backgroundColor === profile.background_color}
+                  disabled={isUpdatingBackgroundColor || backgroundColor === currentPage?.background_color}
                   className="flex-1 h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
                 >
                   {isUpdatingBackgroundColor ? (
