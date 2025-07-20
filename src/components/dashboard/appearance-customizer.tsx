@@ -594,6 +594,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
         .from('links')
         .insert({
           user_id: profile?.id,
+          page_id: currentPage?.id || pages?.find(p => p.is_primary)?.id || pages?.[0]?.id,
           title: linkTitle.trim() || metadata.title,
           url: finalUrl,
           order: widgets.length + 1,
@@ -969,6 +970,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
         .from('links')
         .insert({
           user_id: profile?.id,
+          page_id: currentPage?.id || pages?.find(p => p.is_primary)?.id || pages?.[0]?.id,
           title: title.trim() || metadata.title,
           url: finalUrl,
           order: widgets.length + 1,

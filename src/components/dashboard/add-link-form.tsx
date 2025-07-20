@@ -1,19 +1,15 @@
 'use client'
 
 import React, { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { Database } from '@/lib/supabase/types'
-import { Link2, ExternalLink, QrCode, AlertCircle } from 'lucide-react'
+import { Link2, ExternalLink, QrCode } from 'lucide-react'
 import { LoadingButton } from '@/components/ui/loading'
-import { useFormValidation, linkInBioSchema, deeplinkSchema, qrCodeSchema } from '@/lib/validation'
-import { handleClientError } from '@/lib/error-handler'
 import { checkCanCreateLink } from '@/hooks/use-plan-limits'
 
 type Link = Database['public']['Tables']['links']['Row']
@@ -27,7 +23,6 @@ interface PlatformType {
 }
 
 interface AddLinkFormProps {
-  userId: string
   onLinkAdded: (link: Link) => void
   onCancel: () => void
   nextOrder: number
@@ -37,10 +32,9 @@ interface AddLinkFormProps {
   pageId?: string
 }
 
-export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selectedPlatform, existingLinks = [], defaultTab = 'link_in_bio', pageId }: AddLinkFormProps) {
+export function AddLinkForm({ onLinkAdded, onCancel, nextOrder, selectedPlatform, existingLinks = [], defaultTab = 'link_in_bio', pageId }: AddLinkFormProps) {
   const [activeTab, setActiveTab] = useState(defaultTab)
   const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
   
   // Common fields
   const [title, setTitle] = useState('')
@@ -59,19 +53,6 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
   const [qrForeground, setQrForeground] = useState('#000000')
   const [qrBackground, setQrBackground] = useState('#FFFFFF')
 
-  const supabase = createClient()
-  const linkInBioValidation = useFormValidation(linkInBioSchema)
-  const deeplinkValidation = useFormValidation(deeplinkSchema)
-  const qrCodeValidation = useFormValidation(qrCodeSchema)
-
-  const clearErrors = () => setErrors({})
-  
-  const handleError = (error: unknown, context?: string) => {
-    const errorMessage = handleClientError(error)
-    toast.error(context ? `${context}: ${errorMessage}` : errorMessage)
-    console.error('Form error:', error)
-  }
-
   const handleLinkInBioSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -85,41 +66,28 @@ export function AddLinkForm({ userId, onLinkAdded, onCancel, nextOrder, selected
     setIsLoading(true)
 
     try {
-      // Validate URL format
-      let validUrl = url.trim()
-      if (!validUrl.startsWith('http://') && !validUrl.startsWith('https://')) {
-        validUrl = `https://${validUrl}`
-      }
-
-      // Basic URL validation
-      try {
-        new URL(validUrl)
-      } catch {
-        toast.error('Please enter a valid URL')
-        setIsLoading(false)
-        return
-      }
-
-      const { data, error } = await supabase
-        .from('links')
-        .insert({
-          user_id: userId,
-          page_id: pageId,
+      const response = await fetch('/api/links', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           title: title.trim(),
-          url: validUrl,
+          url: url.trim(),
           order: nextOrder,
-          is_active: true,
-          link_type: 'link_in_bio'
-        })
-        .select()
-        .single()
+          pageId: pageId,
+        }),
+      })
 
-      if (error) {
-        toast.error('Error adding link. Please try again.')
+      if (!response.ok) {
+        const error = await response.json()
+        toast.error(error.error || 'Failed to create link')
         return
       }
 
-      onLinkAdded(data)
+      const result = await response.json()
+      const link = result.success ? result.data.link : result.link
+      onLinkAdded(link)
       toast.success('Link added successfully!')
       resetForm()
     } catch (error) {

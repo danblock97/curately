@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateQRCode, generateQRCodeSVG, getQRCodeUrl } from '@/lib/qr-code'
-import { generateShortCode, isValidUrl, formatUrl } from '@/lib/deeplink'
+import { generateShortCode, formatUrl } from '@/lib/deeplink'
 import { withErrorHandling, AuthError, ValidationError, createSuccessResponse } from '@/lib/error-handler'
 import { validateQRCodeData } from '@/lib/validation'
 import { rateLimiters } from '@/lib/rate-limit'
 import { withSecurity, sanitizeInput, sanitizeUrl, getSecureHeaders } from '@/lib/security'
 import { checkCanCreateLink } from '@/hooks/use-plan-limits'
 
-export const POST = withErrorHandling(withSecurity(async (request: NextRequest, context: { params: Promise<any> }) => {
+export const POST = withErrorHandling(withSecurity(async (request: NextRequest) => {
   // Apply rate limiting
   const rateLimitResult = rateLimiters.qrCode.check(request)
   if (!rateLimitResult.allowed) {

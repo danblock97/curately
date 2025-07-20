@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { generateShortCode, isValidUrl, formatUrl, validateDeeplinkConfig } from '@/lib/deeplink'
+import { generateShortCode, formatUrl, validateDeeplinkConfig } from '@/lib/deeplink'
 import { withErrorHandling, AuthError, ValidationError, createSuccessResponse } from '@/lib/error-handler'
 import { validateDeeplinkData } from '@/lib/validation'
 import { rateLimiters } from '@/lib/rate-limit'
 import { withSecurity, sanitizeInput, sanitizeUrl, getSecureHeaders } from '@/lib/security'
+import { checkCanCreateLink } from '@/hooks/use-plan-limits'
 
-export const POST = withErrorHandling(withSecurity(async (request: NextRequest, context: { params: Promise<any> }) => {
+export const POST = withErrorHandling(withSecurity(async (request: NextRequest) => {
   // Apply rate limiting
   const rateLimitResult = rateLimiters.linkCreation.check(request)
   if (!rateLimitResult.allowed) {
@@ -28,6 +29,30 @@ export const POST = withErrorHandling(withSecurity(async (request: NextRequest, 
 
   if (!user) {
     throw new AuthError()
+  }
+
+  // Get user's profile and current links to check plan limits
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('tier')
+    .eq('id', user.id)
+    .single()
+
+  const { data: userLinks } = await supabase
+    .from('links')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+
+  // Check plan limits for deeplink creation
+  if (profile && userLinks) {
+    const canCreate = checkCanCreateLink(userLinks, 'deeplink', profile.tier)
+    if (!canCreate.canCreate) {
+      return NextResponse.json(
+        { error: canCreate.reason || 'Plan limit exceeded' },
+        { status: 403 }
+      )
+    }
   }
 
   const body = await request.json()

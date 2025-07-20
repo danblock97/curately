@@ -7,6 +7,7 @@ import { LinkList } from './link-list'
 import { Plus, Instagram, Youtube, Twitter, Github, Linkedin, Globe, Music, MessageCircle, Phone, Mail, Sparkles, Zap, Link2, TrendingUp, ExternalLink, QrCode, ChevronDown, User } from 'lucide-react'
 import { Database } from '@/lib/supabase/types'
 import { usePlanLimits } from '@/hooks/use-plan-limits'
+import { toast } from 'sonner'
 
 type Link = Database['public']['Tables']['links']['Row'] & {
   qr_codes?: {
@@ -60,7 +61,11 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
     : pages.find(p => p.is_primary) || pages[0]
   
   // Filter links for the current page
+  console.log('DEBUG: All links:', links)
+  console.log('DEBUG: Current page ID:', currentPage?.id)
+  console.log('DEBUG: Link page_ids:', links.map(l => ({ title: l.title, page_id: l.page_id })))
   const pageLinks = links.filter(link => link.page_id === currentPage?.id)
+  console.log('DEBUG: Filtered page links:', pageLinks)
   
   const planUsage = usePlanLimits(links, profile.tier)
 
@@ -91,23 +96,47 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
   }
 
   const handlePlatformClick = (platform: PlatformType) => {
+    // Check plan limits before allowing link creation
+    if (!planUsage.links.canCreate) {
+      toast.error(`You've reached the maximum number of links (${planUsage.links.limit}) for your ${profile.tier} plan.`)
+      return
+    }
     setSelectedPlatform(platform)
     setShowAddForm(true)
   }
 
   const handleCustomLinkClick = () => {
+    // Check plan limits before allowing link creation
+    if (!planUsage.links.canCreate) {
+      toast.error(`You've reached the maximum number of links (${planUsage.links.limit}) for your ${profile.tier} plan.`)
+      return
+    }
     setSelectedPlatform(null)
     setDefaultTab('link_in_bio')
     setShowAddForm(true)
   }
 
   const handleDeeplinkClick = () => {
+    // Check plan limits before allowing deeplink creation
+    if (!planUsage.links.canCreate) {
+      toast.error(`You've reached the maximum number of links (${planUsage.links.limit}) for your ${profile.tier} plan.`)
+      return
+    }
     setSelectedPlatform(null)
     setDefaultTab('deeplink')
     setShowAddForm(true)
   }
 
   const handleQRCodeClick = () => {
+    // Check plan limits before allowing QR code creation
+    if (!planUsage.links.canCreate) {
+      toast.error(`You've reached the maximum number of links (${planUsage.links.limit}) for your ${profile.tier} plan.`)
+      return
+    }
+    if (!planUsage.qrCodes.canCreate) {
+      toast.error(`You've reached the maximum number of QR codes (${planUsage.qrCodes.limit}) for your ${profile.tier} plan.`)
+      return
+    }
     setSelectedPlatform(null)
     setDefaultTab('qr_code')
     setShowAddForm(true)
@@ -212,7 +241,12 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
           <h3 className="text-sm font-semibold text-gray-900 mb-2">A page, all your links</h3>
           <Button 
             onClick={handleCustomLinkClick}
-            className="bg-gray-900 hover:bg-gray-800 text-white text-xs px-4 py-2 h-8"
+            disabled={!planUsage.links.canCreate}
+            className={`text-white text-xs px-4 py-2 h-8 ${
+              planUsage.links.canCreate 
+                ? 'bg-gray-900 hover:bg-gray-800' 
+                : 'bg-gray-400 cursor-not-allowed'
+            }`}
           >
             Add a link
           </Button>
@@ -227,7 +261,12 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
           <h3 className="text-sm font-semibold text-gray-900 mb-2">Redirect your visitors to the app</h3>
           <Button 
             onClick={handleDeeplinkClick}
-            className="bg-gray-900 hover:bg-gray-800 text-white text-xs px-4 py-2 h-8"
+            disabled={!planUsage.links.canCreate}
+            className={`text-white text-xs px-4 py-2 h-8 ${
+              planUsage.links.canCreate 
+                ? 'bg-gray-900 hover:bg-gray-800' 
+                : 'bg-gray-400 cursor-not-allowed'
+            }`}
           >
             Create a deeplink
           </Button>
@@ -242,7 +281,12 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
           <h3 className="text-sm font-semibold text-gray-900 mb-2">A QR code that redirects to the app</h3>
           <Button 
             onClick={handleQRCodeClick}
-            className="bg-gray-900 hover:bg-gray-800 text-white text-xs px-4 py-2 h-8"
+            disabled={!planUsage.links.canCreate || !planUsage.qrCodes.canCreate}
+            className={`text-white text-xs px-4 py-2 h-8 ${
+              (planUsage.links.canCreate && planUsage.qrCodes.canCreate)
+                ? 'bg-gray-900 hover:bg-gray-800' 
+                : 'bg-gray-400 cursor-not-allowed'
+            }`}
           >
             Create a QR Code
           </Button>
@@ -473,7 +517,6 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
               </div>
               
               <AddLinkForm
-                userId={userId}
                 onLinkAdded={handleLinkAdded}
                 onCancel={() => {
                   setShowAddForm(false)
@@ -481,7 +524,7 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
                 }}
                 nextOrder={Array.isArray(pageLinks) ? pageLinks.length : 0}
                 selectedPlatform={selectedPlatform}
-                existingLinks={pageLinks}
+                existingLinks={links}
                 pageId={currentPage?.id}
                 defaultTab={defaultTab}
               />
@@ -512,7 +555,10 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
                     <Button
                       key={platform.name}
                       onClick={() => handlePlatformClick(platform)}
-                      className={`h-20 flex-col space-y-2 text-white hover:scale-105 transition-transform border border-gray-200 shadow-sm ${platform.color}`}
+                      disabled={!planUsage.links.canCreate}
+                      className={`h-20 flex-col space-y-2 text-white hover:scale-105 transition-transform border border-gray-200 shadow-sm ${
+                        planUsage.links.canCreate ? platform.color : 'bg-gray-400 cursor-not-allowed'
+                      }`}
                     >
                       <IconComponent className="w-6 h-6" />
                       <span className="text-xs font-medium">{platform.name}</span>
@@ -523,7 +569,12 @@ export function LinkManager({ links: initialLinks, userId, profile, pages }: Lin
               
               <Button
                 onClick={handleCustomLinkClick}
-                className="mt-6 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-8 py-3 rounded-xl transition-all duration-200 shadow-lg"
+                disabled={!planUsage.links.canCreate}
+                className={`mt-6 font-semibold px-8 py-3 rounded-xl transition-all duration-200 shadow-lg ${
+                  planUsage.links.canCreate 
+                    ? 'bg-gray-900 hover:bg-gray-800 text-white' 
+                    : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                }`}
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Add Custom Link
