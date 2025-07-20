@@ -57,7 +57,7 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
   const [selectedSort, setSelectedSort] = useState('Most recent')
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [currentPageNum, setCurrentPageNum] = useState(1)
-  const [itemsPerPage] = useState(10)
+  const [itemsPerPage] = useState(5)
   
   // Get the current page (default to primary page)
   const currentPage = selectedPageId 
