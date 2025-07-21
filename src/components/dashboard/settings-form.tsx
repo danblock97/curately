@@ -69,9 +69,9 @@ export function SettingsForm({ user, profile, pages }: SettingsFormProps) {
 
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from('pages')
         .update({ username: username.toLowerCase().trim() })
-        .eq('id', profile.id)
+        .eq('id', currentPage?.id)
 
       if (error) {
         if (error.code === '23505') {
@@ -274,16 +274,16 @@ export function SettingsForm({ user, profile, pages }: SettingsFormProps) {
               <div>
                 <Label className="text-sm font-medium text-gray-900">Username</Label>
                 <div className="flex items-center space-x-2 mt-1">
-                  <span className="text-sm text-gray-900 font-mono">@{profile.username}</span>
+                  <span className="text-sm text-gray-900 font-mono">@{currentPage?.username}</span>
                 </div>
               </div>
 
               <div>
                 <Label className="text-sm font-medium text-gray-900">Public URL</Label>
                 <div className="flex items-center space-x-2 mt-1">
-                  <span className="text-sm text-gray-900">curately.co.uk/{profile.username}</span>
+                  <span className="text-sm text-gray-900">curately.co.uk/{currentPage?.username}</span>
                   <a
-                    href={`/${profile.username}`}
+                    href={`/${currentPage?.username}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-800"
@@ -342,9 +342,11 @@ export function SettingsForm({ user, profile, pages }: SettingsFormProps) {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-900">Account Type</Label>
-                  <Badge variant="outline" className="mt-1 text-gray-900 border-gray-300">
-                    Free Plan
-                  </Badge>
+                  <div className="mt-2">
+                    <Badge variant="outline" className="text-gray-900 border-gray-300">
+                      {profile.tier === 'pro' ? 'Pro Plan' : 'Free Plan'}
+                    </Badge>
+                  </div>
                 </div>
               </div>
 
@@ -398,7 +400,7 @@ export function SettingsForm({ user, profile, pages }: SettingsFormProps) {
 
                 <Button
                   type="submit"
-                  disabled={isUpdatingUsername || username === profile.username || !username.trim()}
+                  disabled={isUpdatingUsername || username === currentPage?.username || !username.trim()}
                   className="bg-gray-900 hover:bg-gray-800 text-white"
                 >
                   {isUpdatingUsername ? 'Updating...' : 'Update Username'}
@@ -425,11 +427,11 @@ export function SettingsForm({ user, profile, pages }: SettingsFormProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
+                <div>
+                  <div className="mb-3">
                     <h4 className="font-medium text-gray-900">Data Retention</h4>
                     <p className="text-sm text-gray-500">
-                      Analytics data is kept for {profile.tier === 'pro' ? 'unlimited time' : '30 days'} on your current {profile.tier === 'pro' ? 'Pro' : 'Free'} plan
+                      Analytics data is kept for {profile.tier === 'pro' ? 'unlimited time' : '30 days'}
                     </p>
                   </div>
                   <Badge variant="outline" className={`${

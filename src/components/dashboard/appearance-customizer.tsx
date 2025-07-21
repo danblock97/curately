@@ -164,23 +164,31 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
         console.log('No profile ID, skipping widget load')
         return
       }
+
+      if (!currentPage?.id) {
+        console.log('No current page ID, skipping widget load')
+        setIsLoadingWidgets(false)
+        return
+      }
       
       try {
         setIsLoadingWidgets(true)
         console.log('Loading widgets for page:', currentPage?.id, 'with', links?.length, 'links')
         
-        // Load regular links
+        // Load regular links for the current page
         const { data: linksData, error: linksError } = await supabase
           .from('links')
           .select('*')
           .eq('user_id', profile?.id)
+          .eq('page_id', currentPage?.id)
           .order('order')
         
-        // Load QR codes separately (they're now independent)
+        // Load QR codes separately (they're now independent) for the current page
         const { data: qrCodesData, error: qrCodesError } = await supabase
           .from('qr_codes')
           .select('*')
           .eq('user_id', profile?.id)
+          .eq('page_id', currentPage?.id)
           .order('order_index')
 
         if (linksError) {
@@ -2269,11 +2277,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm">
-            <Copy className="w-4 h-4 mr-2" />
-            Copy
-          </Button>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/analytics')}>
             See page analytics
           </Button>
         </div>

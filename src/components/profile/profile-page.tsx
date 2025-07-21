@@ -1454,12 +1454,33 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 										<p className="text-sm font-medium !text-gray-900">
 											Create your own link-in-bio page
 										</p>
-										<Button 
-											className="w-full bg-black hover:bg-gray-800 text-white"
-											onClick={() => window.open('https://curately.co.uk', '_blank', 'noopener,noreferrer')}
-										>
-											Get Started Free
-										</Button>
+										<div className="relative group">
+											{/* Pulse animation background */}
+											<div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full animate-pulse opacity-75 group-hover:opacity-100 transition-opacity"></div>
+											
+											{/* Main button */}
+											<Button 
+												className="relative w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-4 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 font-semibold border-2 border-white/20"
+												onClick={() => window.open('https://curately.co.uk', '_blank', 'noopener,noreferrer')}
+											>
+												<span className="flex items-center justify-center gap-2">
+													✨ Create Your Page
+													<svg 
+														className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" 
+														fill="none" 
+														stroke="currentColor" 
+														viewBox="0 0 24 24"
+													>
+														<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+													</svg>
+												</span>
+											</Button>
+											
+											{/* Floating badge */}
+											<div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-bounce">
+												FREE
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>
