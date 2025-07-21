@@ -342,10 +342,43 @@ export function SettingsForm({ user, profile, pages }: SettingsFormProps) {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-900">Account Type</Label>
-                  <div className="mt-2">
+                  <div className="mt-2 flex items-center justify-between">
                     <Badge variant="outline" className="text-gray-900 border-gray-300">
                       {profile.tier === 'pro' ? 'Pro Plan' : 'Free Plan'}
                     </Badge>
+                    {profile.tier === 'free' ? (
+                      <Button
+                        onClick={() => window.location.href = '/pricing'}
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 text-sm"
+                        size="sm"
+                      >
+                        Upgrade to Pro
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch('/api/customer-portal', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                            })
+                            const { url, error } = await response.json()
+                            if (error) {
+                              console.error('Portal error:', error)
+                              return
+                            }
+                            if (url) window.location.href = url
+                          } catch (error) {
+                            console.error('Portal error:', error)
+                          }
+                        }}
+                        variant="outline"
+                        className="border-gray-300 text-gray-900 hover:bg-gray-50 text-sm"
+                        size="sm"
+                      >
+                        Manage Billing
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

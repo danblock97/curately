@@ -44,6 +44,26 @@ export default async function DashboardPage() {
 
   return (
     <div className="w-full space-y-6">
+      {/* Upgrade Banner for Free Users */}
+      {profile.tier === 'free' && (
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Ready to unlock more features?</h3>
+              <p className="text-gray-600 mt-1">
+                Upgrade to Pro for 50 links, 50 QR codes, 2 pages, and advanced analytics
+              </p>
+            </div>
+            <a
+              href="/pricing"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-full transition-all duration-300 hover:scale-105 whitespace-nowrap ml-4"
+            >
+              Upgrade to Pro
+            </a>
+          </div>
+        </div>
+      )}
+
       <LinkManager 
         links={(links || []).filter(Boolean)} 
         qrCodes={(qrCodes || []).filter(Boolean)}

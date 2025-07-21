@@ -28,7 +28,7 @@ export function Navbar() {
             <Link href="#link-in-bio" className="text-gray-300 hover:text-white transition-colors">
               Link in bio
             </Link>
-            <Link href="#pricing" className="text-gray-300 hover:text-white transition-colors">
+            <Link href="/pricing" className="text-gray-300 hover:text-white transition-colors">
               Pricing
             </Link>
             <Link href="#affiliation" className="text-gray-300 hover:text-white transition-colors">
@@ -78,7 +78,7 @@ export function Navbar() {
                 Link in bio
               </Link>
               <Link
-                href="#pricing"
+                href="/pricing"
                 className="text-gray-300 hover:text-white transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >

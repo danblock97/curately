@@ -8,6 +8,7 @@ import { FeaturesTimeline } from '@/components/features-timeline'
 import { AnalyticsSection } from '@/components/analytics-section'
 import { AdvantagesSection } from '@/components/advantages-section'
 import { TestimonialsSection } from '@/components/testimonials-section'
+import { PricingSection } from '@/components/pricing-section'
 import { AnimatedGridBackground } from '@/components/ui/animated-grid-background'
 
 export function LandingPage() {
@@ -83,6 +84,9 @@ export function LandingPage() {
 
       {/* Advantages Section */}
       <AdvantagesSection />
+
+      {/* Pricing Section */}
+      <PricingSection />
 
       {/* Testimonials Section */}
       <TestimonialsSection />
