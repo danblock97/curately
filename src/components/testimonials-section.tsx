@@ -1,9 +1,11 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Star } from 'lucide-react'
+import { Star, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
 interface Testimonial {
   id: number
@@ -124,28 +126,28 @@ const bottomRowTestimonials: Testimonial[] = [
 
 function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
   return (
-    <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm min-w-[320px] max-w-[320px] mx-3 flex-shrink-0">
-      <CardContent className="p-4">
-        <div className="flex items-start space-x-3">
-          <Avatar className="w-10 h-10 flex-shrink-0">
+    <Card className="bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] min-w-[360px] max-w-[360px] mx-4 flex-shrink-0 group">
+      <CardContent className="p-6">
+        <div className="flex items-start space-x-4">
+          <Avatar className="w-12 h-12 flex-shrink-0 ring-2 ring-gray-100 group-hover:ring-gray-200 transition-all">
             <AvatarImage src={testimonial.avatar} />
-            <AvatarFallback className={`${testimonial.bgColor} text-white text-sm`}>
+            <AvatarFallback className={`${testimonial.bgColor} text-white font-semibold`}>
               {testimonial.initials}
             </AvatarFallback>
           </Avatar>
           
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <h4 className="font-semibold text-white text-sm truncate">{testimonial.name}</h4>
-              <div className="flex items-center space-x-0.5 flex-shrink-0">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-semibold text-gray-900 text-base truncate">{testimonial.name}</h4>
+              <div className="flex items-center space-x-1 flex-shrink-0">
                 {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} className="w-3 h-3 fill-green-400 text-green-400" />
+                  <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                 ))}
               </div>
             </div>
             
-            <h5 className="font-medium text-white mb-2 text-xs leading-tight">{testimonial.title}</h5>
-            <p className="text-gray-300 text-xs leading-relaxed">{testimonial.content}</p>
+            <h5 className="font-semibold text-gray-900 mb-3 text-sm leading-tight">{testimonial.title}</h5>
+            <p className="text-gray-600 text-sm leading-relaxed">{testimonial.content}</p>
           </div>
         </div>
       </CardContent>
@@ -162,7 +164,7 @@ function ScrollingRow({ testimonials, direction }: { testimonials: Testimonial[]
       <div 
         className={`flex ${direction === 'left' ? 'animate-scroll-left' : 'animate-scroll-right'}`}
         style={{
-          width: `${duplicatedTestimonials.length * 344}px` // 320px card + 24px margin
+          width: `${duplicatedTestimonials.length * 392}px` // 360px card + 32px margin
         }}
       >
         {duplicatedTestimonials.map((testimonial, index) => (
@@ -174,16 +176,31 @@ function ScrollingRow({ testimonials, direction }: { testimonials: Testimonial[]
 }
 
 export function TestimonialsSection() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  // Check authentication status on mount
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('auth-token')
+      setIsAuthenticated(!!token)
+    }
+    
+    checkAuth()
+  }, [])
+
   return (
-    <section className="py-20">
+    <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
       {/* Header */}
       <div className="text-center mb-16 px-4">
-        <Badge variant="outline" className="mb-4 bg-green-500/20 text-green-400 border-green-500/30">
+        <Badge variant="outline" className="mb-4 bg-green-100 text-green-700 border-green-200">
           TESTIMONIALS
         </Badge>
-        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-          Their opinions speak louder than any of our arguments.
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          Loved by creators worldwide
         </h2>
+        <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          See what our users have to say about their experience with Curately
+        </p>
       </div>
 
       {/* Scrolling Testimonials */}
@@ -193,6 +210,46 @@ export function TestimonialsSection() {
         
         {/* Bottom Row - Moving Right */}
         <ScrollingRow testimonials={bottomRowTestimonials} direction="right" />
+      </div>
+      
+      {/* Call to Action */}
+      <div className="text-center mt-16 px-4">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 max-w-2xl mx-auto shadow-lg">
+          {isAuthenticated ? (
+            <>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                Ready to get back to work?
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Continue building your perfect link-in-bio page and managing your links with Curately.
+              </p>
+              <div className="flex justify-center">
+                <Link href="/dashboard">
+                  <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-lg font-semibold transition-colors group inline-flex items-center">
+                    Open Dashboard
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                Ready to join them?
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Start creating your perfect link-in-bio page today and see why thousands of creators trust Curately.
+              </p>
+              <div className="flex justify-center">
+                <Link href="/auth">
+                  <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+                    Get Started Free
+                  </button>
+                </Link>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </section>
   )

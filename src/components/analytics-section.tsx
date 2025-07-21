@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts'
-import { TrendingUp, Link, MousePointer, Users, Globe } from 'lucide-react'
+import { TrendingUp, Link, MousePointer, Users, Globe, QrCode, ExternalLink } from 'lucide-react'
 
 // Dummy data for the analytics
 const clicksData = [
@@ -25,31 +25,35 @@ const clicksData = [
 const metrics = [
   {
     title: 'Total Clicks',
-    value: '2,847',
-    change: '+12.5%',
+    value: '12,847',
+    change: 'All time',
     icon: <MousePointer className="w-5 h-5" />,
-    color: 'text-blue-400'
+    bgColor: 'bg-blue-100',
+    iconColor: 'text-blue-600'
   },
   {
     title: 'Active Links',
-    value: '24',
-    change: '+3 new',
+    value: '18',
+    change: 'Currently active',
     icon: <Link className="w-5 h-5" />,
-    color: 'text-green-400'
+    bgColor: 'bg-green-100',
+    iconColor: 'text-green-600'
   },
   {
-    title: 'Link Types',
-    value: '3 Types',
-    change: 'Bio, Deep, QR',
-    icon: <Users className="w-5 h-5" />,
-    color: 'text-purple-400'
+    title: 'Avg. Clicks/Link',
+    value: '714',
+    change: 'Per link average',
+    icon: <TrendingUp className="w-5 h-5" />,
+    bgColor: 'bg-purple-100',
+    iconColor: 'text-purple-600'
   },
   {
-    title: 'Themes',
-    value: '4 Themes',
-    change: 'All included',
+    title: 'Top Performer',
+    value: '3,249',
+    change: 'Portfolio website',
     icon: <Globe className="w-5 h-5" />,
-    color: 'text-orange-400'
+    bgColor: 'bg-orange-100',
+    iconColor: 'text-orange-600'
   }
 ]
 
@@ -59,37 +63,30 @@ export function AnalyticsSection() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
-          <Badge variant="outline" className="mb-4 bg-blue-500/20 text-blue-400 border-blue-500/30">
+          <Badge variant="outline" className="mb-4 bg-blue-100 text-blue-700 border-blue-200">
             ANALYTICS
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             Track your link performance
           </h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-            Monitor click counts, see your top performing links, and track your growth over time
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            Monitor click counts, see your top performing links, and track your growth over time with powerful analytics
           </p>
         </div>
 
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {metrics.map((metric, index) => (
-            <Card key={index} className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+            <Card key={index} className="bg-white border border-gray-200 shadow-sm">
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className={`p-2 rounded-lg bg-gray-700/50 ${metric.color}`}>
-                    {metric.icon}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-white">{metric.value}</div>
-                    <div className="text-sm text-green-400 flex items-center justify-end">
-                      <TrendingUp className="w-3 h-3 mr-1" />
-                      {metric.change}
-                    </div>
+                <div className="flex items-center justify-between space-y-0 pb-2">
+                  <div className="text-sm font-medium text-gray-600">{metric.title}</div>
+                  <div className={`w-8 h-8 ${metric.bgColor} rounded-lg flex items-center justify-center`}>
+                    <div className={metric.iconColor}>{metric.icon}</div>
                   </div>
                 </div>
-                <div className="mt-4">
-                  <div className="text-sm text-gray-400">{metric.title}</div>
-                </div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">{metric.value}</div>
+                <div className="text-sm text-gray-500">{metric.change}</div>
               </CardContent>
             </Card>
           ))}
@@ -98,108 +95,186 @@ export function AnalyticsSection() {
         {/* Main Analytics Dashboard */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Line Chart */}
-          <Card className="lg:col-span-2 bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <Card className="lg:col-span-2 bg-white border border-gray-200 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-white flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5" />
-                <span>Click Performance</span>
-              </CardTitle>
-              <p className="text-gray-400">Monthly clicks and link creation over time</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg font-semibold text-gray-900">Traffic Overview</CardTitle>
+                  <p className="text-gray-600">Daily clicks over the selected period</p>
+                </div>
+                <div className="flex items-center space-x-1">
+                  {['7D', '30D', '90D'].map((period) => (
+                    <button
+                      key={period}
+                      className={`text-xs h-7 px-2 rounded border ${
+                        period === '30D'
+                          ? 'bg-gray-900 text-white border-gray-900'
+                          : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {period}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={clicksData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      dataKey="name" 
-                      stroke="#9CA3AF"
-                      fontSize={12}
-                    />
-                    <YAxis 
-                      stroke="#9CA3AF"
-                      fontSize={12}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1F2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '8px',
-                        color: '#F9FAFB'
-                      }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="clicks" 
-                      stroke="#3B82F6" 
-                      strokeWidth={3}
-                      dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
-                      activeDot={{ r: 6, fill: '#3B82F6' }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="links" 
-                      stroke="#10B981" 
-                      strokeWidth={3}
-                      dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
-                      activeDot={{ r: 6, fill: '#10B981' }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              <div className="h-80 bg-gray-50 rounded-lg p-6 relative border border-gray-100">
+                <svg className="w-full h-full" viewBox="0 0 600 240">
+                  <defs>
+                    <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.3"/>
+                      <stop offset="100%" stopColor="#3B82F6" stopOpacity="0"/>
+                    </linearGradient>
+                    <pattern id="grid" width="60" height="48" patternUnits="userSpaceOnUse">
+                      <path d="M 60 0 L 0 0 0 48" fill="none" stroke="#E5E7EB" strokeWidth="0.5" opacity="0.5"/>
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#grid)" />
+                  
+                  {/* Area chart */}
+                  <path
+                    d="M 30,180 L 90,160 L 150,140 L 210,120 L 270,100 L 330,90 L 390,80 L 450,70 L 510,60 L 570,50 L 570,200 L 30,200 Z"
+                    fill="url(#areaGradient)"
+                  />
+                  
+                  {/* Line chart */}
+                  <polyline
+                    fill="none"
+                    stroke="#3B82F6"
+                    strokeWidth="3"
+                    points="30,180 90,160 150,140 210,120 270,100 330,90 390,80 450,70 510,60 570,50"
+                  />
+                  
+                  {/* Data points */}
+                  <circle cx="30" cy="180" r="4" fill="#3B82F6"/>
+                  <circle cx="90" cy="160" r="4" fill="#3B82F6"/>
+                  <circle cx="150" cy="140" r="4" fill="#3B82F6"/>
+                  <circle cx="210" cy="120" r="4" fill="#3B82F6"/>
+                  <circle cx="270" cy="100" r="4" fill="#3B82F6"/>
+                  <circle cx="330" cy="90" r="4" fill="#3B82F6"/>
+                  <circle cx="390" cy="80" r="4" fill="#3B82F6"/>
+                  <circle cx="450" cy="70" r="4" fill="#3B82F6"/>
+                  <circle cx="510" cy="60" r="4" fill="#3B82F6"/>
+                  <circle cx="570" cy="50" r="4" fill="#3B82F6"/>
+                  
+                  {/* X-axis labels */}
+                  <text x="30" y="225" fill="#6B7280" fontSize="12" textAnchor="middle">7 days ago</text>
+                  <text x="210" y="225" fill="#6B7280" fontSize="12" textAnchor="middle">3 days ago</text>
+                  <text x="390" y="225" fill="#6B7280" fontSize="12" textAnchor="middle">Yesterday</text>
+                  <text x="570" y="225" fill="#6B7280" fontSize="12" textAnchor="middle">Today</text>
+                </svg>
               </div>
             </CardContent>
           </Card>
 
           {/* Side Stats */}
-          <div className="space-y-6">
-            {/* Top Performing Links */}
-            <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white text-lg">Top Performing Links</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {[
-                  { name: 'Portfolio Site', clicks: '12,847', percentage: '24%' },
-                  { name: 'GitHub Profile', clicks: '8,293', percentage: '16%' },
-                  { name: 'Latest Blog Post', clicks: '6,847', percentage: '13%' },
-                  { name: 'Contact Form', clicks: '5,293', percentage: '10%' }
-                ].map((link, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div>
-                      <div className="text-white font-medium">{link.name}</div>
-                      <div className="text-gray-400 text-sm">{link.clicks} clicks</div>
-                    </div>
-                    <div className="text-blue-400 font-bold">{link.percentage}</div>
+          <Card className="bg-white border border-gray-200 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-gray-900">Link Types</CardTitle>
+              <p className="text-gray-600">Distribution by link type</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <span className="text-sm font-medium text-gray-700">Link in Bio</span>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                  <span className="text-sm font-semibold text-gray-900">14</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="bg-blue-500 h-2 rounded-full" style={{width: '70%'}}></div>
+                </div>
 
-            {/* Quick Stats */}
-            <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white text-lg">Quick Stats</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {[
-                  { label: 'Total Links', value: '24' },
-                  { label: 'Bio Links', value: '18' },
-                  { label: 'QR Codes', value: '4' },
-                  { label: 'Deeplinks', value: '2' }
-                ].map((stat, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <span className="text-white">{stat.label}</span>
-                    <div className="text-blue-400 font-bold">{stat.value}</div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-sm font-medium text-gray-700">QR Codes</span>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
+                  <span className="text-sm font-semibold text-gray-900">3</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="bg-green-500 h-2 rounded-full" style={{width: '15%'}}></div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                    <span className="text-sm font-medium text-gray-700">Deep Links</span>
+                  </div>
+                  <span className="text-sm font-semibold text-gray-900">1</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="bg-purple-500 h-2 rounded-full" style={{width: '5%'}}></div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Call to Action */}
+        {/* Top Performing Links Table */}
+        <Card className="bg-white border border-gray-200 shadow-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-semibold text-gray-900">Top Performing Links</CardTitle>
+                <p className="text-gray-600">Your most clicked links and their performance metrics</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { title: 'Portfolio Website', url: 'johnsmith.dev', clicks: 3249, percentage: '25.3%', type: 'link' },
+                { title: 'GitHub Profile', url: 'github.com/johnsmith', clicks: 2847, percentage: '22.1%', type: 'link' },
+                { title: 'Latest Blog Post', url: 'blog.johnsmith.dev/post-1', clicks: 1893, percentage: '14.7%', type: 'link' },
+                { title: 'Contact QR Code', url: 'QR Code', clicks: 1247, percentage: '9.7%', type: 'qr' },
+                { title: 'Instagram Deep Link', url: 'Deep Link to Instagram', clicks: 856, percentage: '6.7%', type: 'deep' }
+              ].map((link, index) => (
+                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center justify-center w-8 h-8 bg-white rounded-lg border border-gray-200">
+                      <span className="text-sm font-semibold text-gray-600">#{index + 1}</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        link.type === 'qr' ? 'bg-green-100' : 
+                        link.type === 'deep' ? 'bg-purple-100' : 'bg-blue-100'
+                      }`}>
+                        {link.type === 'qr' ? (
+                          <QrCode className="w-5 h-5 text-green-600" />
+                        ) : link.type === 'deep' ? (
+                          <ExternalLink className="w-5 h-5 text-purple-600" />
+                        ) : (
+                          <Globe className="w-5 h-5 text-blue-600" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{link.title}</h3>
+                        <p className="text-sm text-gray-500">{link.url}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-6">
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-gray-900">{link.clicks.toLocaleString()}</div>
+                      <div className="text-sm text-gray-500">clicks</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-semibold text-green-600">{link.percentage}</div>
+                      <div className="text-sm text-gray-500">of total</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="text-center mt-16">
-          <Button className="bg-white hover:bg-gray-100 text-black px-8 py-3 rounded-lg font-semibold">
+          <Button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-lg font-semibold">
             Start tracking your links
           </Button>
         </div>

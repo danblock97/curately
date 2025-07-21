@@ -27,16 +27,16 @@ export function AnimatedGridBackground({ className = '', children }: AnimatedGri
   }, [])
 
   return (
-    <div className={`relative overflow-hidden bg-black ${className}`}>
+    <div className={`relative overflow-hidden ${className}`}>
       {/* Animated Grid */}
       <div
         ref={gridRef}
         className="absolute inset-0 -top-40 -left-40 -right-40 -bottom-40"
         style={{
-          backgroundColor: 'black',
+          backgroundColor: 'transparent',
           backgroundImage: `
-            linear-gradient(rgba(128, 128, 128, 0.3) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(128, 128, 128, 0.3) 1px, transparent 1px)
+            linear-gradient(rgba(200, 200, 200, 0.3) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(200, 200, 200, 0.3) 1px, transparent 1px)
           `,
           backgroundSize: '40px 40px',
           backgroundPosition: '0 0, 0 0',

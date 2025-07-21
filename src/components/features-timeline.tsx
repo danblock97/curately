@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Link2, ExternalLink, QrCode, Zap, Globe, BarChart3 } from 'lucide-react'
+import Image from 'next/image'
+import { BrandedQRCode } from '@/components/ui/branded-qr-code'
+import Link from 'next/link'
 
 interface Feature {
   id: number
@@ -19,46 +22,46 @@ interface Feature {
 const features: Feature[] = [
   {
     id: 1,
-    title: 'The perfect Link in Bio',
-    description: 'One link, endless possibilities. taap.it brings together everything that makes you unique, with style and efficiency.',
-    buttonText: 'Create my link in bio',
+    title: 'Stunning Link in Bio Pages',
+    description: 'Create beautiful split-screen pages with your profile on the left and customizable widgets on the right. Perfect for content creators, businesses, and influencers.',
+    buttonText: 'Create my page',
     icon: <Link2 className="w-6 h-6" />,
     image: '/api/placeholder/300/500',
     side: 'left'
   },
   {
     id: 2,
-    title: 'Deeplinks',
-    description: 'Create links that send users to different destinations based on their device - iOS app, Android app, or web fallback.',
-    buttonText: 'Create deeplink',
+    title: 'Smart Deeplinks',
+    description: 'Automatically route users to the right destination - iOS App Store, Google Play, or your website - based on their device. No more broken links.',
+    buttonText: 'Try deeplinks',
     icon: <ExternalLink className="w-6 h-6" />,
     image: '/api/placeholder/300/500',
     side: 'right'
   },
   {
     id: 3,
-    title: 'Custom QR Codes',
-    description: 'Generate QR codes with custom colors and sizes. Perfect for print materials, business cards, and offline marketing.',
-    buttonText: 'Generate QR code',
+    title: 'Designer QR Codes',
+    description: 'Generate beautiful QR codes with custom colors, sizes, and your logo in the center. Download as SVG or PNG for print and digital use.',
+    buttonText: 'Create QR code',
     icon: <QrCode className="w-6 h-6" />,
     image: '/api/placeholder/300/500',
     side: 'left'
   },
   {
     id: 4,
-    title: 'Click Tracking',
-    description: 'Monitor how many people click your links and see which ones perform best. Track your growth over time.',
-    buttonText: 'View analytics',
+    title: 'Powerful Analytics',
+    description: 'Track clicks, views, and engagement across all your links and QR codes. See which content performs best with detailed charts and insights.',
+    buttonText: 'See analytics',
     icon: <BarChart3 className="w-6 h-6" />,
     image: '/api/placeholder/300/500',
     side: 'right'
   },
   {
     id: 5,
-    title: 'Custom Themes',
-    description: 'Choose from 4 beautiful themes to match your brand. Light, dark, and gradient options available.',
-    buttonText: 'See themes',
-    icon: <Zap className="w-6 h-6" />,
+    title: 'Beautiful Widgets',
+    description: 'Add social media widgets, links, text blocks, images, and more. Each widget type has multiple size options and can be positioned anywhere on your page.',
+    buttonText: 'Explore widgets',
+    icon: <Globe className="w-6 h-6" />,
     image: '/api/placeholder/300/500',
     side: 'left'
   }
@@ -66,6 +69,7 @@ const features: Feature[] = [
 
 export function FeaturesTimeline() {
   const [visibleFeatures, setVisibleFeatures] = useState<Set<number>>(new Set())
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const featureRefs = useRef<Map<number, HTMLDivElement>>(new Map())
 
   useEffect(() => {
@@ -97,6 +101,16 @@ export function FeaturesTimeline() {
     return () => observer.disconnect()
   }, [])
 
+  useEffect(() => {
+    // Check authentication status on mount
+    const checkAuth = () => {
+      const token = localStorage.getItem('auth-token')
+      setIsAuthenticated(!!token)
+    }
+    
+    checkAuth()
+  }, [])
+
   const setFeatureRef = (id: number) => (element: HTMLDivElement | null) => {
     if (element) {
       featureRefs.current.set(id, element)
@@ -110,24 +124,30 @@ export function FeaturesTimeline() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
-          <Badge variant="outline" className="mb-4 bg-green-500/20 text-green-400 border-green-500/30">
+          <Badge variant="outline" className="mb-4 bg-blue-100 text-blue-700 border-blue-200">
             FEATURES
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             What makes us essential (and a little proud).
           </h2>
-          <p className="text-xl text-gray-300 mb-8">
+          <p className="text-xl text-gray-600 mb-8">
             Create the best Links in bio, deeplinks, and QR Codes with Curately
           </p>
-          <Button className="bg-white hover:bg-gray-100 text-black px-8 py-3 rounded-lg font-semibold">
-            Create an account
-          </Button>
+          {isAuthenticated ? (
+            <Button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-lg font-semibold" asChild>
+              <Link href="/dashboard">Open Dashboard</Link>
+            </Button>
+          ) : (
+            <Button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-lg font-semibold" asChild>
+              <Link href="/auth">Create an account</Link>
+            </Button>
+          )}
         </div>
 
         {/* Timeline */}
         <div className="relative">
           {/* Center line */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 w-0.5 bg-gray-700 h-full"></div>
+          <div className="absolute left-1/2 transform -translate-x-1/2 w-0.5 bg-gray-300 h-full"></div>
           
           {/* Timeline dots */}
           {features.map((feature) => (
@@ -135,8 +155,8 @@ export function FeaturesTimeline() {
               key={`dot-${feature.id}`}
               className={`absolute left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full transition-all duration-500 ${
                 visibleFeatures.has(feature.id) 
-                  ? 'bg-white shadow-lg scale-125' 
-                  : 'bg-gray-600 scale-100'
+                  ? 'bg-blue-500 shadow-lg scale-125' 
+                  : 'bg-gray-400 scale-100'
               }`}
               style={{
                 top: `${(feature.id - 1) * 600 + 300}px`,
@@ -167,69 +187,95 @@ export function FeaturesTimeline() {
                     ? 'pr-8' 
                     : 'pl-8'
                 }`}>
-                  <Card className={`bg-gray-800/50 border-gray-700 backdrop-blur-sm transition-all duration-500 ${
+                  <Card className={`bg-white border-gray-200 transition-all duration-500 ${
                     visibleFeatures.has(feature.id)
-                      ? 'shadow-2xl border-gray-600'
+                      ? 'shadow-2xl border-gray-300'
                       : 'shadow-lg'
                   }`}>
                     <CardContent className="p-8">
                       <div className="flex items-start space-x-4">
                         {/* Mock phone image */}
                         <div className="flex-shrink-0">
-                          <div className="w-32 h-52 bg-gray-900 rounded-2xl p-2 shadow-lg">
-                            <div className="w-full h-full bg-black rounded-xl overflow-hidden">
+                          <div className="w-32 h-52 bg-gray-200 rounded-2xl p-2 shadow-lg">
+                            <div className="w-full h-full bg-white rounded-xl overflow-hidden border border-gray-100">
                               {/* Mock phone content based on feature */}
                               {feature.id === 1 && (
-                                <div className="p-4 space-y-3">
-                                  <div className="w-8 h-8 bg-blue-500 rounded-full mx-auto"></div>
-                                  <div className="text-center">
-                                    <div className="w-16 h-2 bg-white rounded mx-auto mb-1"></div>
-                                    <div className="w-12 h-1 bg-gray-400 rounded mx-auto"></div>
+                                <div className="p-3 flex">
+                                  {/* Left - Profile */}
+                                  <div className="w-1/2 text-center">
+                                    <div className="w-6 h-6 bg-blue-500 rounded-full mx-auto mb-2"></div>
+                                    <div className="w-8 h-1 bg-gray-900 rounded mx-auto mb-1"></div>
+                                    <div className="w-6 h-0.5 bg-gray-400 rounded mx-auto"></div>
                                   </div>
-                                  <div className="space-y-2">
-                                    <div className="w-full h-8 bg-gray-700 rounded"></div>
-                                    <div className="w-full h-8 bg-gray-700 rounded"></div>
-                                    <div className="w-full h-8 bg-gray-700 rounded"></div>
+                                  {/* Right - Widgets */}
+                                  <div className="w-1/2 space-y-1">
+                                    <div className="w-full h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded text-xs"></div>
+                                    <div className="w-full h-2 bg-gray-100 rounded border border-gray-200"></div>
+                                    <div className="flex space-x-1">
+                                      <div className="w-3 h-3 bg-gradient-to-br from-pink-500 to-red-500 rounded"></div>
+                                      <div className="w-3 h-3 bg-gray-800 rounded"></div>
+                                    </div>
                                   </div>
                                 </div>
                               )}
                               {feature.id === 2 && (
                                 <div className="p-4 flex items-center justify-center h-full">
-                                  <div className="text-center">
-                                    <div className="w-12 h-12 bg-green-500 rounded-full mx-auto mb-2 flex items-center justify-center">
-                                      <ExternalLink className="w-6 h-6 text-white" />
+                                  <div className="text-center space-y-2">
+                                    {/* Central hub */}
+                                    <div className="w-8 h-8 bg-gray-900 rounded-full mx-auto mb-3 flex items-center justify-center">
+                                      <span className="text-white text-xs font-bold">C</span>
                                     </div>
-                                    <div className="w-16 h-1 bg-gray-400 rounded mx-auto mb-1"></div>
-                                    <div className="w-12 h-1 bg-gray-600 rounded mx-auto"></div>
+                                    {/* Device icons */}
+                                    <div className="flex justify-center space-x-2">
+                                      <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                                      <div className="w-3 h-3 bg-green-500 rounded"></div>
+                                      <div className="w-3 h-3 bg-purple-500 rounded"></div>
+                                    </div>
+                                    <div className="text-xs text-gray-600">Smart routing</div>
                                   </div>
                                 </div>
                               )}
                               {feature.id === 3 && (
                                 <div className="p-4 flex items-center justify-center h-full">
-                                  <div className="w-24 h-24 bg-white rounded-lg p-2">
-                                    <div className="w-full h-full bg-black rounded relative">
-                                      <div className="absolute inset-1 grid grid-cols-6 gap-px">
-                                        {Array.from({ length: 36 }).map((_, i) => (
-                                          <div
-                                            key={i}
-                                            className={`${
-                                              i % 2 === 0 ? 'bg-white' : 'bg-black'
-                                            }`}
-                                          />
-                                        ))}
-                                      </div>
-                                    </div>
+                                  <div className="w-20 h-20 bg-white border-2 border-gray-200 rounded-lg p-2">
+                                    <BrandedQRCode 
+                                      url="https://danblock.dev" 
+                                      size={64}
+                                      logoSize={16}
+                                      className="w-full h-full"
+                                    />
                                   </div>
                                 </div>
                               )}
-                              {feature.id > 3 && (
+                              {feature.id === 4 && (
                                 <div className="p-4 flex items-center justify-center h-full">
-                                  <div className="text-center">
-                                    <div className="w-10 h-10 bg-purple-500 rounded-full mx-auto mb-2 flex items-center justify-center">
-                                      {feature.icon}
+                                  <div className="text-center space-y-2">
+                                    {/* Chart mockup */}
+                                    <div className="w-16 h-12 bg-gradient-to-t from-blue-500 to-blue-300 rounded relative">
+                                      <div className="absolute bottom-0 left-1 w-2 h-6 bg-blue-600 rounded-sm"></div>
+                                      <div className="absolute bottom-0 left-4 w-2 h-8 bg-blue-600 rounded-sm"></div>
+                                      <div className="absolute bottom-0 left-7 w-2 h-4 bg-blue-600 rounded-sm"></div>
+                                      <div className="absolute bottom-0 left-10 w-2 h-10 bg-blue-600 rounded-sm"></div>
                                     </div>
-                                    <div className="w-16 h-1 bg-gray-400 rounded mx-auto mb-1"></div>
-                                    <div className="w-12 h-1 bg-gray-600 rounded mx-auto"></div>
+                                    <div className="text-xs text-gray-600">Click tracking</div>
+                                  </div>
+                                </div>
+                              )}
+                              {feature.id === 5 && (
+                                <div className="p-4 flex items-center justify-center h-full">
+                                  <div className="text-center space-y-2">
+                                    {/* Widget mockup */}
+                                    <div className="space-y-1">
+                                      <div className="w-12 h-2 bg-gradient-to-r from-pink-500 to-red-500 rounded"></div>
+                                      <div className="w-12 h-2 bg-gray-100 border border-gray-200 rounded"></div>
+                                      <div className="flex space-x-1">
+                                        <div className="w-2 h-2 bg-blue-500 rounded"></div>
+                                        <div className="w-2 h-2 bg-green-500 rounded"></div>
+                                        <div className="w-2 h-2 bg-purple-500 rounded"></div>
+                                        <div className="w-2 h-2 bg-white border border-gray-300 rounded"></div>
+                                      </div>
+                                    </div>
+                                    <div className="text-xs text-gray-600">Widgets</div>
                                   </div>
                                 </div>
                               )}
@@ -239,13 +285,13 @@ export function FeaturesTimeline() {
 
                         {/* Content */}
                         <div className="flex-1">
-                          <h3 className="text-2xl font-bold text-white mb-4">
+                          <h3 className="text-2xl font-bold text-gray-900 mb-4">
                             {feature.title}
                           </h3>
-                          <p className="text-gray-300 mb-6 leading-relaxed">
+                          <p className="text-gray-600 mb-6 leading-relaxed">
                             {feature.description}
                           </p>
-                          <Button className="bg-white hover:bg-gray-100 text-black px-6 py-2 rounded-lg font-semibold">
+                          <Button className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2 rounded-lg font-semibold">
                             {feature.buttonText}
                           </Button>
                         </div>

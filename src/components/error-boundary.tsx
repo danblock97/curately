@@ -61,25 +61,25 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen bg-black flex items-center justify-center p-4">
-          <Card className="max-w-md w-full bg-gray-800 border-gray-700">
+        <div className="min-h-screen bg-white flex items-center justify-center p-4">
+          <Card className="max-w-md w-full bg-white border-gray-200">
             <CardHeader className="text-center">
               <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertTriangle className="w-8 h-8 text-red-400" />
               </div>
-              <CardTitle className="text-white">Something went wrong</CardTitle>
+              <CardTitle className="text-gray-900">Something went wrong</CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-4">
-              <p className="text-gray-300">
+              <p className="text-gray-600">
                 We're sorry, but something unexpected happened. Please try again.
               </p>
               
               {process.env.NODE_ENV === 'development' && this.state.error && (
                 <details className="text-left">
-                  <summary className="cursor-pointer text-sm text-gray-400 hover:text-gray-300">
+                  <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800">
                     Error details (development only)
                   </summary>
-                  <pre className="mt-2 text-xs text-red-400 bg-gray-900 p-2 rounded overflow-auto">
+                  <pre className="mt-2 text-xs text-red-600 bg-gray-100 p-2 rounded overflow-auto">
                     {this.state.error.message}
                     {this.state.error.stack}
                   </pre>
@@ -122,13 +122,13 @@ export function ErrorFallback({
 }) {
   return (
     <div className="min-h-64 flex items-center justify-center p-4">
-      <Card className="max-w-sm w-full bg-gray-800 border-gray-700">
+      <Card className="max-w-sm w-full bg-white border-gray-200">
         <CardContent className="p-6 text-center">
           <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-white mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
             Something went wrong
           </h3>
-          <p className="text-gray-300 mb-4">
+          <p className="text-gray-600 mb-4">
             {error?.message || 'An unexpected error occurred'}
           </p>
           {resetError && (

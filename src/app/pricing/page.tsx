@@ -19,16 +19,16 @@ export default async function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-white">
       <Navbar />
       
       {/* Page Header */}
       <section className="pt-24 pb-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             Choose Your Plan
           </h1>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Start free and upgrade when you're ready to unlock more features and grow your link-in-bio presence.
           </p>
         </div>
@@ -43,53 +43,71 @@ export default async function PricingPage() {
       {/* FAQ Section */}
       <section className="py-20 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-white text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-16">
             Frequently Asked Questions
           </h2>
           
-          <div className="grid gap-8">
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-3">
-                Can I upgrade or downgrade at any time?
+          <div className="space-y-12">
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                How does the split-screen layout work?
               </h3>
-              <p className="text-gray-300">
-                Yes! You can upgrade to Pro or downgrade to Free at any time. When downgrading, excess content will be deactivated (not deleted) and can be reactivated if you upgrade again.
+              <p className="text-gray-600 leading-relaxed">
+                Your Curately page displays your profile on the left (with your photo, name, and bio) while your widgets appear on the right side. You can drag and drop widgets anywhere on the right panel, including social media widgets, link buttons, QR codes, and text blocks.
               </p>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-3">
-                What happens to my content if I downgrade?
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                What's the difference between links, deeplinks, and QR codes?
               </h3>
-              <p className="text-gray-300">
-                Your first 5 links and 5 QR codes remain active. Additional content is deactivated but saved for 7 days, allowing you to reactivate it if you upgrade again or manually delete what you don't need.
+              <p className="text-gray-600 leading-relaxed">
+                <strong>Links</strong> are regular web links that take users to any website. <strong>Deeplinks</strong> are smart links that detect the user's device and automatically redirect to the iOS App Store, Google Play, or a web fallback. <strong>QR codes</strong> can be customized with your logo and downloaded for print materials.
               </p>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-3">
-                How does billing work for the annual plan?
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Can I use my own custom domain?
               </h3>
-              <p className="text-gray-300">
-                The annual plan is billed once per year at £100, saving you £20 compared to monthly billing (17% discount). You can cancel anytime and use the service until your billing period ends.
+              <p className="text-gray-600 leading-relaxed">
+                Currently, all pages use the format curately.co.uk/yourname. Custom domains are on our roadmap for future updates. Your curately.co.uk link works perfectly for social media bios and is short enough for easy sharing.
               </p>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-3">
-                Is there a free trial for Pro?
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                What analytics do I get with my links?
               </h3>
-              <p className="text-gray-300">
-                Since we offer a generous free plan with 5 links and 5 QR codes, we don't offer a separate trial. You can start with the free plan and upgrade when you need more features.
+              <p className="text-gray-600 leading-relaxed">
+                The free plan includes basic analytics for 30 days (click counts and top links). Pro users get advanced analytics forever, including detailed charts, geographic data, referrer tracking, and performance insights for all your links and QR codes.
               </p>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-3">
-                Can I cancel my Pro subscription?
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                How do I customize the appearance of my page?
               </h3>
-              <p className="text-gray-300">
-                Yes, you can cancel anytime from your account settings. You'll continue to have Pro features until the end of your current billing period, then automatically downgrade to the free plan.
+              <p className="text-gray-600 leading-relaxed">
+                Pro users can customize background colors, themes, and widget styles. Free users get the clean white background. All users can upload their own profile photo and customize their bio text to match their brand.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                What happens if I hit my limits on the free plan?
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                When you reach 5 links or 5 QR codes, you'll be prompted to upgrade to Pro or delete existing items to make room for new ones. Your existing content stays active and functional - you just can't add more until you upgrade or make space.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Can I downgrade from Pro to Free anytime?
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Yes! When downgrading, your first 5 links and 5 QR codes stay active. Additional content becomes inactive (but isn't deleted). You can reactivate everything by upgrading again, or manually choose which items to keep active.
               </p>
             </div>
           </div>
@@ -97,18 +115,18 @@ export default async function PricingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 px-4 border-t border-white/10">
+      <section className="py-16 px-4 border-t border-gray-200">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white mb-6">
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">
             Ready to get started?
           </h2>
-          <p className="text-xl text-gray-300 mb-8">
+          <p className="text-xl text-gray-600 mb-8">
             Join thousands of users who trust Curately for their link-in-bio needs.
           </p>
           {!user && (
             <a
               href="/auth"
-              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-full transition-all duration-300 hover:scale-105"
+              className="inline-flex items-center px-8 py-4 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-full transition-all duration-300 hover:scale-105"
             >
               Create Free Account
             </a>

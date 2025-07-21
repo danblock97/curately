@@ -105,36 +105,36 @@ export function PricingSection({ showUpgradeButtons = false, currentTier }: Pric
   const annualDiscount = Math.round((1 - (100 / (10 * 12))) * 100) // 17% discount
 
   return (
-    <section className="py-20 px-4">
+    <section className="py-20 px-4 bg-gray-50">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Simple, transparent pricing
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            Choose your plan
           </h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             Choose the plan that's right for you. Start free, upgrade anytime.
           </p>
           
           {/* Billing Toggle */}
           <div className="flex items-center justify-center gap-4 mb-12">
-            <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-400'}`}>
+            <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-gray-900' : 'text-gray-500'}`}>
               Monthly
             </span>
             <button
               onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'annual' : 'monthly')}
-              className="relative inline-flex h-6 w-11 items-center rounded-full bg-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-white/20"
+              className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                className={`inline-block h-4 w-4 transform rounded-full bg-gray-900 transition-transform ${
                   billingCycle === 'annual' ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
             </button>
-            <span className={`text-sm font-medium ${billingCycle === 'annual' ? 'text-white' : 'text-gray-400'}`}>
+            <span className={`text-sm font-medium ${billingCycle === 'annual' ? 'text-gray-900' : 'text-gray-500'}`}>
               Annual
             </span>
             {billingCycle === 'annual' && (
-              <Badge className="bg-green-500/20 text-green-300 border-green-500/30 ml-2">
+              <Badge className="bg-green-100 text-green-700 border-green-200 ml-2">
                 Save {annualDiscount}%
               </Badge>
             )}
@@ -147,8 +147,8 @@ export function PricingSection({ showUpgradeButtons = false, currentTier }: Pric
               key={plan.name}
               className={`relative overflow-hidden transition-all duration-300 hover:scale-105 ${
                 plan.popular
-                  ? 'border-2 border-blue-500/50 bg-gradient-to-b from-blue-500/10 to-purple-500/10 backdrop-blur-sm'
-                  : 'border border-white/20 bg-white/5 backdrop-blur-sm'
+                  ? 'border-2 border-blue-200 bg-gradient-to-b from-blue-50 to-purple-50 shadow-lg'
+                  : 'border border-gray-200 bg-white shadow-md'
               }`}
             >
               {plan.popular && (
@@ -157,7 +157,7 @@ export function PricingSection({ showUpgradeButtons = false, currentTier }: Pric
               
               <CardHeader className="text-center pb-4">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  <CardTitle className="text-2xl font-bold text-white">
+                  <CardTitle className="text-2xl font-bold text-gray-900">
                     {plan.name}
                   </CardTitle>
                   {plan.popular && (
@@ -167,21 +167,21 @@ export function PricingSection({ showUpgradeButtons = false, currentTier }: Pric
                     </Badge>
                   )}
                 </div>
-                <p className="text-gray-300 mb-4">{plan.description}</p>
+                <p className="text-gray-600 mb-4">{plan.description}</p>
                 
                 <div className="mb-4">
                   <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold text-white">
+                    <span className="text-4xl font-bold text-gray-900">
                       £{plan.price[billingCycle]}
                     </span>
                     {plan.price[billingCycle] > 0 && (
-                      <span className="text-gray-400">
+                      <span className="text-gray-600">
                         /{billingCycle === 'monthly' ? 'month' : 'year'}
                       </span>
                     )}
                   </div>
                   {billingCycle === 'annual' && plan.price.annual > 0 && (
-                    <p className="text-sm text-green-400 mt-1">
+                    <p className="text-sm text-green-600 mt-1">
                       Save £{(plan.price.monthly * 12) - plan.price.annual} per year
                     </p>
                   )}
@@ -192,10 +192,10 @@ export function PricingSection({ showUpgradeButtons = false, currentTier }: Pric
                 <ul className="space-y-3">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-center gap-3">
-                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
-                        <Check className="w-3 h-3 text-green-400" />
+                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                        <Check className="w-3 h-3 text-green-600" />
                       </div>
-                      <span className="text-gray-300">{feature}</span>
+                      <span className="text-gray-700">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -203,14 +203,14 @@ export function PricingSection({ showUpgradeButtons = false, currentTier }: Pric
                 <div className="pt-4">
                   {showUpgradeButtons ? (
                     currentTier === plan.tier ? (
-                      <Button disabled className="w-full bg-gray-600 text-gray-300">
+                      <Button disabled className="w-full bg-gray-300 text-gray-600">
                         Current Plan
                       </Button>
                     ) : plan.tier === 'free' && currentTier === 'pro' ? (
                       <Button
                         variant="outline"
                         onClick={handleManageBilling}
-                        className="w-full border-red-500/50 text-red-400 hover:bg-red-500/10"
+                        className="w-full border-red-200 text-red-600 hover:bg-red-50"
                       >
                         Downgrade to Free
                       </Button>
@@ -236,7 +236,7 @@ export function PricingSection({ showUpgradeButtons = false, currentTier }: Pric
                         </Button>
                       )
                     ) : (
-                      <Button disabled className="w-full">
+                      <Button disabled className="w-full bg-gray-300 text-gray-600">
                         Current Plan
                       </Button>
                     )
@@ -246,11 +246,11 @@ export function PricingSection({ showUpgradeButtons = false, currentTier }: Pric
                       className={
                         plan.popular
                           ? "w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
-                          : "w-full bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                          : "w-full bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-300"
                       }
                     >
                       <a href="/auth">
-                        {plan.name === 'Free' ? 'Get Started Free' : 'Start Free, Upgrade Later'}
+                        {plan.name === 'Free' ? 'Get Started Free' : 'Upgrade to Pro'}
                       </a>
                     </Button>
                   )}
@@ -261,7 +261,7 @@ export function PricingSection({ showUpgradeButtons = false, currentTier }: Pric
         </div>
 
         <div className="text-center mt-12">
-          <p className="text-gray-400 text-sm">
+          <p className="text-gray-600 text-sm">
             All plans include SSL certificates, 99.9% uptime, and email support.
           </p>
         </div>

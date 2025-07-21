@@ -3,10 +3,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ExternalLink, Instagram, Twitter, Github, Linkedin, Youtube } from 'lucide-react'
+import Image from 'next/image'
+import { BrandedQRCode } from '@/components/ui/branded-qr-code'
 
 export function DeviceMockups() {
   return (
-    <div className="relative max-w-7xl mx-auto">
+    <div className="relative max-w-[90rem] mx-auto w-full">
       {/* MacBook View - Main */}
       <div className="relative">
         {/* MacBook Outer Frame */}
@@ -23,7 +25,7 @@ export function DeviceMockups() {
                 </div>
                 <div className="flex-1 flex justify-center">
                   <div className="bg-white rounded-lg px-6 py-2 text-sm text-gray-600 border border-gray-300 shadow-sm min-w-[300px] text-center">
-                    🔒 curately.com/johnsmith
+                    🔒 curately.co.uk/johnsmith
                   </div>
                 </div>
                 <div className="w-20"></div>
@@ -32,64 +34,59 @@ export function DeviceMockups() {
             
             {/* MacBook Screen Content */}
             <div className="bg-black rounded-b-lg overflow-hidden">
-              <div className="relative h-[600px] bg-gradient-to-br from-gray-900 via-black to-gray-900 p-16">
-                {/* Desktop Layout - Centered */}
-                <div className="max-w-lg mx-auto h-full flex flex-col justify-center">
-                  {/* Profile Section */}
-                  <div className="text-center mb-12">
-                    <Avatar className="w-32 h-32 mx-auto mb-6 ring-4 ring-white/20 shadow-2xl">
-                      <AvatarImage src="/api/placeholder/128/128" />
-                      <AvatarFallback className="bg-blue-500 text-white text-2xl">JS</AvatarFallback>
+              <div className="relative h-[600px] bg-white flex">
+                {/* Left side - Profile */}
+                <div className="w-1/2 p-8 flex flex-col justify-center">
+                  <div className="text-center">
+                    <Avatar className="w-20 h-20 mx-auto mb-4 ring-3 ring-gray-200 shadow-xl">
+                      <AvatarImage src="/api/placeholder/80/80" />
+                      <AvatarFallback className="bg-blue-500 text-white text-lg">JS</AvatarFallback>
                     </Avatar>
                     
-                    <h2 className="text-3xl font-bold text-white mb-4">
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">
                       John Smith
                     </h2>
-                    <p className="text-lg text-gray-400 mb-8 leading-relaxed">
-                      Full-stack developer sharing my journey and latest projects
+                    <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                      Full-stack developer sharing my journey
                     </p>
-                  </div>
-
-                  {/* Links */}
-                  <div className="space-y-5 mb-12">
-                    <Button
-                      variant="outline"
-                      className="w-full py-5 bg-white/10 hover:bg-white/20 text-white border-white/20 rounded-2xl justify-between backdrop-blur-sm transition-all text-lg shadow-lg hover:shadow-xl"
-                    >
-                      <span className="font-semibold">My Portfolio</span>
-                      <ExternalLink className="w-5 h-5" />
-                    </Button>
                     
-                    <Button
-                      variant="outline"
-                      className="w-full py-5 bg-white/10 hover:bg-white/20 text-white border-white/20 rounded-2xl justify-between backdrop-blur-sm transition-all text-lg shadow-lg hover:shadow-xl"
-                    >
-                      <span className="font-semibold">Latest Blog Post</span>
-                      <ExternalLink className="w-5 h-5" />
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      className="w-full py-5 bg-white/10 hover:bg-white/20 text-white border-white/20 rounded-2xl justify-between backdrop-blur-sm transition-all text-lg shadow-lg hover:shadow-xl"
-                    >
-                      <span className="font-semibold">GitHub Projects</span>
-                      <ExternalLink className="w-5 h-5" />
-                    </Button>
                   </div>
+                </div>
 
-                  {/* Social Icons */}
-                  <div className="flex justify-center space-x-6">
-                    <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors backdrop-blur-sm shadow-lg hover:shadow-xl">
-                      <Twitter className="w-6 h-6 text-gray-300" />
+                {/* Right side - Widgets */}
+                <div className="w-1/2 p-6 relative">
+                  {/* Widget Grid */}
+                  <div className="space-y-2">
+                    {/* Twitter Widget */}
+                    <div className="h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center px-3 shadow-sm">
+                      <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center mr-3">
+                        <Twitter className="w-3 h-3 text-blue-500" />
+                      </div>
+                      <span className="text-white text-xs font-medium">@johnsmith</span>
                     </div>
-                    <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors backdrop-blur-sm shadow-lg hover:shadow-xl">
-                      <Instagram className="w-6 h-6 text-gray-300" />
+                    
+                    {/* Portfolio Link */}
+                    <div className="h-12 bg-gray-100 rounded-lg flex items-center px-3 justify-between shadow-sm">
+                      <span className="text-gray-900 text-xs font-medium">My Portfolio</span>
+                      <ExternalLink className="w-3 h-3 text-gray-600" />
                     </div>
-                    <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors backdrop-blur-sm shadow-lg hover:shadow-xl">
-                      <Github className="w-6 h-6 text-gray-300" />
-                    </div>
-                    <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors backdrop-blur-sm shadow-lg hover:shadow-xl">
-                      <Linkedin className="w-6 h-6 text-gray-300" />
+                    
+                    {/* Square widgets row */}
+                    <div className="flex space-x-2">
+                      <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-red-500 rounded-lg flex items-center justify-center shadow-sm">
+                        <Instagram className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="w-16 h-16 bg-gradient-to-br from-gray-800 to-black rounded-lg flex items-center justify-center shadow-sm">
+                        <Github className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="w-16 h-16 bg-white border-2 border-gray-200 rounded-lg flex items-center justify-center shadow-sm p-1">
+                        <BrandedQRCode 
+                          url="https://danblock.dev" 
+                          size={56}
+                          logoSize={14}
+                          className="w-full h-full"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -118,75 +115,78 @@ export function DeviceMockups() {
             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-36 h-7 bg-black rounded-b-3xl z-10"></div>
             
             {/* iPhone Screen Content */}
-            <div className="relative h-[640px] w-[300px] bg-gradient-to-br from-gray-900 via-black to-gray-900 p-8 pt-12">
-              {/* Mobile Layout */}
-              <div className="text-center mb-8">
-                <Avatar className="w-20 h-20 mx-auto mb-6 ring-3 ring-white/20 shadow-xl">
-                  <AvatarImage src="/api/placeholder/80/80" />
-                  <AvatarFallback className="bg-blue-500 text-white text-lg">JS</AvatarFallback>
+            <div className="relative h-[640px] w-[300px] bg-white flex flex-col pt-12">
+              {/* Mobile Profile Section */}
+              <div className="px-6 text-center mb-6">
+                <Avatar className="w-16 h-16 mx-auto mb-3 ring-2 ring-gray-200 shadow-lg">
+                  <AvatarImage src="/api/placeholder/64/64" />
+                  <AvatarFallback className="bg-blue-500 text-white text-sm">JS</AvatarFallback>
                 </Avatar>
                 
-                <h2 className="text-xl font-bold text-white mb-3">
+                <h2 className="text-lg font-bold text-gray-900 mb-2">
                   John Smith
                 </h2>
-                <p className="text-base text-gray-400 mb-6 leading-relaxed">
+                <p className="text-sm text-gray-600 mb-4 leading-relaxed">
                   Full-stack developer sharing my journey
                 </p>
+                
               </div>
 
-              {/* Mobile Links */}
-              <div className="space-y-4 mb-8">
-                <Button
-                  variant="outline"
-                  className="w-full py-4 bg-white/10 hover:bg-white/20 text-white border-white/20 rounded-xl justify-between backdrop-blur-sm text-base transition-all shadow-lg hover:shadow-xl"
-                >
-                  <span className="font-semibold">My Portfolio</span>
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  className="w-full py-4 bg-white/10 hover:bg-white/20 text-white border-white/20 rounded-xl justify-between backdrop-blur-sm text-base transition-all shadow-lg hover:shadow-xl"
-                >
-                  <span className="font-semibold">Latest Blog Post</span>
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  className="w-full py-4 bg-white/10 hover:bg-white/20 text-white border-white/20 rounded-xl justify-between backdrop-blur-sm text-base transition-all shadow-lg hover:shadow-xl"
-                >
-                  <span className="font-semibold">GitHub Projects</span>
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
-              </div>
-
-              {/* Mobile Social Icons */}
-              <div className="flex justify-center space-x-4">
-                <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors backdrop-blur-sm shadow-lg hover:shadow-xl">
-                  <Twitter className="w-5 h-5 text-gray-300" />
-                </div>
-                <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors backdrop-blur-sm shadow-lg hover:shadow-xl">
-                  <Instagram className="w-5 h-5 text-gray-300" />
-                </div>
-                <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors backdrop-blur-sm shadow-lg hover:shadow-xl">
-                  <Github className="w-5 h-5 text-gray-300" />
-                </div>
-                <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors backdrop-blur-sm shadow-lg hover:shadow-xl">
-                  <Linkedin className="w-5 h-5 text-gray-300" />
+              {/* Mobile Widgets Section */}
+              <div className="px-4 flex-1">
+                <div className="flex flex-wrap justify-center gap-2">
+                  {/* Twitter Widget */}
+                  <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex flex-col justify-end p-2 shadow-sm relative">
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-white rounded-full flex items-center justify-center">
+                      <Twitter className="w-3 h-3 text-blue-500" />
+                    </div>
+                    <div className="text-white text-xs font-medium">@johnsmith</div>
+                  </div>
+                  
+                  {/* Instagram Widget */}
+                  <div className="w-32 h-32 bg-gradient-to-br from-pink-500 to-red-500 rounded-lg flex flex-col justify-end p-2 shadow-sm relative">
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-white rounded-full flex items-center justify-center">
+                      <Instagram className="w-3 h-3 text-pink-500" />
+                    </div>
+                    <div className="text-white text-xs font-medium">Instagram</div>
+                  </div>
+                  
+                  {/* Portfolio Link */}
+                  <div className="w-full h-10 bg-gray-100 rounded-lg flex items-center px-3 justify-between shadow-sm mt-2">
+                    <span className="text-gray-900 text-sm font-medium">My Portfolio</span>
+                    <ExternalLink className="w-4 h-4 text-gray-600" />
+                  </div>
+                  
+                  {/* GitHub Widget */}
+                  <div className="w-32 h-32 bg-gradient-to-br from-gray-800 to-black rounded-lg flex flex-col justify-end p-2 shadow-sm relative">
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-white rounded-full flex items-center justify-center">
+                      <Github className="w-3 h-3 text-gray-800" />
+                    </div>
+                    <div className="text-white text-xs font-medium">GitHub</div>
+                  </div>
+                  
+                  {/* Branded QR Code Widget */}
+                  <div className="w-32 h-32 bg-white border-2 border-gray-200 rounded-lg flex items-center justify-center shadow-sm p-2">
+                    <BrandedQRCode 
+                      url="https://danblock.dev" 
+                      size={112}
+                      logoSize={28}
+                      className="w-full h-full"
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* Mobile Curately Footer */}
-              <div className="absolute bottom-10 left-0 right-0 text-center">
-                <p className="text-sm text-gray-400">
+              <div className="px-6 py-4 text-center">
+                <p className="text-xs text-gray-600">
                   Created with{' '}
-                  <span className="font-medium text-gray-200">Curately</span>
+                  <span className="font-medium text-gray-800">Curately</span>
                 </p>
               </div>
               
               {/* iPhone Home Indicator */}
-              <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-36 h-1 bg-white/30 rounded-full"></div>
+              <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 w-36 h-1 bg-gray-400 rounded-full"></div>
             </div>
           </div>
         </div>

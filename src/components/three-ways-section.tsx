@@ -6,6 +6,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Link2, ExternalLink, QrCode, Instagram, Youtube, ArrowRight } from 'lucide-react'
+import Image from 'next/image'
+import { BrandedQRCode } from '@/components/ui/branded-qr-code'
 
 export function ThreeWaysSection() {
   const [activeTab, setActiveTab] = useState('link-in-bio')
@@ -34,62 +36,110 @@ export function ThreeWaysSection() {
         return (
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h3 className="text-3xl font-bold text-white mb-6">
+              <h3 className="text-3xl font-bold text-gray-900 mb-6">
                 Create a Link in Bio that stands out
               </h3>
-              <p className="text-lg text-gray-300 mb-8">
+              <p className="text-lg text-gray-600 mb-8">
                 Gather all your links in one place, on a platform that combines design and simplicity.
               </p>
               
-              <div className="space-y-4 mb-8">
-                <p className="text-gray-200 font-medium">Claim your curately.co.uk</p>
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center bg-gray-800 rounded-lg border border-gray-600 px-4 py-3 flex-1">
-                    <span className="text-gray-300">curately.co.uk/</span>
-                    <input
-                      type="text"
-                      placeholder="username"
-                      className="flex-1 outline-none text-gray-300 ml-1 bg-transparent placeholder-gray-500"
-                    />
+              <div className="space-y-6 mb-8">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="text-sm font-medium text-gray-900 mb-2">✨ Beautiful widgets</div>
+                    <div className="text-xs text-gray-600">Social media, links, QR codes, and more</div>
                   </div>
-                  <Button className="bg-white hover:bg-gray-100 text-black px-6">
-                    Get Started
-                  </Button>
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="text-sm font-medium text-gray-900 mb-2">📊 Click tracking</div>
+                    <div className="text-xs text-gray-600">See which links perform best</div>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="text-sm font-medium text-gray-900 mb-2">🎨 Custom themes</div>
+                    <div className="text-xs text-gray-600">Match your brand perfectly</div>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="text-sm font-medium text-gray-900 mb-2">⚡ Lightning fast</div>
+                    <div className="text-xs text-gray-600">Optimized for all devices</div>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div className="relative">
-              <div className="absolute top-4 right-4 z-10">
-                <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
-                  curately.co.uk/theweeknd
-                </Badge>
+              {/* Desktop Preview */}
+              <div className="relative">
+                <div className="absolute -top-4 right-4 z-10">
+                  <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
+                    curately.co.uk/johnsmith
+                  </Badge>
+                </div>
+                <Card className="bg-white shadow-xl border border-gray-200">
+                  <CardContent className="p-0 flex">
+                    {/* Left - Profile */}
+                    <div className="w-1/2 p-6 bg-white">
+                      <div className="text-center">
+                        <Avatar className="w-16 h-16 mx-auto mb-4 ring-2 ring-gray-200">
+                          <AvatarImage src="/api/placeholder/64/64" />
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white">JS</AvatarFallback>
+                        </Avatar>
+                        <h4 className="text-xl font-bold text-gray-900">John Smith</h4>
+                        <p className="text-gray-600 text-sm mb-2">Content Creator</p>
+                        <p className="text-gray-500 text-xs">Digital Marketing Specialist</p>
+                        <p className="text-gray-500 text-xs mb-4">Building amazing content</p>
+                        
+                        <div className="flex justify-center space-x-3">
+                          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                            <Instagram className="w-4 h-4 text-gray-600" />
+                          </div>
+                          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                            <Youtube className="w-4 h-4 text-gray-600" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Right - Widgets */}
+                    <div className="w-1/2 p-4 space-y-2">
+                      {/* Instagram Widget */}
+                      <div className="h-10 bg-gradient-to-r from-pink-500 to-red-500 rounded-lg flex items-center px-3">
+                        <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center mr-2">
+                          <Instagram className="w-3 h-3 text-pink-500" />
+                        </div>
+                        <span className="text-white text-xs font-medium">@johnsmith</span>
+                      </div>
+                      
+                      {/* YouTube Widget */}
+                      <div className="h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center px-3">
+                        <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center mr-2">
+                          <Youtube className="w-3 h-3 text-red-500" />
+                        </div>
+                        <span className="text-white text-xs font-medium">Latest Video</span>
+                      </div>
+                      
+                      {/* Link Widget */}
+                      <div className="h-10 bg-gray-100 rounded-lg flex items-center px-3 justify-between">
+                        <span className="text-gray-900 text-xs font-medium">My Portfolio</span>
+                        <ExternalLink className="w-3 h-3 text-gray-600" />
+                      </div>
+                      
+                      {/* Square widgets */}
+                      <div className="flex space-x-2 mt-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">JS</span>
+                        </div>
+                        <div className="w-12 h-12 bg-white border-2 border-gray-200 rounded-lg flex items-center justify-center p-1">
+                          <BrandedQRCode 
+                            url="https://danblock.dev" 
+                            size={40}
+                            logoSize={10}
+                            className="w-full h-full"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-              <Card className="bg-white shadow-lg">
-                <CardContent className="p-6">
-                  <div className="text-center mb-6">
-                    <Avatar className="w-16 h-16 mx-auto mb-4">
-                      <AvatarImage src="/api/placeholder/64/64" />
-                      <AvatarFallback>TW</AvatarFallback>
-                    </Avatar>
-                    <h4 className="text-xl font-bold text-gray-900">The Weeknd</h4>
-                    <p className="text-gray-600 text-sm">Artist</p>
-                    <p className="text-gray-500 text-xs mt-2">HURRY UP TOMORROW</p>
-                    <p className="text-gray-500 text-xs">Grammy Award Winner</p>
-                  </div>
-
-                  <div className="flex justify-center space-x-4 mb-6">
-                    <Instagram className="w-5 h-5 text-gray-600" />
-                    <Youtube className="w-5 h-5 text-gray-600" />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="bg-red-600 aspect-square rounded-lg"></div>
-                    <div className="bg-red-800 aspect-square rounded-lg"></div>
-                    <div className="bg-gray-800 aspect-square rounded-lg"></div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </div>
         )
@@ -98,27 +148,30 @@ export function ThreeWaysSection() {
         return (
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h3 className="text-3xl font-bold text-white mb-6">
-                Create a <span className="text-gray-400">deeplink</span> that converts.
+              <h3 className="text-3xl font-bold text-gray-900 mb-6">
+                Create a <span className="text-blue-600">deeplink</span> that converts.
               </h3>
               <div className="space-y-4 mb-8">
-                <p className="text-lg text-gray-300">Say goodbye to user drop-offs.</p>
-                <p className="text-lg text-gray-300">Send your traffic directly to the app of your choice.</p>
+                <p className="text-lg text-gray-600">Say goodbye to user drop-offs.</p>
+                <p className="text-lg text-gray-600">Send your traffic directly to the app of your choice.</p>
               </div>
               
-              <div className="space-y-4 mb-8">
-                <p className="text-gray-200 font-medium">Turn your link into a deeplink</p>
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center bg-gray-800 rounded-lg border border-gray-600 px-4 py-3 flex-1">
-                    <input
-                      type="text"
-                      placeholder="https://yourlink.com"
-                      className="flex-1 outline-none text-gray-300 bg-transparent placeholder-gray-500"
-                    />
-                  </div>
-                  <Button className="bg-white hover:bg-gray-100 text-black px-6">
-                    Get Started
-                  </Button>
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="text-sm font-medium text-blue-900 mb-2">📱 iOS App Store</div>
+                  <div className="text-xs text-blue-700">Direct users to your iOS app</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <div className="text-sm font-medium text-green-900 mb-2">🤖 Google Play</div>
+                  <div className="text-xs text-green-700">Route Android users seamlessly</div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <div className="text-sm font-medium text-purple-900 mb-2">🌐 Web Fallback</div>
+                  <div className="text-xs text-purple-700">Backup for desktop users</div>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                  <div className="text-sm font-medium text-orange-900 mb-2">📊 Smart Detection</div>
+                  <div className="text-xs text-orange-700">Automatically detect device type</div>
                 </div>
               </div>
             </div>
@@ -170,26 +223,29 @@ export function ThreeWaysSection() {
         return (
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h3 className="text-3xl font-bold text-white mb-6">
+              <h3 className="text-3xl font-bold text-gray-900 mb-6">
                 Create a QR Code that people want to scan
               </h3>
-              <p className="text-lg text-gray-300 mb-8">
+              <p className="text-lg text-gray-600 mb-8">
                 Beautiful, efficient, trackable: take your QR Codes to the next level.
               </p>
               
-              <div className="space-y-4 mb-8">
-                <p className="text-gray-200 font-medium">Turn your link into a QR Code</p>
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center bg-gray-800 rounded-lg border border-gray-600 px-4 py-3 flex-1">
-                    <input
-                      type="text"
-                      placeholder="https://yourlink.com"
-                      className="flex-1 outline-none text-gray-300 bg-transparent placeholder-gray-500"
-                    />
-                  </div>
-                  <Button className="bg-white hover:bg-gray-100 text-black px-6">
-                    Get Started
-                  </Button>
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                  <div className="text-sm font-medium text-indigo-900 mb-2">🎨 Custom colors</div>
+                  <div className="text-xs text-indigo-700">Match your brand perfectly</div>
+                </div>
+                <div className="bg-cyan-50 p-4 rounded-lg border border-cyan-200">
+                  <div className="text-sm font-medium text-cyan-900 mb-2">📏 Any size</div>
+                  <div className="text-xs text-cyan-700">From business cards to billboards</div>
+                </div>
+                <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
+                  <div className="text-sm font-medium text-emerald-900 mb-2">📈 Track scans</div>
+                  <div className="text-xs text-emerald-700">See when and where it's scanned</div>
+                </div>
+                <div className="bg-rose-50 p-4 rounded-lg border border-rose-200">
+                  <div className="text-sm font-medium text-rose-900 mb-2">💾 High quality</div>
+                  <div className="text-xs text-rose-700">SVG and PNG downloads</div>
                 </div>
               </div>
             </div>
@@ -200,43 +256,14 @@ export function ThreeWaysSection() {
                   SCAN ME !
                 </div>
                 
-                {/* QR Code mockup */}
+                {/* Branded QR Code mockup */}
                 <div className="w-48 h-48 bg-white border-2 border-gray-200 rounded-lg p-4 shadow-lg">
-                  <div className="w-full h-full bg-black relative overflow-hidden">
-                    {/* QR Code pattern mockup */}
-                    <div className="absolute inset-0 grid grid-cols-12 gap-px p-2">
-                      {Array.from({ length: 144 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className={`aspect-square ${
-                            i % 2 === 0 ? 'bg-white' : 'bg-black'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    
-                    {/* Corner squares */}
-                    <div className="absolute top-2 left-2 w-8 h-8 bg-black border-2 border-white">
-                      <div className="w-full h-full bg-white m-1">
-                        <div className="w-full h-full bg-black m-1"></div>
-                      </div>
-                    </div>
-                    <div className="absolute top-2 right-2 w-8 h-8 bg-black border-2 border-white">
-                      <div className="w-full h-full bg-white m-1">
-                        <div className="w-full h-full bg-black m-1"></div>
-                      </div>
-                    </div>
-                    <div className="absolute bottom-2 left-2 w-8 h-8 bg-black border-2 border-white">
-                      <div className="w-full h-full bg-white m-1">
-                        <div className="w-full h-full bg-black m-1"></div>
-                      </div>
-                    </div>
-                    
-                    {/* Center logo */}
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                      <span className="text-black font-bold text-sm">C</span>
-                    </div>
-                  </div>
+                  <BrandedQRCode 
+                    url="https://danblock.dev" 
+                    size={176}
+                    logoSize={44}
+                    className="w-full h-full"
+                  />
                 </div>
               </div>
             </div>
@@ -250,21 +277,21 @@ export function ThreeWaysSection() {
 
   return (
     <div className="text-center">
-      <h2 className="text-4xl font-bold text-white mb-12">
-        One tool, three ways to try it.
+      <h2 className="text-4xl font-bold text-gray-900 mb-12">
+        Same outcome, three ways
       </h2>
       
       {/* Tab Navigation */}
       <div className="flex justify-center mb-16">
-        <div className="bg-gray-800 rounded-xl p-2 shadow-md border border-gray-700">
+        <div className="bg-gray-100 rounded-xl p-1 shadow-sm flex">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center space-x-2 px-6 py-3 rounded-lg transition-all ${
                 activeTab === tab.id
-                  ? 'bg-white text-black shadow-md'
-                  : 'text-gray-300 hover:text-white'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               {tab.icon}
