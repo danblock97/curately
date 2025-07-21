@@ -85,6 +85,9 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 	console.log('🎯 ProfilePage MOUNT - Received props:', { page, profile, links, socialLinks });
 	console.log('🔗 ProfilePage MOUNT - Links array:', links);
 	console.log('📏 ProfilePage MOUNT - Links length:', links?.length);
+	console.log('📄 ProfilePage MOUNT - Page title:', page.page_title);
+	console.log('📄 ProfilePage MOUNT - Page description:', page.page_description);
+	console.log('👤 ProfilePage MOUNT - Profile display_name:', profile?.display_name);
 	const supabase = createClient();
 	const [widgets, setWidgets] = useState<Widget[]>([]);
 	const [isLoadingWidgets, setIsLoadingWidgets] = useState(true);
@@ -1356,7 +1359,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 							<h1 className={`${
 								isMobile ? 'text-2xl' : 'text-4xl'
 							} font-black mb-3 !text-gray-900`}>
-								{page.page_title || profile?.display_name || page.username}
+								{profile?.display_name || page.page_title || page.username}
 							</h1>
 
 							{profile?.bio && (
@@ -1365,6 +1368,28 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 								} !text-gray-700 font-medium mb-6 leading-relaxed max-w-md mx-auto`}>
 									{profile.bio}
 								</p>
+							)}
+
+							{/* Page title - show if exists */}
+							{(page.page_title && page.page_title.trim()) && (
+								<div className="mb-4 max-w-md mx-auto">
+									<div className={`${
+										isMobile ? 'text-lg' : 'text-xl'
+									} font-semibold text-gray-800`}>
+										{page.page_title}
+									</div>
+								</div>
+							)}
+							
+							{/* Page description - always show if exists */}
+							{(page.page_description && page.page_description.trim()) && (
+								<div className="mb-6 max-w-md mx-auto">
+									<p className={`${
+										isMobile ? 'text-sm' : 'text-base'
+									} text-gray-600 leading-relaxed`}>
+										{page.page_description}
+									</p>
+								</div>
 							)}
 						</div>
 

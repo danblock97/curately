@@ -142,7 +142,7 @@ export async function generateMetadata({ params }: PageProps) {
       title: 'User not found - Curately'
     }
   }
-  const title = page.page_title || profile.display_name || resolvedParams.username
+  const title = profile?.display_name || page.page_title || resolvedParams.username
   const description = page.page_description || profile.bio || `Check out ${title}'s links`
 
   return {

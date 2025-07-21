@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,6 +22,7 @@ interface PagesManagerProps {
 }
 
 export function PagesManager({ profile, userId }: PagesManagerProps) {
+  const router = useRouter()
   const [pages, setPages] = useState<Page[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -207,6 +209,7 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => router.push(`/dashboard/appearance?pageId=${page.id}`)}
                       className="text-gray-600 hover:text-gray-900"
                     >
                       <Settings className="w-4 h-4 mr-2" />

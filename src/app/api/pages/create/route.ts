@@ -84,9 +84,8 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         username: username.toLowerCase(),
-        display_name: display_name || null,
-        bio: bio || null,
-        avatar_url: avatar_url || null,
+        page_title: display_name || username,
+        page_description: bio || null,
         background_color: '#ffffff',
         is_primary: false,
         is_active: true

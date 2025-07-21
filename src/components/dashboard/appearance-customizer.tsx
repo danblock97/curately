@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -41,6 +42,7 @@ interface AppearanceCustomizerProps {
   socialLinks: SocialLink[]
   links: Link[]
   pages: Page[]
+  selectedPageId?: string
 }
 
 export interface Widget {
@@ -89,7 +91,8 @@ const qrSizeOptions = [
 
 // Mobile widgets are always small squares - no size options needed
 
-export function AppearanceCustomizer({ profile, socialLinks, links, pages }: AppearanceCustomizerProps) {
+export function AppearanceCustomizer({ profile, socialLinks, links, pages, selectedPageId }: AppearanceCustomizerProps) {
+  const router = useRouter()
   const [activeView, setActiveView] = useState<'web' | 'mobile'>('web')
   const [showWidgetModal, setShowWidgetModal] = useState(false)
   const [widgets, setWidgets] = useState<Widget[]>([])
@@ -101,6 +104,8 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
   const [currentPage, setCurrentPage] = useState<Page | null>(null)
+  const [pageTitle, setPageTitle] = useState('')
+  const [pageDescription, setPageDescription] = useState('')
   const [backgroundColor, setBackgroundColor] = useState('#ffffff')
   const [showBackgroundPicker, setShowBackgroundPicker] = useState(false)
   
@@ -129,10 +134,15 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
     setBio(profile?.bio || '')
     
     // Initialize current page and background color
-    const initialPage = pages?.find(p => p.is_primary) || pages?.[0] || null
+    // If selectedPageId is provided, use that page; otherwise use primary or first page
+    const initialPage = selectedPageId 
+      ? pages?.find(p => p.id === selectedPageId) 
+      : pages?.find(p => p.is_primary) || pages?.[0] || null
     setCurrentPage(initialPage)
     setBackgroundColor(initialPage?.background_color || '#ffffff')
-  }, [profile, pages])
+    setPageTitle(initialPage?.page_title || '')
+    setPageDescription(initialPage?.page_description || '')
+  }, [profile, pages, selectedPageId])
 
   // Update background color when current page changes
   useEffect(() => {
@@ -774,6 +784,60 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
   const handleBioBlur = () => {
     if (bio !== (profile?.bio || '')) {
       updateProfile('bio', bio)
+    }
+  }
+
+  const handlePageTitleChange = (value: string) => {
+    setPageTitle(value)
+  }
+
+  const handlePageTitleBlur = async () => {
+    if (pageTitle !== (currentPage?.page_title || '') && currentPage) {
+      try {
+        const { error } = await supabase
+          .from('pages')
+          .update({ page_title: pageTitle.trim() })
+          .eq('id', currentPage.id)
+          .eq('user_id', profile?.id)
+
+        if (error) {
+          toast.error('Failed to update page title')
+          return
+        }
+
+        // Update current page state
+        setCurrentPage(prev => prev ? { ...prev, page_title: pageTitle.trim() } : null)
+        toast.success('Page title updated!')
+      } catch (error) {
+        toast.error('Failed to update page title')
+      }
+    }
+  }
+
+  const handlePageDescriptionChange = (value: string) => {
+    setPageDescription(value)
+  }
+
+  const handlePageDescriptionBlur = async () => {
+    if (pageDescription !== (currentPage?.page_description || '') && currentPage) {
+      try {
+        const { error } = await supabase
+          .from('pages')
+          .update({ page_description: pageDescription.trim() || null })
+          .eq('id', currentPage.id)
+          .eq('user_id', profile?.id)
+
+        if (error) {
+          toast.error('Failed to update page description')
+          return
+        }
+
+        // Update current page state
+        setCurrentPage(prev => prev ? { ...prev, page_description: pageDescription.trim() || null } : null)
+        toast.success('Page description updated!')
+      } catch (error) {
+        toast.error('Failed to update page description')
+      }
     }
   }
 
@@ -2171,7 +2235,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-gray-200">
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/pages')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Return
           </Button>
@@ -2225,17 +2289,17 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
               <div className="relative mb-6 group">
                 <label className="cursor-pointer block">
                   <div className="relative">
-                    <Avatar className={`${activeView === 'web' ? 'w-36 h-36' : 'w-24 h-24'} mx-auto mb-4 ring-4 ring-white shadow-2xl`}>
+                    <Avatar className={`${activeView === 'web' ? 'w-32 h-32' : 'w-20 h-20'} mx-auto mb-6 ring-3 ring-white/80 shadow-lg`}>
                       <AvatarImage src={profile?.avatar_url || ''} alt={displayName} />
-                      <AvatarFallback className={`${activeView === 'web' ? 'text-4xl' : 'text-2xl'} bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold`}>
+                      <AvatarFallback className={`${activeView === 'web' ? 'text-3xl' : 'text-xl'} bg-gradient-to-br from-gray-100 to-gray-200 text-gray-700 font-semibold`}>
                         {isHydrated ? displayName.charAt(0).toUpperCase() || 'U' : 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <div className={`absolute inset-0 ${activeView === 'web' ? 'w-36 h-36' : 'w-24 h-24'} mx-auto mb-4 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300`}>
+                    <div className={`absolute inset-0 ${activeView === 'web' ? 'w-32 h-32' : 'w-20 h-20'} mx-auto mb-6 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200`}>
                       <div className="text-center">
-                        <Edit className={`${activeView === 'web' ? 'w-6 h-6' : 'w-4 h-4'} text-white mb-1 mx-auto`} />
-                        <span className={`text-white ${activeView === 'web' ? 'text-xs' : 'text-xs'} font-medium`}>
-                          Edit Photo
+                        <Edit className={`${activeView === 'web' ? 'w-5 h-5' : 'w-4 h-4'} text-white mb-1 mx-auto`} />
+                        <span className={`text-white text-xs font-medium`}>
+                          Edit
                         </span>
                       </div>
                     </div>
@@ -2254,8 +2318,8 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
                 onChange={(e) => handleDisplayNameChange(e.target.value)}
                 onBlur={handleDisplayNameBlur}
                 className={`${
-                  activeView === 'web' ? 'text-4xl' : 'text-2xl'
-                } font-black mb-3 bg-transparent border-none text-center w-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white/80 rounded-lg px-3 py-2 transition-all hover:bg-gray-50/50 backdrop-blur-sm`}
+                  activeView === 'web' ? 'text-3xl' : 'text-xl'
+                } font-bold text-gray-900 bg-transparent border-none text-center w-full focus:outline-none focus:ring-1 focus:ring-gray-200 focus:bg-white/50 rounded-xl px-4 py-3 mb-3 transition-all hover:bg-gray-50/30`}
                 placeholder="Your name"
               />
               <textarea
@@ -2263,11 +2327,36 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
                 onChange={(e) => handleBioChange(e.target.value)}
                 onBlur={handleBioBlur}
                 className={`${
-                  activeView === 'web' ? 'text-lg' : 'text-base'
-                } text-gray-700 font-medium mb-6 bg-transparent border-none text-center w-full resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white/80 rounded-lg px-3 py-2 transition-all hover:bg-gray-50/50 backdrop-blur-sm leading-relaxed`}
+                  activeView === 'web' ? 'text-base' : 'text-sm'
+                } text-gray-600 bg-transparent border-none text-center w-full resize-none focus:outline-none focus:ring-1 focus:ring-gray-200 focus:bg-white/50 rounded-xl px-4 py-3 mb-4 transition-all hover:bg-gray-50/30 leading-relaxed`}
                 placeholder="Tell people about yourself..."
-                rows={activeView === 'web' ? 3 : 2}
+                rows={activeView === 'web' ? 2 : 1}
               />
+              
+              {/* Page Info Section */}
+              <div className="border-t border-gray-100 pt-4 mt-2 space-y-3">
+                <input
+                  type="text"
+                  value={pageTitle}
+                  onChange={(e) => handlePageTitleChange(e.target.value)}
+                  onBlur={handlePageTitleBlur}
+                  className={`${
+                    activeView === 'web' ? 'text-lg' : 'text-base'
+                  } font-medium text-gray-700 bg-transparent border-none text-center w-full focus:outline-none focus:ring-1 focus:ring-gray-200 focus:bg-white/50 rounded-xl px-4 py-2 transition-all hover:bg-gray-50/30`}
+                  placeholder="Page title (optional)"
+                />
+                
+                <textarea
+                  value={pageDescription}
+                  onChange={(e) => handlePageDescriptionChange(e.target.value)}
+                  onBlur={handlePageDescriptionBlur}
+                  className={`${
+                    activeView === 'web' ? 'text-sm' : 'text-xs'
+                  } text-gray-500 bg-transparent border-none text-center w-full resize-none focus:outline-none focus:ring-1 focus:ring-gray-200 focus:bg-white/50 rounded-xl px-4 py-2 transition-all hover:bg-gray-50/30 leading-relaxed mb-6`}
+                  placeholder="Page description (optional)"
+                  rows={1}
+                />
+              </div>
             </div>
 
             {/* Widgets Area - Only for mobile view */}

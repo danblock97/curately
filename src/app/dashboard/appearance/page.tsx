@@ -2,7 +2,15 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AppearanceCustomizer } from '@/components/dashboard/appearance-customizer'
 
-export default async function AppearancePage() {
+interface SearchParams {
+  pageId?: string
+}
+
+export default async function AppearancePage({
+  searchParams,
+}: {
+  searchParams: SearchParams
+}) {
   const supabase = await createClient()
   
   const { data: { user } } = await supabase.auth.getUser()
@@ -53,6 +61,7 @@ export default async function AppearancePage() {
       socialLinks={socialLinks || []} 
       links={links || []}
       pages={pages || []}
+      selectedPageId={searchParams.pageId}
     />
   )
 }
