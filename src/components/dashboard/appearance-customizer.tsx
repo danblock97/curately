@@ -81,6 +81,12 @@ const sizeOptions = [
   { value: 'large-square', label: 'Large Square', icon: <div className="w-3 h-3 bg-white border border-black rounded-sm"></div> }
 ]
 
+// QR codes only support square sizes for optimal scanning
+const qrSizeOptions = [
+  { value: 'small-square', label: 'Small Square', icon: <div className="w-2 h-2 bg-white border border-black rounded-sm"></div> },
+  { value: 'large-square', label: 'Large Square', icon: <div className="w-3 h-3 bg-white border border-black rounded-sm"></div> }
+]
+
 // Mobile widgets are always small squares - no size options needed
 
 export function AppearanceCustomizer({ profile, socialLinks, links, pages }: AppearanceCustomizerProps) {
@@ -1087,6 +1093,12 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
       // Check if this is a QR code widget
       const isQRCode = widget.data?.link_type === 'qr_code'
       
+      // QR codes only support square sizes
+      if (isQRCode && newSize !== 'small-square' && newSize !== 'large-square') {
+        toast.error('QR codes only support square sizes for optimal scanning')
+        return
+      }
+      
       // Update size in appropriate database table
       const { error } = await supabase
         .from(isQRCode ? 'qr_codes' : 'links')
@@ -1127,16 +1139,19 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
 
       console.log('Found widget to delete:', widget)
 
-      // Delete from links table for all widget types (they're all stored as links now)
-      const { error: linkError } = await supabase
-        .from('links')
+      // Check if this is a QR code widget
+      const isQRCode = widget.data?.link_type === 'qr_code'
+      
+      // Delete from appropriate table
+      const { error: deleteError } = await supabase
+        .from(isQRCode ? 'qr_codes' : 'links')
         .delete()
         .eq('id', widgetId)
         .eq('user_id', profile?.id)
 
-      if (linkError) {
-        console.error('Error deleting link from database:', linkError)
-        toast.error('Failed to delete link')
+      if (deleteError) {
+        console.error('Error deleting widget from database:', deleteError)
+        toast.error('Failed to delete widget')
         return
       }
 
@@ -1316,8 +1331,11 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
         [activeView === 'web' ? 'web_position' : 'mobile_position']: JSON.stringify(validPosition)
       }
       
+      // Check if this is a QR code widget
+      const isQRCode = widget.data?.link_type === 'qr_code'
+      
       const { error } = await supabase
-        .from('links')
+        .from(isQRCode ? 'qr_codes' : 'links')
         .update(updateData)
         .eq('id', widgetId)
         .eq('user_id', profile?.id)
@@ -1455,17 +1473,12 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
         if (widget.data.link_type === 'qr_code' && widget.data.qr_codes && widget.data.qr_codes[0]) {
           const qrData = widget.data.qr_codes[0]
           
-          // Get QR code size based on widget size and view - make it fill most of the space
+          // QR codes only support square layouts for optimal scanning
+          // Get QR code size based on widget size and view
           const getQRSize = () => {
-            if (effectiveSize === 'thin') {
-              return activeView === 'mobile' ? 'w-10 h-10' : 'w-12 h-12'
-            }
-            
             switch (effectiveSize) {
               case 'small-square':
                 return activeView === 'mobile' ? 'w-20 h-20' : 'w-28 h-28'
-              case 'medium-square':
-                return activeView === 'mobile' ? 'w-32 h-32' : 'w-44 h-44'
               case 'large-square':
                 return activeView === 'mobile' ? 'w-40 h-40' : 'w-56 h-56'
               default:
@@ -1475,37 +1488,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
           
           const qrSizeClass = getQRSize()
           
-          // Different layouts based on effective size
-          if (effectiveSize === 'thin') {
-            return (
-              <div className="flex items-center h-full space-x-3 px-3">
-                <div className={`${qrSizeClass} bg-white border border-gray-300 rounded-lg p-1 flex-shrink-0`}>
-                  {qrData.format === 'SVG' ? (
-                    <div 
-                      className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
-                      dangerouslySetInnerHTML={{ __html: qrData.qr_code_data }}
-                    />
-                  ) : (
-                    <img 
-                      src={qrData.qr_code_data}
-                      alt={`QR Code for ${widget.data.title}`}
-                      className="w-full h-full object-contain"
-                    />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 text-sm truncate">
-                    {widget.data.title || 'QR Code'}
-                  </div>
-                  <div className="text-xs text-gray-500 truncate">
-                    Scan to visit
-                  </div>
-                </div>
-              </div>
-            )
-          }
-          
-          // Square layouts - match exact social widget styling
+          // Square layouts only - match exact social widget styling
           return (
             <div className={`relative h-full w-full overflow-hidden ${
               activeView === 'mobile' ? 'rounded-lg' : 'rounded-xl'
@@ -1999,18 +1982,22 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
             {isHovered && (
               <div className="absolute -top-2 -right-2 bg-white border border-gray-200 rounded-lg p-1 shadow-lg flex items-center space-x-1">
                 {/* Only show resize options in web view */}
-                {activeView === 'web' && sizeOptions.map(size => (
-                  <Button
-                    key={size.value}
-                    variant={effectiveSize === size.value ? 'default' : 'ghost'}
-                    size="sm"
-                    className="w-6 h-6 p-0"
-                    onClick={() => handleResizeWidget(widget.id, size.value as Widget['size'])}
-                    title={size.label}
-                  >
-                    {size.icon}
-                  </Button>
-                ))}
+                {activeView === 'web' && (() => {
+                  // Use QR-specific size options for QR codes, regular options for others
+                  const availableSizes = widget.data?.link_type === 'qr_code' ? qrSizeOptions : sizeOptions
+                  return availableSizes.map(size => (
+                    <Button
+                      key={size.value}
+                      variant={effectiveSize === size.value ? 'default' : 'ghost'}
+                      size="sm"
+                      className="w-6 h-6 p-0"
+                      onClick={() => handleResizeWidget(widget.id, size.value as Widget['size'])}
+                      title={size.label}
+                    >
+                      {size.icon}
+                    </Button>
+                  ))
+                })()}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -2082,54 +2069,87 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
           <div className="absolute top-10 right-0 bg-white border-2 border-black rounded-lg shadow-xl p-3 z-20">
             <div className="text-xs text-black font-semibold mb-2">Resize Widget</div>
             <div className="grid grid-cols-2 gap-2">
-              <Button
-                size="sm"
-                variant={widget.size === 'thin' ? 'default' : 'outline'}
-                className={`text-xs h-8 border-2 border-black font-medium ${
-                  widget.size === 'thin' 
-                    ? 'bg-black text-white hover:bg-gray-800' 
-                    : 'bg-white text-black hover:bg-gray-100'
-                }`}
-                onClick={() => handleResizeWidget(widget.id, 'thin')}
-              >
-                Thin
-              </Button>
-              <Button
-                size="sm"
-                variant={widget.size === 'small-square' ? 'default' : 'outline'}
-                className={`text-xs h-8 border-2 border-black font-medium ${
-                  widget.size === 'small-square' 
-                    ? 'bg-black text-white hover:bg-gray-800' 
-                    : 'bg-white text-black hover:bg-gray-100'
-                }`}
-                onClick={() => handleResizeWidget(widget.id, 'small-square')}
-              >
-                Small
-              </Button>
-              <Button
-                size="sm"
-                variant={widget.size === 'medium-square' ? 'default' : 'outline'}
-                className={`text-xs h-8 border-2 border-black font-medium ${
-                  widget.size === 'medium-square' 
-                    ? 'bg-black text-white hover:bg-gray-800' 
-                    : 'bg-white text-black hover:bg-gray-100'
-                }`}
-                onClick={() => handleResizeWidget(widget.id, 'medium-square')}
-              >
-                Medium
-              </Button>
-              <Button
-                size="sm"
-                variant={widget.size === 'large-square' ? 'default' : 'outline'}
-                className={`text-xs h-8 border-2 border-black font-medium ${
-                  widget.size === 'large-square' 
-                    ? 'bg-black text-white hover:bg-gray-800' 
-                    : 'bg-white text-black hover:bg-gray-100'
-                }`}
-                onClick={() => handleResizeWidget(widget.id, 'large-square')}
-              >
-                Large
-              </Button>
+              {widget.data?.link_type === 'qr_code' ? (
+                // QR codes only show square options
+                <>
+                  <Button
+                    size="sm"
+                    variant={widget.size === 'small-square' ? 'default' : 'outline'}
+                    className={`text-xs h-8 border-2 border-black font-medium ${
+                      widget.size === 'small-square' 
+                        ? 'bg-black text-white hover:bg-gray-800' 
+                        : 'bg-white text-black hover:bg-gray-100'
+                    }`}
+                    onClick={() => handleResizeWidget(widget.id, 'small-square')}
+                  >
+                    Small
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={widget.size === 'large-square' ? 'default' : 'outline'}
+                    className={`text-xs h-8 border-2 border-black font-medium ${
+                      widget.size === 'large-square' 
+                        ? 'bg-black text-white hover:bg-gray-800' 
+                        : 'bg-white text-black hover:bg-gray-100'
+                    }`}
+                    onClick={() => handleResizeWidget(widget.id, 'large-square')}
+                  >
+                    Large
+                  </Button>
+                </>
+              ) : (
+                // Regular widgets show all options
+                <>
+                  <Button
+                    size="sm"
+                    variant={widget.size === 'thin' ? 'default' : 'outline'}
+                    className={`text-xs h-8 border-2 border-black font-medium ${
+                      widget.size === 'thin' 
+                        ? 'bg-black text-white hover:bg-gray-800' 
+                        : 'bg-white text-black hover:bg-gray-100'
+                    }`}
+                    onClick={() => handleResizeWidget(widget.id, 'thin')}
+                  >
+                    Thin
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={widget.size === 'small-square' ? 'default' : 'outline'}
+                    className={`text-xs h-8 border-2 border-black font-medium ${
+                      widget.size === 'small-square' 
+                        ? 'bg-black text-white hover:bg-gray-800' 
+                        : 'bg-white text-black hover:bg-gray-100'
+                    }`}
+                    onClick={() => handleResizeWidget(widget.id, 'small-square')}
+                  >
+                    Small
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={widget.size === 'medium-square' ? 'default' : 'outline'}
+                    className={`text-xs h-8 border-2 border-black font-medium ${
+                      widget.size === 'medium-square' 
+                        ? 'bg-black text-white hover:bg-gray-800' 
+                        : 'bg-white text-black hover:bg-gray-100'
+                    }`}
+                    onClick={() => handleResizeWidget(widget.id, 'medium-square')}
+                  >
+                    Medium
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={widget.size === 'large-square' ? 'default' : 'outline'}
+                    className={`text-xs h-8 border-2 border-black font-medium ${
+                      widget.size === 'large-square' 
+                        ? 'bg-black text-white hover:bg-gray-800' 
+                        : 'bg-white text-black hover:bg-gray-100'
+                    }`}
+                    onClick={() => handleResizeWidget(widget.id, 'large-square')}
+                  >
+                    Large
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -2255,7 +2275,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
               <div className="flex justify-center">
                 <div 
                   ref={gridRef}
-                  className={`relative min-h-[calc(100vh-250px)] w-80 bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${
+                  className={`relative min-h-[600px] w-80 bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${
                     draggedWidget ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
                   }`}
                   onDragOver={handleDragOver}
@@ -2265,8 +2285,13 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages }: App
                     backgroundImage: `radial-gradient(circle at ${GRID_SIZE/2}px ${GRID_SIZE/2}px, rgba(0,0,0,0.08) 1px, transparent 1px)`,
                     backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
                     maxWidth: '320px',
-                    overflow: 'visible',
-                    minHeight: '600px'
+                    overflow: 'auto',
+                    scrollBehavior: 'smooth',
+                    minHeight: Math.max(600, widgets.reduce((max, w) => {
+                      const pos = w.mobilePosition || { y: 0 };
+                      return Math.max(max, pos.y + 128 + 40); // widget height + padding
+                    }, 600)) + 'px',
+                    maxHeight: 'calc(100vh - 250px)'
                   }}
               >
                 {!isHydrated || isLoadingWidgets ? (

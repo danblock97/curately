@@ -18,7 +18,8 @@
       "Bash(npx next build:*)",
       "Bash(tail:*)",
       "Bash(grep:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": []
   }

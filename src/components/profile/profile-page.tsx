@@ -82,6 +82,9 @@ export interface Widget {
 }
 
 export function ProfilePage({ page, profile, links, socialLinks }: ProfilePageProps) {
+	console.log('🎯 ProfilePage MOUNT - Received props:', { page, profile, links, socialLinks });
+	console.log('🔗 ProfilePage MOUNT - Links array:', links);
+	console.log('📏 ProfilePage MOUNT - Links length:', links?.length);
 	const supabase = createClient();
 	const [widgets, setWidgets] = useState<Widget[]>([]);
 	const [isLoadingWidgets, setIsLoadingWidgets] = useState(true);
@@ -116,6 +119,10 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 		const loadWidgets = async () => {
 			try {
 				setIsLoadingWidgets(true);
+
+				console.log('🔧 ProfilePage Debug - memoizedLinks:', memoizedLinks);
+				console.log('📏 ProfilePage Debug - memoizedLinks length:', memoizedLinks?.length);
+				console.log('👤 ProfilePage Debug - profile?.id:', profile?.id);
 
 				if (memoizedLinks && memoizedLinks.length > 0) {
 					// Convert links to widgets with proper positioning and fetch metadata
@@ -379,11 +386,14 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 						})
 					);
 
+					console.log('🎯 ProfilePage Debug - Created linkWidgets:', linkWidgets);
+					console.log('📊 ProfilePage Debug - linkWidgets length:', linkWidgets.length);
 					setWidgets(linkWidgets);
 					console.log(
 						`Loaded ${linkWidgets.length} existing links as widgets with metadata`
 					);
 				} else {
+					console.log('❌ ProfilePage Debug - No memoizedLinks or empty array');
 					// No links found, start with empty widgets
 					setWidgets([]);
 					console.log("No existing links found, starting with empty widgets");
@@ -395,13 +405,19 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 			}
 		};
 
-		if (profile?.id) {
+		if (profile) {
 			loadWidgets();
 		} else {
 			// If no profile, just finish loading
 			setIsLoadingWidgets(false);
 		}
-	}, [profile?.id, memoizedLinks]);
+	}, [profile, memoizedLinks]);
+
+	// Debug final widgets state
+	useEffect(() => {
+		console.log('📦 ProfilePage Debug - Final widgets state:', widgets);
+		console.log('🔢 ProfilePage Debug - Final widgets count:', widgets.length);
+	}, [widgets]);
 
 	const fetchProfilePicture = async (platform: string, username: string) => {
 		try {
@@ -574,7 +590,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 		// Web view classes (original sizes)
 		switch (size) {
 			case "thin":
-				return "w-80 h-14";
+				return "w-80 h-12";
 			case "small-square":
 				return "w-48 h-48";
 			case "medium-square":
@@ -598,53 +614,21 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 
 		const widgetContent = () => {
 			const renderSocialWidget = () => {
-				// Handle QR Code widgets first
-				if (widget.data.link_type === 'qr_code' && widget.data.qr_codes && widget.data.qr_codes[0]) {
-					const qrData = widget.data.qr_codes[0]
+				// Handle QR Code widgets first - QR codes only support square layouts
+				if (widget.data.link_type === 'qr_code' && widget.data.qr_codes) {
+					const qrData = widget.data.qr_codes
 					
-					// Different layouts based on effective size
-					if (effectiveSize === 'thin') {
-						return (
-							<div className={`flex items-center h-full space-x-3 px-3 ${
-								isMobile ? 'bg-white rounded-lg shadow-sm border border-gray-200' : ''
-							}`}>
-								<div className="w-8 h-8 bg-white border border-gray-300 rounded-lg p-1 flex-shrink-0">
-									{qrData.format === 'SVG' ? (
-										<div 
-											className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
-											dangerouslySetInnerHTML={{ __html: qrData.qr_code_data }}
-										/>
-									) : (
-										<img 
-											src={qrData.qr_code_data}
-											alt={`QR Code for ${widget.data.title}`}
-											className="w-full h-full object-contain"
-										/>
-									)}
-								</div>
-								<div className="flex-1 min-w-0">
-									<div className="font-medium text-gray-900 text-sm truncate">
-										{widget.data.title || 'QR Code'}
-									</div>
-									<div className="text-xs text-gray-500 truncate">
-										Scan to visit
-									</div>
-								</div>
-							</div>
-						)
-					}
-					
-					// Square layouts - show QR code prominently
+					// Square layouts only - match exact AppearanceCustomizer styling
 					return (
-						<div className={`flex flex-col items-center justify-center h-full p-4 space-y-3 ${
-							isMobile ? 'bg-white rounded-lg shadow-sm border border-gray-200' : ''
+						<div className={`relative h-full w-full overflow-hidden ${
+							isMobile ? 'rounded-lg' : 'rounded-xl'
 						}`}>
-							<div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+							{/* QR Code with white background */}
+							<div className="absolute inset-0 bg-white flex items-center justify-center">
 								{qrData.format === 'SVG' ? (
 									<div 
 										className={`${
-											effectiveSize === 'small-square' ? 'w-20 h-20' : 
-											effectiveSize === 'medium-square' ? 'w-28 h-28' : 'w-36 h-36'
+											effectiveSize === 'large-square' ? 'w-56 h-56' : 'w-28 h-28'
 										} [&>svg]:w-full [&>svg]:h-full`}
 										dangerouslySetInnerHTML={{ __html: qrData.qr_code_data }}
 									/>
@@ -653,18 +637,20 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 										src={qrData.qr_code_data}
 										alt={`QR Code for ${widget.data.title}`}
 										className={`${
-											effectiveSize === 'small-square' ? 'w-20 h-20' : 
-											effectiveSize === 'medium-square' ? 'w-28 h-28' : 'w-36 h-36'
+											effectiveSize === 'large-square' ? 'w-56 h-56' : 'w-28 h-28'
 										} object-contain`}
 									/>
 								)}
 							</div>
-							<div className="text-center">
-								<div className="font-medium text-gray-900 text-sm truncate max-w-full">
+							
+							{/* Text overlay - compact and positioned to minimize QR code coverage */}
+							<div className={`absolute z-10 ${
+								isMobile ? 'bottom-1 left-1 right-1' : 'bottom-1 left-1 right-1'
+							}`}>
+								<div className={`${
+									isMobile ? 'text-xs' : 'text-xs'
+								} font-medium text-black bg-white/90 px-1.5 py-0.5 rounded text-center truncate`}>
 									{widget.data.title || 'QR Code'}
-								</div>
-								<div className="text-xs text-gray-500 mt-1">
-									Scan with camera
 								</div>
 							</div>
 						</div>
@@ -1354,13 +1340,13 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									isMobile ? 'w-24 h-24' : 'w-36 h-36'
 								} mx-auto mb-4 ring-4 ring-white shadow-2xl`}>
 									<AvatarImage
-										src={page.profiles?.avatar_url || ""}
-										alt={page.profiles?.display_name || page.page_title}
+										src={profile?.avatar_url || ""}
+										alt={profile?.display_name || page.page_title}
 									/>
 									<AvatarFallback className={`${
 										isMobile ? 'text-2xl' : 'text-4xl'
 									} bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold`}>
-										{(page.profiles?.display_name || page.page_title || page.username)
+										{(profile?.display_name || page.page_title || page.username)
 											.charAt(0)
 											.toUpperCase()}
 									</AvatarFallback>
@@ -1370,14 +1356,14 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 							<h1 className={`${
 								isMobile ? 'text-2xl' : 'text-4xl'
 							} font-black mb-3 !text-gray-900`}>
-								{page.page_title || page.profiles?.display_name || page.username}
+								{page.page_title || profile?.display_name || page.username}
 							</h1>
 
-							{page.profiles?.bio && (
+							{profile?.bio && (
 								<p className={`${
 									isMobile ? 'text-base' : 'text-lg'
 								} !text-gray-700 font-medium mb-6 leading-relaxed max-w-md mx-auto`}>
-									{page.profiles.bio}
+									{profile.bio}
 								</p>
 							)}
 						</div>
