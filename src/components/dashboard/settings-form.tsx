@@ -358,18 +358,37 @@ export function SettingsForm({ user, profile, pages }: SettingsFormProps) {
                       <Button
                         onClick={async () => {
                           try {
+                            console.log('🔄 Requesting customer portal...')
                             const response = await fetch('/api/customer-portal', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                             })
-                            const { url, error } = await response.json()
-                            if (error) {
-                              console.error('Portal error:', error)
+                            
+                            console.log('📊 Portal response status:', response.status)
+                            
+                            if (!response.ok) {
+                              const errorText = await response.text()
+                              console.error('❌ Portal API error:', errorText)
+                              toast.error('Failed to open billing portal. Please try again.')
                               return
                             }
-                            if (url) window.location.href = url
+                            
+                            const data = await response.json()
+                            console.log('📋 Portal data:', data)
+                            
+                            const { url, error } = data
+                            if (error) {
+                              console.error('❌ Portal error:', error)
+                              toast.error('Failed to open billing portal. Please try again.')
+                              return
+                            }
+                            if (url) {
+                              console.log('✅ Redirecting to portal:', url)
+                              window.location.href = url
+                            }
                           } catch (error) {
-                            console.error('Portal error:', error)
+                            console.error('❌ Portal exception:', error)
+                            toast.error('Failed to open billing portal. Please try again.')
                           }
                         }}
                         variant="outline"
