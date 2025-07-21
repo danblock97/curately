@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { LinkManager } from '@/components/dashboard/link-manager'
 import { ProfileSetup } from '@/components/dashboard/profile-setup'
+import { InactiveContentManager } from '@/components/dashboard/inactive-content-manager'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -42,7 +43,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full space-y-6">
       <LinkManager 
         links={(links || []).filter(Boolean)} 
         qrCodes={(qrCodes || []).filter(Boolean)}
@@ -50,6 +51,7 @@ export default async function DashboardPage() {
         profile={profile} 
         pages={pages || []}
       />
+      <InactiveContentManager profile={profile} />
     </div>
   )
 }

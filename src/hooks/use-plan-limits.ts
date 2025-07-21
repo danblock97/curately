@@ -77,8 +77,9 @@ export function usePlanLimits(links: Link[] = [], currentPlan: UserTier = 'free'
   }, [currentPlan])
 
   const usage = useMemo(() => {
-    const qrCodesCount = qrCodes.length
-    const linksCount = links.length // All links are now regular links
+    // Only count active links and QR codes towards limits
+    const qrCodesCount = qrCodes.filter(qr => qr.is_active !== false).length
+    const linksCount = links.filter(link => link.is_active !== false).length
 
     return {
       tier: currentPlan,
@@ -129,8 +130,9 @@ export function checkCanCreateLink(
   current?: number
 } {
   const limits = PLAN_LIMITS[currentPlan] || PLAN_LIMITS.free
-  const qrCodesCount = qrCodes.length
-  const linksCount = links.length // All links are now regular links
+  // Only count active links and QR codes towards limits
+  const qrCodesCount = qrCodes.filter(qr => qr.is_active !== false).length
+  const linksCount = links.filter(link => link.is_active !== false).length
   
   const usage = {
     links: {

@@ -175,20 +175,22 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
         setIsLoadingWidgets(true)
         console.log('Loading widgets for page:', currentPage?.id, 'with', links?.length, 'links')
         
-        // Load regular links for the current page
+        // Load active regular links for the current page
         const { data: linksData, error: linksError } = await supabase
           .from('links')
           .select('*')
           .eq('user_id', profile?.id)
           .eq('page_id', currentPage?.id)
+          .eq('is_active', true)
           .order('order')
         
-        // Load QR codes separately (they're now independent) for the current page
+        // Load active QR codes separately (they're now independent) for the current page
         const { data: qrCodesData, error: qrCodesError } = await supabase
           .from('qr_codes')
           .select('*')
           .eq('user_id', profile?.id)
           .eq('page_id', currentPage?.id)
+          .eq('is_active', true)
           .order('order_index')
 
         if (linksError) {
