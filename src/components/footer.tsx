@@ -31,8 +31,6 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Product</h3>
             <ul className="space-y-2">
-              <li><Link href="#deeplink" className="text-gray-600 hover:text-gray-900">Deeplink</Link></li>
-              <li><Link href="#link-in-bio" className="text-gray-600 hover:text-gray-900">Link in bio</Link></li>
               <li><Link href="#pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link></li>
             </ul>
           </div>
@@ -40,7 +38,6 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
             <ul className="space-y-2">
-              <li><Link href="#affiliation" className="text-gray-600 hover:text-gray-900">Affiliation</Link></li>
               <li><Link href="/about" className="text-gray-600 hover:text-gray-900">About</Link></li>
               <li><Link href="/contact" className="text-gray-600 hover:text-gray-900">Contact</Link></li>
             </ul>

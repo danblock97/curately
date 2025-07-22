@@ -5,7 +5,7 @@ import { Shield, Clock, Database, Globe, Lock, Eye, Users, AlertCircle, Mail } f
 import Link from 'next/link'
 
 export default function PrivacyPolicyPage() {
-  const lastUpdated = "January 2025"
+  const lastUpdated = "July 2025"
 
   return (
     <div className="min-h-screen bg-white">

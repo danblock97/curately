@@ -5,7 +5,7 @@ import { FileText, Clock, Shield, Users, CreditCard, AlertTriangle, Scale, Mail,
 import Link from 'next/link'
 
 export default function TermsOfServicePage() {
-  const lastUpdated = "January 2025"
+  const lastUpdated = "July 2025"
 
   return (
     <div className="min-h-screen bg-white">
