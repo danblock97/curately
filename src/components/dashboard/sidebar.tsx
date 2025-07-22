@@ -26,7 +26,6 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ profile, primaryPage }: DashboardSidebarProps) {
   const pathname = usePathname()
   
-  console.log('DashboardSidebar rendering with:', { profile: profile?.id, primaryPage: primaryPage?.id })
 
   const getInitials = (name: string) => {
     return name

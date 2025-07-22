@@ -11,8 +11,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.log('🔍 Creating checkout for user ID:', user.id)
-
     const body = await request.json()
     const { priceId } = body
 

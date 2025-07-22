@@ -20,7 +20,6 @@ export function DashboardHeader({ user, profile, primaryPage }: DashboardHeaderP
   const router = useRouter()
   const supabase = createClient()
   
-  console.log('DashboardHeader rendering with:', { user: user?.email, profile: profile?.id, primaryPage: primaryPage?.id })
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()

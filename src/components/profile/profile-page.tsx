@@ -82,12 +82,6 @@ export interface Widget {
 }
 
 export function ProfilePage({ page, profile, links, socialLinks }: ProfilePageProps) {
-	console.log('🎯 ProfilePage MOUNT - Received props:', { page, profile, links, socialLinks });
-	console.log('🔗 ProfilePage MOUNT - Links array:', links);
-	console.log('📏 ProfilePage MOUNT - Links length:', links?.length);
-	console.log('📄 ProfilePage MOUNT - Page title:', page.page_title);
-	console.log('📄 ProfilePage MOUNT - Page description:', page.page_description);
-	console.log('👤 ProfilePage MOUNT - Profile display_name:', profile?.display_name);
 	const supabase = createClient();
 	const [widgets, setWidgets] = useState<Widget[]>([]);
 	const [isLoadingWidgets, setIsLoadingWidgets] = useState(true);
@@ -123,15 +117,11 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 			try {
 				setIsLoadingWidgets(true);
 
-				console.log('🔧 ProfilePage Debug - memoizedLinks:', memoizedLinks);
-				console.log('📏 ProfilePage Debug - memoizedLinks length:', memoizedLinks?.length);
-				console.log('👤 ProfilePage Debug - profile?.id:', profile?.id);
 
 				if (memoizedLinks && memoizedLinks.length > 0) {
 					// Convert links to widgets with proper positioning and fetch metadata
 					const linkWidgets: Widget[] = await Promise.all(
 						memoizedLinks.map(async (link, index) => {
-							console.log("Processing link:", link);
 							let metadata = {
 								description: "",
 								favicon: "",
@@ -261,20 +251,11 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 								// Fetch display name if we have platform and username
 								if (platform && username) {
 									try {
-										console.log(
-											"Fetching display name for existing widget:",
-											platform,
-											username
-										);
 										const profileMetadata = await fetchProfileMetadata(
 											platform,
 											username
 										);
 										displayName = profileMetadata.displayName;
-										console.log(
-											"Got display name for existing widget:",
-											displayName
-										);
 									} catch (error) {
 										console.warn(
 											"Failed to fetch display name for existing widget:",
@@ -389,17 +370,10 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 						})
 					);
 
-					console.log('🎯 ProfilePage Debug - Created linkWidgets:', linkWidgets);
-					console.log('📊 ProfilePage Debug - linkWidgets length:', linkWidgets.length);
 					setWidgets(linkWidgets);
-					console.log(
-						`Loaded ${linkWidgets.length} existing links as widgets with metadata`
-					);
 				} else {
-					console.log('❌ ProfilePage Debug - No memoizedLinks or empty array');
 					// No links found, start with empty widgets
 					setWidgets([]);
-					console.log("No existing links found, starting with empty widgets");
 				}
 			} catch (error) {
 				console.error("Error loading widgets:", error);
@@ -416,11 +390,6 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 		}
 	}, [profile, memoizedLinks]);
 
-	// Debug final widgets state
-	useEffect(() => {
-		console.log('📦 ProfilePage Debug - Final widgets state:', widgets);
-		console.log('🔢 ProfilePage Debug - Final widgets count:', widgets.length);
-	}, [widgets]);
 
 	const fetchProfilePicture = async (platform: string, username: string) => {
 		try {
@@ -444,10 +413,6 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				return "";
 			}
 
-			console.log(
-				`Fetching profile picture for ${platform}/${username} from:`,
-				profileUrl
-			);
 
 			// For GitHub, we can reliably return the URL since GitHub always provides a profile picture
 			if (platform.toLowerCase() === "github") {
@@ -458,11 +423,9 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 			return new Promise<string>((resolve) => {
 				const img = new Image();
 				img.onload = () => {
-					console.log(`Profile picture found for ${platform}/${username}`);
 					resolve(profileUrl);
 				};
 				img.onerror = () => {
-					console.warn(`Profile picture not found for ${platform}/${username}`);
 					resolve("");
 				};
 				img.src = profileUrl;
@@ -495,9 +458,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 					);
 					if (response.ok) {
 						const data = await response.json();
-						console.log("GitHub API response:", data);
 						displayName = data.name || data.login || username;
-						console.log("Extracted display name:", displayName);
 					}
 				} catch (error) {
 					console.warn("Failed to fetch GitHub display name:", error);
@@ -506,19 +467,13 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				// For Twitter/X, we can try to extract display name from metadata
 				// Since we don't have direct API access, we'll use a heuristic approach
 				try {
-					console.log("Fetching Twitter/X profile for:", username);
 					const response = await fetch(
 						`https://unavatar.io/twitter/${username}`
 					);
 					if (response.ok) {
-						console.log("Twitter/X profile found via unavatar.io");
 						// If unavatar works, we have a valid user - use username as display name for now
 						displayName = `@${username}`;
 					} else {
-						console.log(
-							"Twitter/X profile not found via unavatar.io, status:",
-							response.status
-						);
 						displayName = `@${username}`;
 					}
 				} catch (error) {
@@ -1031,13 +986,6 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 										alt={widget.data.username || platform}
 										className="w-full h-full object-cover"
 										onError={(e) => {
-											console.log(
-												"Profile image failed to load:",
-												widget.data.profileImage,
-												"for",
-												widget.data.username,
-												widget.data.platform
-											);
 											const target = e.target as HTMLImageElement;
 											target.style.display = "none";
 											// Find parent container and add fallback

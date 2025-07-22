@@ -225,14 +225,11 @@ export function PricingSection({ showUpgradeButtons = false, currentTier }: Pric
                         </Button>
                       ) : (
                         <Button
-                          onClick={() => {
-                            alert('Stripe integration not fully configured yet. Please check your price IDs in environment variables.')
-                            console.error('Missing price ID for:', billingCycle, 'Available IDs:', plan.priceIds)
-                          }}
-                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
+                          disabled
+                          className="w-full bg-gray-300 text-gray-600 cursor-not-allowed"
                         >
                           <Zap className="w-4 h-4 mr-2" />
-                          Setup Required
+                          Configuration Required
                         </Button>
                       )
                     ) : (

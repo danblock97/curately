@@ -47,7 +47,6 @@ export default async function DashboardLayout({
 
   // If no profile exists, don't show the sidebar/header layout (user needs to complete setup)
   if (!profile) {
-    console.log('No profile found - showing setup layout')
     return (
       <div className="min-h-screen bg-white">
         {children}
@@ -57,15 +56,8 @@ export default async function DashboardLayout({
   
   // If no primary page, still show layout but with limited functionality
   if (!primaryPage) {
-    console.warn('No primary page found for user:', user.id, '- user may need to complete setup')
   }
   
-  console.log('Showing full dashboard layout with:', { 
-    hasProfile: !!profile, 
-    hasPrimaryPage: !!primaryPage,
-    profileId: profile?.id,
-    primaryPageId: primaryPage?.id 
-  })
 
   return (
     <div className="min-h-screen bg-white flex flex-col">

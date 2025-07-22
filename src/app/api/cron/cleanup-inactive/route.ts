@@ -40,7 +40,6 @@ export async function POST(request: NextRequest) {
         console.error('Error deleting inactive links:', linksDeleteError)
       } else {
         deletedLinks = inactiveLinks.length
-        console.log(`Deleted ${deletedLinks} inactive links`)
       }
     }
 
@@ -61,7 +60,6 @@ export async function POST(request: NextRequest) {
         console.error('Error deleting inactive QR codes:', qrCodesDeleteError)
       } else {
         deletedQrCodes = inactiveQrCodes.length
-        console.log(`Deleted ${deletedQrCodes} inactive QR codes`)
       }
     }
 

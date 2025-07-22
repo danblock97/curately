@@ -358,13 +358,11 @@ export function SettingsForm({ user, profile, pages }: SettingsFormProps) {
                       <Button
                         onClick={async () => {
                           try {
-                            console.log('🔄 Requesting customer portal...')
                             const response = await fetch('/api/customer-portal', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                             })
                             
-                            console.log('📊 Portal response status:', response.status)
                             
                             if (!response.ok) {
                               const errorText = await response.text()
@@ -374,7 +372,6 @@ export function SettingsForm({ user, profile, pages }: SettingsFormProps) {
                             }
                             
                             const data = await response.json()
-                            console.log('📋 Portal data:', data)
                             
                             const { url, error } = data
                             if (error) {
@@ -383,7 +380,6 @@ export function SettingsForm({ user, profile, pages }: SettingsFormProps) {
                               return
                             }
                             if (url) {
-                              console.log('✅ Redirecting to portal:', url)
                               window.location.href = url
                             }
                           } catch (error) {

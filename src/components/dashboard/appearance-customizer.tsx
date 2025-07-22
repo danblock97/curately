@@ -156,24 +156,20 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
     const loadWidgets = async () => {
       // Prevent multiple concurrent loads
       if (isLoadingWidgets) {
-        console.log('Already loading widgets, skipping...')
         return
       }
       
       if (!profile?.id) {
-        console.log('No profile ID, skipping widget load')
         return
       }
 
       if (!currentPage?.id) {
-        console.log('No current page ID, skipping widget load')
         setIsLoadingWidgets(false)
         return
       }
       
       try {
         setIsLoadingWidgets(true)
-        console.log('Loading widgets for page:', currentPage?.id, 'with', links?.length, 'links')
         
         // Load active regular links for the current page
         const { data: linksData, error: linksError } = await supabase
@@ -217,7 +213,6 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
           // Convert all items to widgets with proper positioning and fetch metadata
           const linkWidgets: Widget[] = await Promise.all(
             allItems.map(async (item, index) => {
-              console.log('Processing item:', item)
               let metadata = { description: '', favicon: '', isPopularApp: false, appName: '', appLogo: '' }
               
               // For regular links, fetch metadata
@@ -312,16 +307,14 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
                 // Fetch display name if we have platform and username
                 if (platform && username) {
                   try {
-                    console.log('Fetching display name for existing widget:', platform, username)
                     const profileMetadata = await fetchProfileMetadata(platform, username)
                     displayName = profileMetadata.displayName
-                    console.log('Got display name for existing widget:', displayName)
                   } catch (error) {
                     console.warn('Failed to fetch display name for existing widget:', error)
                   }
                 }
               } catch (error) {
-                console.warn('Failed to extract platform info from URL:', item.url, error)
+                // Failed to extract platform info from URL
               }
 
               // Safe JSON parsing with fallback - position mobile widgets more tightly
@@ -342,7 +335,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
                   widgetPosition = item.widget_position as { x: number; y: number }
                 }
               } catch (error) {
-                console.warn('Failed to parse widget_position:', item.widget_position, error)
+                // Failed to parse widget_position
               }
               
               try {
@@ -352,7 +345,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
                   webPosition = item.web_position as { x: number; y: number }
                 }
               } catch (error) {
-                console.warn('Failed to parse web_position:', item.web_position, error)
+                // Failed to parse web_position
               }
               
               try {
@@ -362,7 +355,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
                   mobilePosition = item.mobile_position as { x: number; y: number }
                 }
               } catch (error) {
-                console.warn('Failed to parse mobile_position:', item.mobile_position, error)
+                // Failed to parse mobile_position
               }
 
               return {
@@ -407,12 +400,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
           // Auto-arrange mobile widgets if they're overlapping (for migration from old data)
           const arrangedWidgets = autoArrangeMobileWidgets(linkWidgets)
           setWidgets(arrangedWidgets)
-          console.log(`Loaded ${arrangedWidgets.length} existing links as widgets with metadata`)
-          console.log('Widget positions:', arrangedWidgets.map(w => ({ id: w.id, title: w.data.title, mobile: w.mobilePosition, web: w.webPosition })))
         } else {
           // No links found, start with empty widgets
           setWidgets([])
-          console.log('No existing links found, starting with empty widgets')
         }
       } catch (error) {
         console.error('Error loading widgets:', error)
@@ -476,7 +466,6 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
         return ''
       }
       
-      console.log(`Fetching profile picture for ${platform}/${username} from:`, profileUrl)
       
       // For GitHub, we can reliably return the URL since GitHub always provides a profile picture
       if (platform.toLowerCase() === 'github') {
@@ -487,18 +476,15 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
       return new Promise<string>((resolve) => {
         const img = new Image()
         img.onload = () => {
-          console.log(`Profile picture found for ${platform}/${username}`)
           resolve(profileUrl)
         }
         img.onerror = () => {
-          console.warn(`Profile picture not found for ${platform}/${username}`)
           resolve('')
         }
         img.src = profileUrl
         
         // Set timeout to avoid hanging
         setTimeout(() => {
-          console.warn(`Profile picture timeout for ${platform}/${username}`)
           resolve('')
         }, 5000)
       })
@@ -519,9 +505,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
           const response = await fetch(`https://api.github.com/users/${username}`)
           if (response.ok) {
             const data = await response.json()
-            console.log('GitHub API response:', data)
             displayName = data.name || data.login || username
-            console.log('Extracted display name:', displayName)
           }
         } catch (error) {
           console.warn('Failed to fetch GitHub display name:', error)
@@ -530,14 +514,11 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
         // For Twitter/X, we can try to extract display name from metadata
         // Since we don't have direct API access, we'll use a heuristic approach
         try {
-          console.log('Fetching Twitter/X profile for:', username)
           const response = await fetch(`https://unavatar.io/twitter/${username}`)
           if (response.ok) {
-            console.log('Twitter/X profile found via unavatar.io')
             // If unavatar works, we have a valid user - use username as display name for now
             displayName = `@${username}`
           } else {
-            console.log('Twitter/X profile not found via unavatar.io, status:', response.status)
             displayName = `@${username}`
           }
         } catch (error) {
@@ -910,7 +891,6 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
         toast.error('No page selected')
         return
       }
-      console.log('Updating background color:', { color, pageId: currentPage.id })
       const { data, error } = await supabase
         .from('pages')
         .update({ background_color: color })
@@ -923,7 +903,6 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
         return
       }
 
-      console.log('Background color update result:', data)
       setBackgroundColor(color)
       // Update current page state with new background color
       if (data && data[0]) {
@@ -992,14 +971,11 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
       // Try to get profile metadata for social platforms
       if (widget.data.platform && widget.data.username) {
         try {
-          console.log('Fetching profile metadata for:', widget.data.platform, widget.data.username)
           const profileMetadata = await fetchProfileMetadata(widget.data.platform, widget.data.username)
           if (profileMetadata.profileImage) {
-            console.log('Profile picture found:', profileMetadata.profileImage)
             metadata.profileImage = profileMetadata.profileImage
           }
           if (profileMetadata.displayName && profileMetadata.displayName !== widget.data.username) {
-            console.log('Display name found:', profileMetadata.displayName)
             metadata.displayName = profileMetadata.displayName
             // Update the title to use display name
             title = `@${widget.data.username}`
@@ -1051,7 +1027,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
             }
           }
         } catch (error) {
-          console.warn('Failed to extract username from URL:', error)
+          // Failed to extract username from URL
         }
       }
       
@@ -1132,7 +1108,6 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
         mobilePosition: getInitialPosition(widget)
       }
 
-      console.log('Created widget with data:', newWidget.data)
 
       setWidgets(prev => [...prev, newWidget])
       setShowWidgetModal(false)
@@ -1201,7 +1176,6 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
 
   const handleRemoveWidget = async (widgetId: string) => {
     try {
-      console.log('Attempting to delete widget:', widgetId)
       // Find the widget to determine its type
       const widget = widgets.find(w => w.id === widgetId)
       
@@ -1211,7 +1185,6 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
         return
       }
 
-      console.log('Found widget to delete:', widget)
 
       // Check if this is a QR code widget
       const isQRCode = widget.data?.link_type === 'qr_code'
@@ -1229,7 +1202,6 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
         return
       }
 
-      console.log('Successfully deleted from database')
 
       // Remove from local state
       setWidgets(prev => prev.filter(w => w.id !== widgetId))
@@ -1837,7 +1809,6 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
                     alt={widget.data.username || platform}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      console.log('Profile image failed to load:', widget.data.profileImage, 'for', widget.data.username, widget.data.platform)
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
                       // Find parent container and add fallback

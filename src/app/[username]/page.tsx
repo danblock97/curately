@@ -97,11 +97,6 @@ export default async function UserProfilePage({ params }: PageProps) {
   // Combine all items and sort by order
   const allLinks = [...(links || []), ...qrCodesAsLinks].sort((a, b) => (a.order || 0) - (b.order || 0))
 
-  console.log('🔍 Debug - Page ID:', page.id)
-  console.log('📊 Debug - Raw links:', links)
-  console.log('🔲 Debug - Raw QR codes:', qrCodes) 
-  console.log('🔗 Debug - Combined allLinks:', allLinks)
-  console.log('📏 Debug - allLinks length:', allLinks.length)
 
 
   return (

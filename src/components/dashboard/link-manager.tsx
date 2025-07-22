@@ -104,16 +104,6 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
     return orderA - orderB
   })
   
-  // Debug logging
-  console.log('DEBUG: isHydrated:', isHydrated)
-  console.log('DEBUG: Current page ID:', currentPage?.id, 'Is Primary:', currentPage?.is_primary)
-  console.log('DEBUG: All links:', links.map(l => ({ id: l?.id, page_id: l?.page_id, title: l?.title })))
-  console.log('DEBUG: All QR codes:', qrCodes.map(q => ({ id: q?.id, page_id: q?.page_id, title: q?.title })))
-  console.log('DEBUG: Filtered page links:', pageLinks.length)
-  console.log('DEBUG: Filtered page QR codes:', pageQrCodes.length)
-  console.log('DEBUG: pageItems length:', pageItems.length)
-  console.log('DEBUG: showAddForm:', showAddForm)
-  console.log('DEBUG: Modal should show?', isHydrated && Array.isArray(links) && Array.isArray(qrCodes) && pageItems.length === 0 && !showAddForm)
   
   // Pagination logic
   const totalItems = pageItems.length

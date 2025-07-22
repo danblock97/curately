@@ -156,7 +156,6 @@ export function ProfileSetup({ userId }: ProfileSetupProps) {
       
       // Refresh server components and redirect to dashboard
       setTimeout(() => {
-        console.log('Attempting to refresh and redirect to dashboard...')
         try {
           router.refresh() // Refresh server components to pick up new profile
           router.push('/dashboard')
@@ -377,7 +376,6 @@ export function ProfileSetup({ userId }: ProfileSetupProps) {
                                 return
                               }
                               
-                              console.log('File selected:', file.name, file.type, file.size)
                               setAvatarFile(file)
                               setAvatarUrl('') // Clear URL if file is selected
                             }
@@ -587,7 +585,6 @@ export function ProfileSetup({ userId }: ProfileSetupProps) {
                 <div className="text-center">
                   <Button
                     onClick={() => {
-                      console.log('Manual redirect to dashboard...')
                       try {
                         router.push('/dashboard')
                       } catch (error) {

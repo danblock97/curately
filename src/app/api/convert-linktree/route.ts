@@ -61,8 +61,6 @@ export async function POST(request: NextRequest) {
     // Parse the HTML to extract links
     const links = parseLinktreeHTML(html)
     
-    console.log('Parsed links from Linktree:', links)
-    
     return NextResponse.json({ links })
   } catch (error) {
     console.error('Error converting Linktree:', error)
@@ -97,12 +95,10 @@ function parseLinktreeHTML(html: string) {
   // Method 1: Look for link data in script tags
   const scriptMatches = html.match(/<script[^>]*>([\s\S]*?)<\/script>/g)
   if (scriptMatches) {
-    console.log('Found script tags:', scriptMatches.length)
     for (const script of scriptMatches) {
       // Look for link objects in the script content
       const linkMatches = script.match(/(?:"title":|title:)\s*"([^"]+)"[^}]*(?:"url":|url:)\s*"([^"]+)"/g)
       if (linkMatches) {
-        console.log('Found link matches in script:', linkMatches.length)
         for (const match of linkMatches) {
           const titleMatch = match.match(/(?:"title":|title:)\s*"([^"]+)"/)
           const urlMatch = match.match(/(?:"url":|url:)\s*"([^"]+)"/)
@@ -110,8 +106,6 @@ function parseLinktreeHTML(html: string) {
           if (titleMatch && urlMatch) {
             const title = titleMatch[1]
             const url = urlMatch[1]
-            
-            console.log('Script method found:', title, url)
             
             if (url.startsWith('http')) {
               const platform = detectPlatform(url)
@@ -133,17 +127,13 @@ function parseLinktreeHTML(html: string) {
   // Method 2: Look for Next.js page props
   const pagePropsMatch = html.match(/"pageProps":\s*({[\s\S]*?})\s*,\s*"__N_SSG"/)
   if (pagePropsMatch) {
-    console.log('Found pageProps match')
     try {
       const pageProps = JSON.parse(pagePropsMatch[1])
-      console.log('PageProps parsed successfully')
       if (pageProps.account) {
         // Process main links
         if (pageProps.account.links) {
-          console.log('Found account links:', pageProps.account.links.length)
           for (const link of pageProps.account.links) {
             if (link.title && link.url && link.url.startsWith('http')) {
-              console.log('PageProps method found:', link.title, link.url)
               const platform = detectPlatform(link.url)
               const username = extractUsername(link.url, platform)
               
@@ -159,14 +149,11 @@ function parseLinktreeHTML(html: string) {
         
         // Process social links
         if (pageProps.account.socialLinks) {
-          console.log('Found social links:', pageProps.account.socialLinks.length)
           for (const link of pageProps.account.socialLinks) {
             if (link.url && link.url.startsWith('http')) {
               const platform = detectPlatform(link.url)
               const username = extractUsername(link.url, platform)
               const title = link.title || link.platform || (platform ? platform.charAt(0).toUpperCase() + platform.slice(1) : 'Social Link')
-              
-              console.log('PageProps social method found:', title, link.url)
               
               links.push({
                 title,
@@ -179,28 +166,22 @@ function parseLinktreeHTML(html: string) {
         }
       }
     } catch (e) {
-      console.log('Failed to parse pageProps:', e)
+      // Failed to parse pageProps
     }
-  } else {
-    console.log('No pageProps match found')
   }
 
   // Method 3: Look for __NEXT_DATA__ script
   const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/)
   if (nextDataMatch) {
-    console.log('Found __NEXT_DATA__ match')
     try {
       const nextData = JSON.parse(nextDataMatch[1])
-      console.log('__NEXT_DATA__ parsed successfully')
       if (nextData.props && nextData.props.pageProps && nextData.props.pageProps.account) {
         const account = nextData.props.pageProps.account
         
         // Process main links
         if (account.links) {
-          console.log('Found account links in __NEXT_DATA__:', account.links.length)
           for (const link of account.links) {
             if (link.title && link.url && link.url.startsWith('http')) {
-              console.log('__NEXT_DATA__ method found:', link.title, link.url)
               const platform = detectPlatform(link.url)
               const username = extractUsername(link.url, platform)
               
@@ -216,14 +197,11 @@ function parseLinktreeHTML(html: string) {
         
         // Process social links
         if (account.socialLinks) {
-          console.log('Found social links in __NEXT_DATA__:', account.socialLinks.length)
           for (const link of account.socialLinks) {
             if (link.url && link.url.startsWith('http')) {
               const platform = detectPlatform(link.url)
               const username = extractUsername(link.url, platform)
               const title = link.title || link.platform || (platform ? platform.charAt(0).toUpperCase() + platform.slice(1) : 'Social Link')
-              
-              console.log('__NEXT_DATA__ social method found:', title, link.url)
               
               links.push({
                 title,
@@ -236,20 +214,14 @@ function parseLinktreeHTML(html: string) {
         }
       }
     } catch (e) {
-      console.log('Failed to parse __NEXT_DATA__:', e)
+      // Failed to parse __NEXT_DATA__
     }
-  } else {
-    console.log('No __NEXT_DATA__ match found')
   }
 
-  console.log('Raw links found:', links)
-  
   // Remove duplicates
   const uniqueLinks = links.filter((link, index, self) => 
     index === self.findIndex(l => l.url === link.url)
   )
-
-  console.log('Unique links after deduplication:', uniqueLinks)
 
   // Filter out ads and promotional links
   const filteredLinks = uniqueLinks.filter(link => {
@@ -462,7 +434,6 @@ function parseLinktreeHTML(html: string) {
     // If it's a legitimate platform, keep it
     const isLegitimate = legitimatePlatforms.some(platform => url.includes(platform))
     if (isLegitimate) {
-      console.log('Keeping legitimate platform:', link.title, link.url)
       return true
     }
     
@@ -597,7 +568,6 @@ function parseLinktreeHTML(html: string) {
     // Check if URL contains any ad domains
     const hasAdDomain = adDomains.some(domain => url.includes(domain))
     if (hasAdDomain) {
-      console.log('Filtered out ad domain:', link.title, link.url)
       return false
     }
     
@@ -729,7 +699,6 @@ function parseLinktreeHTML(html: string) {
     // Check if title contains promotional content
     const hasPromotionalTitle = promotionalTitles.some(promo => title.includes(promo))
     if (hasPromotionalTitle) {
-      console.log('Filtered out promotional title:', link.title, link.url)
       return false
     }
     
@@ -738,11 +707,9 @@ function parseLinktreeHTML(html: string) {
                              url.includes('gclid=') || url.includes('fbclid=') || url.includes('msclkid=') ||
                              url.includes('irclickid=') || url.includes('subid=') || url.includes('aff_')
     if (hasTrackingParams) {
-      console.log('Filtered out tracking params:', link.title, link.url)
       return false
     }
     
-    console.log('Keeping link:', link.title, link.url)
     return true
   })
 

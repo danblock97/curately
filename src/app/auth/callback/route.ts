@@ -6,10 +6,6 @@ export async function GET(request: NextRequest) {
   // Apply rate limiting for auth endpoints
   const rateLimitResult = rateLimiters.auth.check(request)
   if (!rateLimitResult.allowed) {
-    console.log('Rate limit exceeded for auth callback:', {
-      remaining: rateLimitResult.remaining,
-      resetTime: new Date(rateLimitResult.resetTime).toISOString()
-    })
     return NextResponse.json(
       { error: 'Rate limit exceeded. Please try again later.' },
       { 
@@ -29,7 +25,6 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = await createClient()
-    console.log('Attempting to exchange code for session...')
     
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     
@@ -45,8 +40,6 @@ export async function GET(request: NextRequest) {
     }
     
     if (data?.user) {
-      console.log('User authenticated successfully:', data.user.id)
-      
       const forwardedHost = request.headers.get('x-forwarded-host')
       const isLocalEnv = process.env.NODE_ENV === 'development'
       

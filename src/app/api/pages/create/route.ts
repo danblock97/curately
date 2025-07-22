@@ -98,8 +98,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create page' }, { status: 500 })
     }
 
-    console.log(`Created new page for user ${user.id}: ${username}`)
-
     return NextResponse.json({ 
       success: true, 
       page: newPage,
