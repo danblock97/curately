@@ -111,6 +111,7 @@ export const qrCodeSchema = z.object({
   errorCorrection: z.enum(['L', 'M', 'Q', 'H']).default('M'),
   foregroundColor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid hex color').default('#000000'),
   backgroundColor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid hex color').default('#FFFFFF'),
+  pageId: z.string().uuid().optional(),
 })
 
 // Social media validation

@@ -31,9 +31,10 @@ interface AddLinkFormProps {
   existingLinks?: Link[]
   defaultTab?: 'link_in_bio' | 'deeplink' | 'qr_code'
   pageId?: string
+  userTier?: Database['public']['Enums']['user_tier']
 }
 
-export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, selectedPlatform, existingLinks = [], defaultTab = 'link_in_bio', pageId }: AddLinkFormProps) {
+export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, selectedPlatform, existingLinks = [], defaultTab = 'link_in_bio', pageId, userTier = 'free' }: AddLinkFormProps) {
   const [activeTab, setActiveTab] = useState(defaultTab)
   const [isLoading, setIsLoading] = useState(false)
   
@@ -58,7 +59,7 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
     e.preventDefault()
     
     // Check plan limits first
-    const limitCheck = checkCanCreateLink(existingLinks, 'link_in_bio')
+    const limitCheck = checkCanCreateLink(existingLinks, 'link_in_bio', userTier)
     if (!limitCheck.canCreate) {
       toast.error(limitCheck.reason || 'Cannot create more links')
       return
@@ -102,7 +103,7 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
     e.preventDefault()
     
     // Check plan limits first
-    const limitCheck = checkCanCreateLink(existingLinks, 'deeplink')
+    const limitCheck = checkCanCreateLink(existingLinks, 'deeplink', userTier)
     if (!limitCheck.canCreate) {
       toast.error(limitCheck.reason || 'Cannot create more links')
       return
@@ -149,7 +150,7 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
     e.preventDefault()
     
     // Check plan limits first
-    const limitCheck = checkCanCreateLink(existingLinks, 'qr_code')
+    const limitCheck = checkCanCreateLink(existingLinks, 'qr_code', userTier)
     if (!limitCheck.canCreate) {
       toast.error(limitCheck.reason || 'Cannot create more QR codes')
       return

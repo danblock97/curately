@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { AddLinkForm } from './add-link-form'
 import { LinkList } from './link-list'
 import { Plus, Instagram, Youtube, Twitter, Github, Linkedin, Globe, Music, MessageCircle, Phone, Mail, Sparkles, Zap, Link2, TrendingUp, ExternalLink, QrCode, ChevronDown, User, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Database } from '@/lib/supabase/types'
 import { usePlanLimits } from '@/hooks/use-plan-limits'
 import { toast } from 'sonner'
@@ -59,10 +60,11 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
   const [currentPageNum, setCurrentPageNum] = useState(1)
   const [itemsPerPage] = useState(5)
   
-  // Get the current page (default to primary page)
+  // Get the current page (default to primary page, only consider active pages)
+  const activePages = pages.filter(page => page.is_active !== false)
   const currentPage = selectedPageId 
-    ? pages.find(p => p.id === selectedPageId) 
-    : pages.find(p => p.is_primary) || pages[0]
+    ? activePages.find(p => p.id === selectedPageId) 
+    : activePages.find(p => p.is_primary) || activePages[0]
   
   // Filter and combine links and QR codes for the current page
   // Handle case where there's no page setup yet or links don't have page_id
@@ -112,7 +114,7 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
   const endIndex = startIndex + itemsPerPage
   const paginatedItems = pageItems.slice(startIndex, endIndex)
   
-  const planUsage = usePlanLimits(links, profile.tier, pages.length, qrCodes)
+  const planUsage = usePlanLimits(links, profile.tier, pages.filter(page => page.is_active !== false).length, qrCodes)
 
   // Handle hydration and initialize with server data
   useEffect(() => {
@@ -258,7 +260,7 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
     <>
     <div className="space-y-6">
       {/* Page Switcher */}
-      {pages.length > 1 && (
+      {pages.filter(page => page.is_active !== false).length > 1 && (
         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -520,7 +522,27 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
         {/* Links List */}
         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900">My Links & QR Codes</h3>
+            <div className="flex items-center space-x-3">
+              <h3 className="text-sm font-semibold text-gray-900">My Links & QR Codes</h3>
+              {pages.filter(page => page.is_active !== false).length > 1 && (
+                <Select 
+                  value={selectedPageId || currentPage?.id || ''} 
+                  onValueChange={(value) => setSelectedPageId(value)}
+                >
+                  <SelectTrigger className="w-40 h-8 text-xs">
+                    <SelectValue placeholder="Select page" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pages.filter(page => page.is_active !== false).map((page) => (
+                      <SelectItem key={page.id} value={page.id}>
+                        {page.page_title || page.username}
+                        {page.is_primary && ' (Primary)'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
             <div className="flex items-center space-x-1">
               {['Most recent', 'Performance', 'Oldest'].map((sortOption) => (
                 <Button
@@ -626,6 +648,7 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
                 existingLinks={links}
                 pageId={currentPage?.id}
                 defaultTab={defaultTab}
+                userTier={profile.tier}
               />
             </div>
           </div>

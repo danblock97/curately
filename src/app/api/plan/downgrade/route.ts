@@ -42,8 +42,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
-    if (profile.tier === 'free') {
-      return NextResponse.json({ error: 'Already on free plan' }, { status: 400 })
+    // Check if downgrade is needed by looking at current content vs free limits
+    const { data: activeLinks } = await supabase
+      .from('links')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+
+    const { data: activeQrCodes } = await supabase
+      .from('qr_codes')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+
+    const { data: activePagesForCheck } = await supabase
+      .from('pages')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+
+    const currentLinksCount = activeLinks?.length || 0
+    const currentQrCodesCount = activeQrCodes?.length || 0
+    const currentPagesCount = activePagesForCheck?.length || 0
+
+    // If user is already on free plan AND within limits, no downgrade needed
+    if (profile.tier === 'free' && currentLinksCount <= 5 && currentQrCodesCount <= 5 && currentPagesCount <= 1) {
+      return NextResponse.json({ 
+        success: true,
+        message: 'Already on free plan and within limits',
+        deactivatedLinks: 0,
+        deactivatedQrCodes: 0,
+        deactivatedPages: 0
+      })
     }
 
     // Free plan limits
@@ -55,17 +85,18 @@ export async function POST(request: NextRequest) {
 
     let deactivatedLinks = 0
     let deactivatedQrCodes = 0
+    let deactivatedPages = 0
 
-    // Get all active links, ordered by creation date (oldest first)
-    const { data: activeLinks } = await supabase
+    // Get all active links with creation date for ordering (reuse previous query but get creation_at)
+    const { data: activeLinksWithDates } = await supabase
       .from('links')
       .select('id, created_at')
       .eq('user_id', userId)
       .eq('is_active', true)
       .order('created_at', { ascending: true })
 
-    // Get all active QR codes, ordered by creation date (oldest first)
-    const { data: activeQrCodes } = await supabase
+    // Get all active QR codes with creation date for ordering (reuse previous query but get creation_at)
+    const { data: activeQrCodesWithDates } = await supabase
       .from('qr_codes')
       .select('id, created_at')
       .eq('user_id', userId)
@@ -73,8 +104,8 @@ export async function POST(request: NextRequest) {
       .order('created_at', { ascending: true })
 
     // Deactivate excess links (keep first 5, deactivate rest)
-    if (activeLinks && activeLinks.length > FREE_LIMITS.maxLinks) {
-      const excessLinks = activeLinks.slice(FREE_LIMITS.maxLinks)
+    if (activeLinksWithDates && activeLinksWithDates.length > FREE_LIMITS.maxLinks) {
+      const excessLinks = activeLinksWithDates.slice(FREE_LIMITS.maxLinks)
       const linkIds = excessLinks.map(link => link.id)
       
       const { error: linkError } = await supabase
@@ -94,8 +125,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Deactivate excess QR codes (keep first 5, deactivate rest)
-    if (activeQrCodes && activeQrCodes.length > FREE_LIMITS.maxQrCodes) {
-      const excessQrCodes = activeQrCodes.slice(FREE_LIMITS.maxQrCodes)
+    if (activeQrCodesWithDates && activeQrCodesWithDates.length > FREE_LIMITS.maxQrCodes) {
+      const excessQrCodes = activeQrCodesWithDates.slice(FREE_LIMITS.maxQrCodes)
       const qrCodeIds = excessQrCodes.map(qr => qr.id)
       
       const { error: qrError } = await supabase
@@ -112,6 +143,36 @@ export async function POST(request: NextRequest) {
       }
       
       deactivatedQrCodes = qrCodeIds.length
+    }
+
+    // Get all active pages, ordered by creation date (keep primary page first)
+    const { data: activePages } = await supabase
+      .from('pages')
+      .select('id, created_at, is_primary')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .order('is_primary', { ascending: false }) // Primary pages first
+      .order('created_at', { ascending: true })   // Then by creation date
+
+    // Deactivate excess pages (keep only 1 page for free plan, prioritize primary page)
+    if (activePages && activePages.length > FREE_LIMITS.maxPages) {
+      const excessPages = activePages.slice(FREE_LIMITS.maxPages)
+      const pageIds = excessPages.map(page => page.id)
+      
+      const { error: pageError } = await supabase
+        .from('pages')
+        .update({ 
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
+        .in('id', pageIds)
+
+      if (pageError) {
+        console.error('Error deactivating pages:', pageError)
+        return NextResponse.json({ error: 'Failed to deactivate pages' }, { status: 500 })
+      }
+      
+      deactivatedPages = pageIds.length
     }
 
     // Reset all page background colors to white (free plan restriction)
@@ -150,6 +211,10 @@ export async function POST(request: NextRequest) {
       changes.push(`${deactivatedQrCodes} QR code${deactivatedQrCodes > 1 ? 's' : ''} deactivated`)
     }
     
+    if (deactivatedPages > 0) {
+      changes.push(`${deactivatedPages} page${deactivatedPages > 1 ? 's' : ''} deactivated`)
+    }
+    
     changes.push('background color reset to white')
     
     if (changes.length > 0) {
@@ -163,6 +228,7 @@ export async function POST(request: NextRequest) {
       message,
       deactivatedLinks,
       deactivatedQrCodes,
+      deactivatedPages,
       backgroundColorReset: true
     })
 

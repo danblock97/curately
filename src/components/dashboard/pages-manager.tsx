@@ -30,8 +30,8 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
   
   // Form state
   const [username, setUsername] = useState('')
-  const [displayName, setDisplayName] = useState('')
-  const [bio, setBio] = useState('')
+  const [pageName, setPageName] = useState('')
+  const [pageDescription, setPageDescription] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const supabase = createClient()
@@ -65,8 +65,14 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
 
     if (!username.trim()) {
       newErrors.username = 'Username is required'
-    } else if (!/^[a-zA-Z0-9_-]{3,50}$/.test(username)) {
-      newErrors.username = 'Username must be 3-50 characters and contain only letters, numbers, underscores, or dashes'
+    } else if (!/^[a-zA-Z0-9_]{3,50}$/.test(username)) {
+      newErrors.username = 'Username must be 3-50 characters and contain only letters, numbers, and underscores (no spaces)'
+    }
+
+    if (!pageName.trim()) {
+      newErrors.pageName = 'Page name is required'
+    } else if (pageName.trim().length < 1 || pageName.trim().length > 50) {
+      newErrors.pageName = 'Page name must be 1-50 characters'
     }
 
     setErrors(newErrors)
@@ -85,8 +91,8 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
         },
         body: JSON.stringify({
           username: username.toLowerCase(),
-          display_name: displayName.trim() || null,
-          bio: bio.trim() || null,
+          display_name: pageName.trim() || null,
+          bio: pageDescription.trim() || null,
         }),
       })
 
@@ -99,8 +105,8 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
       toast.success('Page created successfully!')
       setShowCreateForm(false)
       setUsername('')
-      setDisplayName('')
-      setBio('')
+      setPageName('')
+      setPageDescription('')
       setErrors({})
       
       // Reload pages
@@ -119,7 +125,7 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
     }
   }
 
-  const canCreatePage = profile.tier === 'pro' && pages.length < 2
+  const canCreatePage = profile.tier === 'pro' && pages.filter(page => page.is_active !== false).length < 2
 
   return (
     <div className="space-y-6">
@@ -161,18 +167,49 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
         </Card>
       )}
 
+      {/* Inactive Pages Notice */}
+      {!isLoading && pages.some(page => !page.is_active) && (
+        <Card className="border border-orange-200 bg-orange-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                <Globe className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-orange-900">Pages Deactivated</h3>
+                <p className="text-sm text-orange-700">
+                  Some pages were deactivated due to free plan limits. Upgrade to Pro to reactivate them.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Pages List */}
       {isLoading ? (
         <div className="text-center py-8 text-gray-500">Loading pages...</div>
       ) : (
         <div className="grid gap-4">
           {pages.map((page) => (
-            <Card key={page.id} className="bg-white border border-gray-200">
+            <Card key={page.id} className={`${
+              page.is_active 
+                ? "bg-white border border-gray-200" 
+                : "bg-gray-50 border border-gray-300 opacity-75"
+            }`}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                      <Globe className="w-6 h-6 text-gray-600" />
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                      page.is_active 
+                        ? "bg-gray-100" 
+                        : "bg-gray-200"
+                    }`}>
+                      <Globe className={`w-6 h-6 ${
+                        page.is_active 
+                          ? "text-gray-600" 
+                          : "text-gray-400"
+                      }`} />
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
@@ -202,19 +239,34 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
                       size="sm"
                       onClick={() => window.open(`/${page.username}`, '_blank')}
                       className="text-gray-600 hover:text-gray-900"
+                      disabled={!page.is_active}
                     >
                       <ExternalLink className="w-4 h-4 mr-2" />
                       View
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push(`/dashboard/appearance?pageId=${page.id}`)}
-                      className="text-gray-600 hover:text-gray-900"
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Edit
-                    </Button>
+                    {page.is_active ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/dashboard/appearance?pageId=${page.id}`)}
+                        className="text-gray-600 hover:text-gray-900"
+                      >
+                        <Settings className="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          toast.error('This page is inactive. Upgrade to Pro to reactivate and edit your additional pages.')
+                        }}
+                        className="text-orange-600 hover:text-orange-700 border-orange-300 hover:border-orange-400"
+                      >
+                        <Settings className="w-4 h-4 mr-2" />
+                        Upgrade to Edit
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -237,8 +289,8 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
                     setShowCreateForm(false)
                     setErrors({})
                     setUsername('')
-                    setDisplayName('')
-                    setBio('')
+                    setPageName('')
+                    setPageDescription('')
                   }}
                   className="text-gray-500 hover:text-gray-700"
                 >
@@ -254,43 +306,53 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
                   <Input
                     id="username"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="your-page-name"
+                    onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                    placeholder="your_page_name"
                     className={`mt-1 ${errors.username ? 'border-red-500' : ''}`}
                   />
                   {errors.username && (
                     <p className="text-sm text-red-600 mt-1">{errors.username}</p>
                   )}
                   <p className="text-xs text-gray-500 mt-1">
-                    This will be your page URL: /{username || 'your-page-name'}
+                    This will be your page URL: /{username || 'your_page_name'}
                   </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="displayName" className="text-sm font-medium text-gray-700">
-                    Display Name
+                  <Label htmlFor="pageName" className="text-sm font-medium text-gray-700">
+                    Page Name *
                   </Label>
                   <Input
-                    id="displayName"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Your Display Name"
-                    className="mt-1"
+                    id="pageName"
+                    value={pageName}
+                    onChange={(e) => setPageName(e.target.value)}
+                    placeholder="My Awesome Page"
+                    className={`mt-1 ${errors.pageName ? 'border-red-500' : ''}`}
+                    required
                   />
+                  {errors.pageName && (
+                    <p className="text-sm text-red-600 mt-1">{errors.pageName}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    This will be displayed as your page title
+                  </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="bio" className="text-sm font-medium text-gray-700">
-                    Bio
+                  <Label htmlFor="pageDescription" className="text-sm font-medium text-gray-700">
+                    Page Description
                   </Label>
                   <Textarea
-                    id="bio"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    placeholder="Tell people about this page..."
+                    id="pageDescription"
+                    value={pageDescription}
+                    onChange={(e) => setPageDescription(e.target.value)}
+                    placeholder="Describe what visitors can find on this page..."
                     className="mt-1 bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus-visible:ring-blue-500 focus-visible:border-blue-500"
                     rows={3}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Optional description shown to visitors
+                  </p>
                 </div>
               </div>
 
@@ -308,8 +370,8 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
                     setShowCreateForm(false)
                     setErrors({})
                     setUsername('')
-                    setDisplayName('')
-                    setBio('')
+                    setPageName('')
+                    setPageDescription('')
                   }}
                   className="flex-1 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                 >

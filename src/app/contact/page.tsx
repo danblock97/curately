@@ -1,3 +1,7 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { Navbar } from '@/components/navbar'
 import { ContactForm } from '@/components/contact-form'
 import { Card, CardContent } from '@/components/ui/card'
@@ -6,6 +10,36 @@ import { Mail, MessageCircle, Clock, Users, ArrowRight, CheckCircle, Zap, Globe 
 import Link from 'next/link'
 
 export default function ContactPage() {
+  const [userTier, setUserTier] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const checkUserTier = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('tier')
+            .eq('id', user.id)
+            .single()
+          
+          setUserTier(profile?.tier || 'free')
+        } else {
+          setUserTier('free')
+        }
+      } catch (error) {
+        console.error('Error checking user tier:', error)
+        setUserTier('free')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    checkUserTier()
+  }, [])
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -114,29 +148,57 @@ export default function ContactPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50 hover:shadow-lg transition-all duration-300 group relative overflow-hidden">
-                <CardContent className="p-6 relative z-10">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <Users className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h4 className="font-bold text-gray-900">Priority Support</h4>
-                        <Badge className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white border-0 text-xs px-2 py-0.5">
-                          PRO
-                        </Badge>
+{!isLoading && (
+                userTier === 'pro' ? (
+                  <Card className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 hover:shadow-lg transition-all duration-300 group relative overflow-hidden">
+                    <CardContent className="p-6 relative z-10">
+                      <div className="flex items-start space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                          <CheckCircle className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h4 className="font-bold text-gray-900">Priority Support</h4>
+                            <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 text-xs px-2 py-0.5">
+                              ACTIVE
+                            </Badge>
+                          </div>
+                          <p className="text-gray-700 text-sm mb-3">You have priority support! Expect responses within 4 hours.</p>
+                          <div className="inline-flex items-center text-green-600 font-semibold text-sm">
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            You're all set!
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-gray-700 text-sm mb-3">Get lightning-fast responses and dedicated help</p>
-                      <Link href="/pricing" className="inline-flex items-center text-orange-600 hover:text-orange-700 font-semibold text-sm group">
-                        Upgrade to Pro
-                        <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                      </Link>
-                    </div>
-                  </div>
-                </CardContent>
-                <div className="absolute -bottom-2 -right-2 w-20 h-20 bg-gradient-to-r from-orange-200 to-yellow-200 rounded-full opacity-20"></div>
-              </Card>
+                    </CardContent>
+                    <div className="absolute -bottom-2 -right-2 w-20 h-20 bg-gradient-to-r from-green-200 to-emerald-200 rounded-full opacity-20"></div>
+                  </Card>
+                ) : (
+                  <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50 hover:shadow-lg transition-all duration-300 group relative overflow-hidden">
+                    <CardContent className="p-6 relative z-10">
+                      <div className="flex items-start space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                          <Users className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h4 className="font-bold text-gray-900">Priority Support</h4>
+                            <Badge className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white border-0 text-xs px-2 py-0.5">
+                              PRO
+                            </Badge>
+                          </div>
+                          <p className="text-gray-700 text-sm mb-3">Get lightning-fast responses and dedicated help</p>
+                          <Link href="/pricing" className="inline-flex items-center text-orange-600 hover:text-orange-700 font-semibold text-sm group">
+                            Upgrade to Pro
+                            <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                          </Link>
+                        </div>
+                      </div>
+                    </CardContent>
+                    <div className="absolute -bottom-2 -right-2 w-20 h-20 bg-gradient-to-r from-orange-200 to-yellow-200 rounded-full opacity-20"></div>
+                  </Card>
+                )
+              )}
             </div>
           </div>
         </div>
@@ -248,13 +310,3 @@ export default function ContactPage() {
   )
 }
 
-export async function generateMetadata() {
-  return {
-    title: 'Contact - Curately | Get Help & Support',
-    description: 'Get in touch with the Curately team. We offer priority support for Pro users and respond to all inquiries within 24 hours.',
-    openGraph: {
-      title: 'Contact Curately',
-      description: 'We\'d love to hear from you. Get help, share feedback, or ask questions.',
-    },
-  }
-}
