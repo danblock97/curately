@@ -78,8 +78,8 @@ export function usePlanLimits(links: Link[] = [], currentPlan: UserTier = 'free'
 
   const usage = useMemo(() => {
     // Only count active links and QR codes towards limits
-    const qrCodesCount = qrCodes.filter(qr => qr.is_active !== false).length
-    const linksCount = links.filter(link => link.is_active !== false).length
+    const qrCodesCount = qrCodes.filter(qr => qr && qr.is_active !== false).length
+    const linksCount = links.filter(link => link && link.is_active !== false).length
 
     return {
       tier: currentPlan,
@@ -113,7 +113,7 @@ export function usePlanLimits(links: Link[] = [], currentPlan: UserTier = 'free'
         prioritySupport: limits.prioritySupport
       }
     }
-  }, [links, limits, currentPlan, pagesCount])
+  }, [links, qrCodes, limits, currentPlan, pagesCount])
 
   return usage
 }
@@ -131,8 +131,8 @@ export function checkCanCreateLink(
 } {
   const limits = PLAN_LIMITS[currentPlan] || PLAN_LIMITS.free
   // Only count active links and QR codes towards limits
-  const qrCodesCount = qrCodes.filter(qr => qr.is_active !== false).length
-  const linksCount = links.filter(link => link.is_active !== false).length
+  const qrCodesCount = qrCodes.filter(qr => qr && qr.is_active !== false).length
+  const linksCount = links.filter(link => link && link.is_active !== false).length
   
   const usage = {
     links: {

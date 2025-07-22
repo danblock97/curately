@@ -32,6 +32,33 @@ export function ProfileSetup({ userId }: ProfileSetupProps) {
   const router = useRouter()
   const supabase = createClient()
 
+  // Check if user already has a profile on component mount
+  useEffect(() => {
+    const checkExistingProfile = async () => {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single()
+
+        if (profile) {
+          // Profile exists, start from page setup (step 2)
+          setCurrentStep(2)
+          // Pre-fill profile data
+          setDisplayName(profile.display_name || '')
+          setBio(profile.bio || '')
+          setAvatarUrl(profile.avatar_url || '')
+        }
+      } catch (error) {
+        console.error('Error checking existing profile:', error)
+        // Stay on step 0 if there's an error
+      }
+    }
+
+    checkExistingProfile()
+  }, [userId, supabase])
+
   const steps = [
     { id: 'welcome', title: 'Welcome!', description: 'Let\'s get you started' },
     { id: 'profile', title: 'Profile Setup', description: 'Tell us about yourself' },
@@ -99,8 +126,10 @@ export function ProfileSetup({ userId }: ProfileSetupProps) {
       setCurrentStep(2) // Move to page setup
       toast.success('Profile created successfully!')
       
-      // Refresh server components to pick up new profile immediately
-      router.refresh()
+      // Notify parent layout that profile is created
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('profileSetupComplete'))
+      }
     } catch (error) {
       console.error('Profile setup error:', error)
       toast.error('An error occurred. Please try again.')
@@ -154,15 +183,14 @@ export function ProfileSetup({ userId }: ProfileSetupProps) {
       setCurrentStep(3) // Move to completion
       toast.success('Page created successfully!')
       
-      // Refresh server components and redirect to dashboard
+      // Notify parent layout that setup is complete
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('profileSetupComplete'))
+      }
+      
+      // Redirect to dashboard after brief delay
       setTimeout(() => {
-        try {
-          router.refresh() // Refresh server components to pick up new profile
-          router.push('/dashboard')
-        } catch (error) {
-          console.error('Router operations failed, trying window.location:', error)
-          window.location.href = '/dashboard'
-        }
+        router.push('/dashboard')
       }, 2000)
     } catch (error) {
       console.error('Page setup error:', error)

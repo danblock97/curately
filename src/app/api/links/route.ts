@@ -14,7 +14,7 @@ export const POST = withErrorHandling(withSecurity(async (request: NextRequest) 
       { 
         status: 429,
         headers: {
-          'X-RateLimit-Limit': '10',
+          'X-RateLimit-Limit': '25',
           'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
           'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
         }

@@ -115,25 +115,25 @@ export const rateLimiters = {
   // Link creation endpoints
   linkCreation: rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    maxRequests: 10
+    maxRequests: 25 // Increased from 10 to allow rapid page setup
   }),
   
   // QR code generation (more resource intensive)
   qrCode: rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    maxRequests: 5
+    maxRequests: 20 // Increased from 5 to allow multiple QR codes during setup
   }),
   
   // Profile updates
   profile: rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    maxRequests: 5
+    maxRequests: 15 // Increased from 5 to allow profile customization
   }),
   
   // File uploads
   upload: rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    maxRequests: 3
+    maxRequests: 10 // Increased from 3 to allow multiple avatar/media uploads
   })
 }
 

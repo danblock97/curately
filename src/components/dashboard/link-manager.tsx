@@ -132,6 +132,12 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
     setSelectedPlatform(null)
   }
 
+  const handleQrCodeAdded = (newQrCode: any) => {
+    setQrCodes(prev => [...prev, newQrCode])
+    setShowAddForm(false)
+    setSelectedPlatform(null)
+  }
+
   const handleLinkUpdated = (updatedLink: Link) => {
     setLinks(prev => prev.map(link => 
       link.id === updatedLink.id ? updatedLink : link
@@ -140,6 +146,10 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
 
   const handleLinkDeleted = (linkId: string) => {
     setLinks(prev => prev.filter(link => link.id !== linkId))
+  }
+
+  const handleQrCodeDeleted = (qrCodeId: string) => {
+    setQrCodes(prev => prev.filter(qrCode => qrCode.id !== qrCodeId))
   }
 
   const handleLinksReordered = (reorderedLinks: Link[]) => {
@@ -534,6 +544,7 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
               links={paginatedItems}
               onLinkUpdated={handleLinkUpdated}
               onLinkDeleted={handleLinkDeleted}
+              onQrCodeDeleted={handleQrCodeDeleted}
               onLinksReordered={handleLinksReordered}
             />
           ) : (
@@ -605,6 +616,7 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
               
               <AddLinkForm
                 onLinkAdded={handleLinkAdded}
+                onQrCodeAdded={handleQrCodeAdded}
                 onCancel={() => {
                   setShowAddForm(false)
                   setSelectedPlatform(null)

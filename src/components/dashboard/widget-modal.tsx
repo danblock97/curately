@@ -114,7 +114,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
         }
 
         // Check plan limits before starting import
-        const activeLinksCount = links.filter(link => link.is_active !== false).length
+        const activeLinksCount = links.filter(link => link && link.is_active !== false).length
         const planLimits = userTier === 'pro' ? 50 : 5
         const remainingSlots = planLimits - activeLinksCount
         
@@ -284,13 +284,13 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                   <h3 className="font-medium text-gray-900 mb-3">Your Existing Links</h3>
                   <div className="grid grid-cols-1 gap-3">
                     {/* Active Links */}
-                    {links.filter(link => link.is_active).map((link) => (
+                    {links.filter(link => link && link.is_active).map((link) => (
                       <Card
                         key={link.id}
                         className="cursor-pointer bg-white hover:bg-gray-50 transition-colors border border-gray-200"
                         onClick={() => {
                           // Check plan limits before creating widget
-                          const canCreate = checkCanCreateLink(links, 'link_in_bio', userTier)
+                          const canCreate = checkCanCreateLink(links.filter(link => link), 'link_in_bio', userTier)
                           
                           if (!canCreate.canCreate) {
                             toast.error(canCreate.reason || 'Cannot create widget')
@@ -344,13 +344,13 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                     ))}
                     
                     {/* Inactive Links */}
-                    {links.filter(link => !link.is_active).length > 0 && (
+                    {links.filter(link => link && !link.is_active).length > 0 && (
                       <>
                         <div className="mt-4">
                           <h4 className="text-sm font-medium text-gray-600 mb-2">Inactive Links</h4>
                           <p className="text-xs text-gray-500 mb-3">These links are currently inactive and cannot be added to your page.</p>
                         </div>
-                        {links.filter(link => !link.is_active).map((link) => (
+                        {links.filter(link => link && !link.is_active).map((link) => (
                           <Card
                             key={link.id}
                             className="cursor-not-allowed bg-gray-50 border border-gray-200 opacity-60"

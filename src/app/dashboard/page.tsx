@@ -37,8 +37,8 @@ export default async function DashboardPage() {
     .eq('user_id', user.id)
     .order('order_index', { ascending: true })
 
-  // If no profile exists, show profile setup
-  if (!profile) {
+  // If no profile exists or no pages exist, show profile setup
+  if (!profile || !pages || pages.length === 0) {
     return <ProfileSetup userId={user.id} />
   }
 

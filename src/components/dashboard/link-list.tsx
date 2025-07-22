@@ -42,9 +42,10 @@ type Link = Database['public']['Tables']['links']['Row'] & {
 }
 
 interface LinkListProps {
-  links: Link[]
+  links: (Link & { type?: 'link' | 'qr_code' })[]
   onLinkUpdated: (link: Link) => void
   onLinkDeleted: (linkId: string) => void
+  onQrCodeDeleted?: (qrCodeId: string) => void
   onLinksReordered: (links: Link[]) => void
 }
 
@@ -297,7 +298,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
   )
 }
 
-export function LinkList({ links, onLinkUpdated, onLinkDeleted, onLinksReordered }: LinkListProps) {
+export function LinkList({ links, onLinkUpdated, onLinkDeleted, onQrCodeDeleted, onLinksReordered }: LinkListProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editUrl, setEditUrl] = useState('')
@@ -445,18 +446,34 @@ export function LinkList({ links, onLinkUpdated, onLinkDeleted, onLinksReordered
 
   const handleDelete = async (linkId: string) => {
     try {
+      // Find the item to determine its type
+      const item = links.find(link => link.id === linkId)
+      if (!item) {
+        toast.error('Item not found.')
+        return
+      }
+
+      const isQrCode = item.type === 'qr_code'
+      const tableName = isQrCode ? 'qr_codes' : 'links'
+      
       const { error } = await supabase
-        .from('links')
+        .from(tableName)
         .delete()
         .eq('id', linkId)
 
       if (error) {
-        toast.error('Error deleting link. Please try again.')
+        toast.error(`Error deleting ${isQrCode ? 'QR code' : 'link'}. Please try again.`)
         return
       }
 
-      onLinkDeleted(linkId)
-      toast.success('Link deleted successfully!')
+      // Call the appropriate callback
+      if (isQrCode && onQrCodeDeleted) {
+        onQrCodeDeleted(linkId)
+      } else {
+        onLinkDeleted(linkId)
+      }
+      
+      toast.success(`${isQrCode ? 'QR code' : 'Link'} deleted successfully!`)
     } catch (error) {
       toast.error('An error occurred. Please try again.')
     }

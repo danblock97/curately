@@ -927,7 +927,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
       // Check plan limits before creating widget (including current widgets in session)
       const linkTypeForCheck = widget.type === 'media' || widget.type === 'image' ? 'link_in_bio' : 'link_in_bio'
       const currentWidgetCount = widgets.length
-      const activeLinksCount = links.filter(link => link.is_active !== false).length
+      const activeLinksCount = links.filter(link => link && link.is_active !== false).length
       const totalLinksCount = activeLinksCount + currentWidgetCount
       const planLimit = profile.tier === 'pro' ? 50 : 5
       

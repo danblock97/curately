@@ -24,6 +24,7 @@ interface PlatformType {
 
 interface AddLinkFormProps {
   onLinkAdded: (link: Link) => void
+  onQrCodeAdded?: (qrCode: any) => void
   onCancel: () => void
   nextOrder: number
   selectedPlatform?: PlatformType | null
@@ -32,7 +33,7 @@ interface AddLinkFormProps {
   pageId?: string
 }
 
-export function AddLinkForm({ onLinkAdded, onCancel, nextOrder, selectedPlatform, existingLinks = [], defaultTab = 'link_in_bio', pageId }: AddLinkFormProps) {
+export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, selectedPlatform, existingLinks = [], defaultTab = 'link_in_bio', pageId }: AddLinkFormProps) {
   const [activeTab, setActiveTab] = useState(defaultTab)
   const [isLoading, setIsLoading] = useState(false)
   
@@ -181,9 +182,20 @@ export function AddLinkForm({ onLinkAdded, onCancel, nextOrder, selectedPlatform
       }
 
       const result = await response.json()
-      const link = result.success ? result.data.link : result.link
-      onLinkAdded(link)
-      toast.success('QR code created successfully!')
+      if (result.success && result.data.qrCode) {
+        // QR code was created, use the QR code callback
+        if (onQrCodeAdded) {
+          onQrCodeAdded(result.data.qrCode)
+        }
+        toast.success('QR code created successfully!')
+      } else {
+        // Fallback for legacy response format
+        const link = result.link
+        if (link) {
+          onLinkAdded(link)
+        }
+        toast.success('QR code created successfully!')
+      }
       resetForm()
     } catch (error) {
       toast.error('An error occurred. Please try again.')
