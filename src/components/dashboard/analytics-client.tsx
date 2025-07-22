@@ -20,10 +20,11 @@ type Link = Database['public']['Tables']['links']['Row'] & {
 
 interface AnalyticsClientProps {
   links: Link[]
+  qrCodes: any[]
   profile: any
 }
 
-export function AnalyticsClient({ links, profile }: AnalyticsClientProps) {
+export function AnalyticsClient({ links, qrCodes, profile }: AnalyticsClientProps) {
   const [selectedChartPeriod, setSelectedChartPeriod] = useState('7D')
   const [showTimePeriodDropdown, setShowTimePeriodDropdown] = useState(false)
 
@@ -39,10 +40,25 @@ export function AnalyticsClient({ links, profile }: AnalyticsClientProps) {
     return 'Last 30 days'
   })
 
-  const totalClicks = links?.reduce((sum, link) => sum + link.clicks, 0) || 0
-  const activeLinks = links?.filter(link => link.is_active).length || 0
-  const topLink = links?.[0]
-  const qrCodeLinks = links?.filter(link => link.link_type === 'qr_code').length || 0
+  // Calculate total clicks from both links and QR codes
+  const linkClicks = links?.reduce((sum, link) => sum + (link.clicks || 0), 0) || 0
+  const qrClicks = qrCodes?.reduce((sum, qr) => sum + (qr.clicks || 0), 0) || 0
+  const totalClicks = linkClicks + qrClicks
+
+  // Calculate active items
+  const activeLinksCount = links?.filter(link => link && link.is_active !== false).length || 0
+  const activeQrCodesCount = qrCodes?.filter(qr => qr && qr.is_active !== false).length || 0
+  const activeLinks = activeLinksCount + activeQrCodesCount
+
+  // Find top performer from both links and QR codes
+  const allItems = [
+    ...(links || []).map(link => ({ ...link, type: 'link' })),
+    ...(qrCodes || []).map(qr => ({ ...qr, type: 'qr_code' }))
+  ].sort((a, b) => (b.clicks || 0) - (a.clicks || 0))
+  const topLink = allItems[0]
+
+  // Count different types
+  const qrCodeLinks = qrCodes?.length || 0
   const deepLinks = links?.filter(link => link.link_type === 'deeplink').length || 0
   const regularLinks = links?.filter(link => link.link_type === 'link_in_bio').length || 0
   const avgClicksPerLink = totalClicks > 0 && activeLinks > 0 ? Math.round(totalClicks / activeLinks) : 0
@@ -349,22 +365,22 @@ export function AnalyticsClient({ links, profile }: AnalyticsClientProps) {
           </div>
         </CardHeader>
         <CardContent>
-          {links && links.length > 0 ? (
+          {allItems && allItems.length > 0 ? (
             <div className="space-y-4">
-              {links.slice(0, 10).map((link, index) => (
-                <div key={link.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors">
+              {allItems.slice(0, 10).map((item, index) => (
+                <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors">
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center justify-center w-8 h-8 bg-white rounded-lg border border-gray-200">
                       <span className="text-sm font-semibold text-gray-600">#{index + 1}</span>
                     </div>
                     <div className="flex items-center space-x-3">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        link.link_type === 'qr_code' ? 'bg-green-100' : 
-                        link.link_type === 'deeplink' ? 'bg-blue-100' : 'bg-gray-100'
+                        item.type === 'qr_code' ? 'bg-green-100' : 
+                        item.link_type === 'deeplink' ? 'bg-blue-100' : 'bg-gray-100'
                       }`}>
-                        {link.link_type === 'qr_code' ? (
+                        {item.type === 'qr_code' ? (
                           <QrCode className="w-5 h-5 text-green-600" />
-                        ) : link.link_type === 'deeplink' ? (
+                        ) : item.link_type === 'deeplink' ? (
                           <Smartphone className="w-5 h-5 text-blue-600" />
                         ) : (
                           <Globe className="w-5 h-5 text-gray-600" />
@@ -373,14 +389,14 @@ export function AnalyticsClient({ links, profile }: AnalyticsClientProps) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2">
                           <h3 className="font-semibold text-gray-900 truncate">
-                            {link.title || 'Untitled Link'}
+                            {item.title || 'Untitled Link'}
                           </h3>
-                          <Badge variant={link.is_active ? "default" : "secondary"} className="text-xs">
-                            {link.is_active ? 'Active' : 'Inactive'}
+                          <Badge variant={(item.is_active !== false) ? "default" : "secondary"} className="text-xs">
+                            {(item.is_active !== false) ? 'Active' : 'Inactive'}
                           </Badge>
                         </div>
                         <div className="flex items-center space-x-1 mt-1">
-                          <span className="text-sm text-gray-500 truncate max-w-md">{link.url}</span>
+                          <span className="text-sm text-gray-500 truncate max-w-md">{item.url}</span>
                           <ExternalLink className="w-3 h-3 text-gray-400 flex-shrink-0" />
                         </div>
                       </div>
@@ -389,7 +405,7 @@ export function AnalyticsClient({ links, profile }: AnalyticsClientProps) {
                   <div className="flex items-center space-x-6">
                     <div className="text-right">
                       <div className="text-2xl font-bold text-gray-900">
-                        {link.clicks.toLocaleString()}
+                        {(item.clicks || 0).toLocaleString()}
                       </div>
                       <div className="text-sm text-gray-500">
                         clicks
@@ -397,7 +413,7 @@ export function AnalyticsClient({ links, profile }: AnalyticsClientProps) {
                     </div>
                     <div className="text-right">
                       <div className="text-lg font-semibold text-green-600">
-                        {totalClicks > 0 ? ((link.clicks / totalClicks) * 100).toFixed(1) : 0}%
+                        {totalClicks > 0 ? (((item.clicks || 0) / totalClicks) * 100).toFixed(1) : 0}%
                       </div>
                       <div className="text-sm text-gray-500">
                         of total

@@ -19,18 +19,15 @@ export default async function AnalyticsPage() {
 
   const { data: links } = await supabase
     .from('links')
-    .select(`
-      *,
-      qr_codes (
-        qr_code_data,
-        format,
-        size,
-        foreground_color,
-        background_color
-      )
-    `)
+    .select('*')
     .eq('user_id', user.id)
     .order('clicks', { ascending: false })
 
-  return <AnalyticsClient links={links || []} profile={profile} />
+  const { data: qrCodes } = await supabase
+    .from('qr_codes')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('clicks', { ascending: false })
+
+  return <AnalyticsClient links={links || []} qrCodes={qrCodes || []} profile={profile} />
 }
