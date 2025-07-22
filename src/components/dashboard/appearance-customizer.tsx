@@ -924,12 +924,15 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
         return
       }
 
-      // Check plan limits before creating widget
+      // Check plan limits before creating widget (including current widgets in session)
       const linkTypeForCheck = widget.type === 'media' || widget.type === 'image' ? 'link_in_bio' : 'link_in_bio'
-      const canCreate = checkCanCreateLink(links, linkTypeForCheck, profile.tier)
+      const currentWidgetCount = widgets.length
+      const activeLinksCount = links.filter(link => link.is_active !== false).length
+      const totalLinksCount = activeLinksCount + currentWidgetCount
+      const planLimit = profile.tier === 'pro' ? 50 : 5
       
-      if (!canCreate.canCreate) {
-        toast.error(canCreate.reason || 'Cannot create widget')
+      if (totalLinksCount >= planLimit) {
+        toast.error(`You've reached the maximum number of links (${planLimit}) for your ${profile.tier} plan.`)
         return
       }
 
@@ -2532,6 +2535,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
           onAddWidget={handleAddWidget}
           socialLinks={socialLinks}
           links={links}
+          userTier={profile.tier}
         />
       )}
 

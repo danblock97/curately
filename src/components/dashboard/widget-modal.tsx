@@ -28,6 +28,7 @@ import {
 import { Database } from '@/lib/supabase/types'
 import { Widget } from './appearance-customizer'
 import { toast } from 'sonner'
+import { checkCanCreateLink } from '@/hooks/use-plan-limits'
 
 interface WidgetModalProps {
   isOpen: boolean
@@ -35,6 +36,7 @@ interface WidgetModalProps {
   onAddWidget: (widget: Widget) => void
   socialLinks: Database['public']['Tables']['social_media_links']['Row'][]
   links: Database['public']['Tables']['links']['Row'][]
+  userTier?: Database['public']['Enums']['user_tier']
 }
 
 const socialPlatforms = [
@@ -56,7 +58,7 @@ const essentialWidgets = [
   { name: 'Product', icon: Package, value: 'product', description: 'Highlight a product', color: 'bg-orange-500' },
 ]
 
-export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links }: WidgetModalProps) {
+export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, userTier = 'free' }: WidgetModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedWidget, setSelectedWidget] = useState<string | null>(null)
   const [isConverting, setIsConverting] = useState(false)
@@ -111,9 +113,22 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links }
           return
         }
 
-        // Create widgets for each link found
+        // Check plan limits before starting import
+        const activeLinksCount = links.filter(link => link.is_active !== false).length
+        const planLimits = userTier === 'pro' ? 50 : 5
+        const remainingSlots = planLimits - activeLinksCount
+        
+        if (remainingSlots <= 0) {
+          toast.error(`You've reached the maximum number of links (${planLimits}) for your ${userTier} plan.`)
+          return
+        }
+
+        // Create widgets for each link found (up to remaining slots)
         let widgetCount = 0
-        for (const link of links) {
+        let successfulImports = 0
+        const linksToImport = links.slice(0, remainingSlots)
+        
+        for (const link of linksToImport) {
           const widget: Widget = {
             id: `${Date.now()}-${widgetCount}`,
             type: link.platform ? 'social' : 'link',
@@ -132,9 +147,17 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links }
 
           onAddWidget(widget)
           widgetCount++
+          successfulImports++
+        }
+        
+        // Show warning if some links couldn't be imported due to limits
+        if (links.length > remainingSlots) {
+          toast.warning(`Successfully imported ${successfulImports} links. ${links.length - remainingSlots} links couldn't be imported due to plan limits.`)
         }
 
-        toast.success(`Successfully imported ${links.length} links from Linktree!`)
+        if (successfulImports > 0) {
+          toast.success(`Successfully imported ${successfulImports} links from Linktree!`)
+        }
       } catch (error) {
         console.error('Linktree conversion error:', error)
         toast.error(`Failed to import from Linktree: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -266,6 +289,14 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links }
                         key={link.id}
                         className="cursor-pointer bg-white hover:bg-gray-50 transition-colors border border-gray-200"
                         onClick={() => {
+                          // Check plan limits before creating widget
+                          const canCreate = checkCanCreateLink(links, 'link_in_bio', userTier)
+                          
+                          if (!canCreate.canCreate) {
+                            toast.error(canCreate.reason || 'Cannot create widget')
+                            return
+                          }
+
                           const widget: Widget = {
                             id: `existing-${link.id}`,
                             type: 'link',
