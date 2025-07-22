@@ -65,15 +65,35 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
     : pages.find(p => p.is_primary) || pages[0]
   
   // Filter and combine links and QR codes for the current page
-  const pageLinks = links.filter(link => link && link.page_id === currentPage?.id)
-  const pageQrCodes = qrCodes.filter(qr => qr && qr.page_id === currentPage?.id)
+  // Handle case where there's no page setup yet or links don't have page_id
+  const pageLinks = links.filter(link => {
+    if (!link) return false
+    
+    // If no page exists yet, show all links (user hasn't completed page setup)
+    if (!currentPage) return true
+    
+    // If no page_id set on link, include it if it's the primary page or no page setup
+    if (!link.page_id) {
+      return currentPage?.is_primary || !currentPage
+    }
+    
+    return link.page_id === currentPage?.id
+  })
   
-  // Debug logging
-  console.log('DEBUG: Current page ID:', currentPage?.id)
-  console.log('DEBUG: All links:', links)
-  console.log('DEBUG: All QR codes:', qrCodes)
-  console.log('DEBUG: Filtered page links:', pageLinks)
-  console.log('DEBUG: Filtered page QR codes:', pageQrCodes)
+  const pageQrCodes = qrCodes.filter(qr => {
+    if (!qr) return false
+    
+    // If no page exists yet, show all QR codes (user hasn't completed page setup)
+    if (!currentPage) return true
+    
+    // If no page_id set on QR code, include it if it's the primary page or no page setup
+    if (!qr.page_id) {
+      return currentPage?.is_primary || !currentPage
+    }
+    
+    return qr.page_id === currentPage?.id
+  })
+  
   // Combine and sort by order/created_at for unified display
   const pageItems = [
     ...pageLinks.filter(link => link).map(link => ({ ...link, type: 'link' })),
@@ -83,6 +103,17 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
     const orderB = (b?.order || b?.order_index || 0)
     return orderA - orderB
   })
+  
+  // Debug logging
+  console.log('DEBUG: isHydrated:', isHydrated)
+  console.log('DEBUG: Current page ID:', currentPage?.id, 'Is Primary:', currentPage?.is_primary)
+  console.log('DEBUG: All links:', links.map(l => ({ id: l?.id, page_id: l?.page_id, title: l?.title })))
+  console.log('DEBUG: All QR codes:', qrCodes.map(q => ({ id: q?.id, page_id: q?.page_id, title: q?.title })))
+  console.log('DEBUG: Filtered page links:', pageLinks.length)
+  console.log('DEBUG: Filtered page QR codes:', pageQrCodes.length)
+  console.log('DEBUG: pageItems length:', pageItems.length)
+  console.log('DEBUG: showAddForm:', showAddForm)
+  console.log('DEBUG: Modal should show?', isHydrated && Array.isArray(links) && Array.isArray(qrCodes) && pageItems.length === 0 && !showAddForm)
   
   // Pagination logic
   const totalItems = pageItems.length
@@ -600,7 +631,7 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
       )}
 
       {/* Empty State Modal for initial setup */}
-      {Array.isArray(links) && Array.isArray(qrCodes) && links.length === 0 && qrCodes.length === 0 && !showAddForm && (
+      {isHydrated && Array.isArray(links) && Array.isArray(qrCodes) && pageItems.length === 0 && !showAddForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center p-4">
           <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center max-w-2xl shadow-xl">
             <div className="space-y-6">

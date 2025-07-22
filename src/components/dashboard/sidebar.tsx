@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { Link as LinkIcon, Palette, Settings, BarChart3, Globe } from 'lucide-react'
+import { Link as LinkIcon, Palette, Settings, BarChart3, Globe, MessageCircle } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Database } from '@/lib/supabase/types'
 
@@ -38,7 +38,7 @@ export function DashboardSidebar({ profile, primaryPage }: DashboardSidebarProps
   }
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 min-h-full">
+    <div className="w-64 bg-white border-r border-gray-200 h-full flex flex-col">
       {/* User Profile Section */}
       {profile && (
         <div className="p-4 border-b border-gray-200">
@@ -73,8 +73,8 @@ export function DashboardSidebar({ profile, primaryPage }: DashboardSidebarProps
         </div>
       )}
       
-      <nav className="mt-4">
-        <div className="px-4">
+      <nav className="mt-4 flex-1 flex flex-col">
+        <div className="px-4 flex-1">
           <ul className="space-y-2">
             {navigation.map((item) => {
               const isActive = pathname === item.href
@@ -96,6 +96,22 @@ export function DashboardSidebar({ profile, primaryPage }: DashboardSidebarProps
               )
             })}
           </ul>
+        </div>
+        
+        {/* Support Section at bottom */}
+        <div className="px-4 pb-4 border-t border-gray-200 pt-4 mt-4">
+          <Link
+            href="/contact"
+            className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          >
+            <MessageCircle className="w-5 h-5 text-blue-600" />
+            <span>Contact Support</span>
+            {profile?.tier === 'pro' && (
+              <span className="ml-auto text-xs bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2 py-0.5 rounded-full">
+                Priority
+              </span>
+            )}
+          </Link>
         </div>
       </nav>
     </div>

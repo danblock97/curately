@@ -68,9 +68,9 @@ export default async function DashboardLayout({
   })
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       <DashboardHeader user={user} profile={profile} primaryPage={primaryPage} />
-      <div className="flex">
+      <div className="flex flex-1">
         <DashboardSidebar profile={profile} primaryPage={primaryPage} />
         <main className="flex-1 p-6">
           {children}

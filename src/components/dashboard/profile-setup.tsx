@@ -98,6 +98,9 @@ export function ProfileSetup({ userId }: ProfileSetupProps) {
 
       setCurrentStep(2) // Move to page setup
       toast.success('Profile created successfully!')
+      
+      // Refresh server components to pick up new profile immediately
+      router.refresh()
     } catch (error) {
       console.error('Profile setup error:', error)
       toast.error('An error occurred. Please try again.')
@@ -151,13 +154,14 @@ export function ProfileSetup({ userId }: ProfileSetupProps) {
       setCurrentStep(3) // Move to completion
       toast.success('Page created successfully!')
       
-      // Redirect to dashboard after a short delay
+      // Refresh server components and redirect to dashboard
       setTimeout(() => {
-        console.log('Attempting to redirect to dashboard...')
+        console.log('Attempting to refresh and redirect to dashboard...')
         try {
+          router.refresh() // Refresh server components to pick up new profile
           router.push('/dashboard')
         } catch (error) {
-          console.error('Router.push failed, trying window.location:', error)
+          console.error('Router operations failed, trying window.location:', error)
           window.location.href = '/dashboard'
         }
       }, 2000)
