@@ -664,6 +664,7 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
                 nextOrder={Array.isArray(pageItems) ? pageItems.length : 0}
                 selectedPlatform={selectedPlatform}
                 existingLinks={links}
+                existingQrCodes={qrCodes}
                 pageId={currentPage?.id}
                 defaultTab={defaultTab}
                 userTier={profile.tier}

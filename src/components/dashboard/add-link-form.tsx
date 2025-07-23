@@ -30,12 +30,13 @@ interface AddLinkFormProps {
   nextOrder: number
   selectedPlatform?: PlatformType | null
   existingLinks?: Link[]
+  existingQrCodes?: QRCode[]
   defaultTab?: 'link_in_bio' | 'deeplink' | 'qr_code'
   pageId?: string
   userTier?: Database['public']['Enums']['user_tier']
 }
 
-export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, selectedPlatform, existingLinks = [], defaultTab = 'link_in_bio', pageId, userTier = 'free' }: AddLinkFormProps) {
+export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, selectedPlatform, existingLinks = [], existingQrCodes = [], defaultTab = 'link_in_bio', pageId, userTier = 'free' }: AddLinkFormProps) {
   const [activeTab, setActiveTab] = useState(defaultTab)
   const [isLoading, setIsLoading] = useState(false)
   
@@ -60,7 +61,7 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
     e.preventDefault()
     
     // Check plan limits first
-    const limitCheck = checkCanCreateLink(existingLinks, 'link_in_bio', userTier)
+    const limitCheck = checkCanCreateLink(existingLinks, 'link_in_bio', userTier, existingQrCodes)
     if (!limitCheck.canCreate) {
       toast.error(limitCheck.reason || 'Cannot create more links')
       return
@@ -104,7 +105,7 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
     e.preventDefault()
     
     // Check plan limits first
-    const limitCheck = checkCanCreateLink(existingLinks, 'deeplink', userTier)
+    const limitCheck = checkCanCreateLink(existingLinks, 'deeplink', userTier, existingQrCodes)
     if (!limitCheck.canCreate) {
       toast.error(limitCheck.reason || 'Cannot create more links')
       return
@@ -151,7 +152,7 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
     e.preventDefault()
     
     // Check plan limits first
-    const limitCheck = checkCanCreateLink(existingLinks, 'qr_code', userTier)
+    const limitCheck = checkCanCreateLink(existingLinks, 'qr_code', userTier, existingQrCodes)
     if (!limitCheck.canCreate) {
       toast.error(limitCheck.reason || 'Cannot create more QR codes')
       return

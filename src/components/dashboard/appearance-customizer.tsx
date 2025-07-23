@@ -608,7 +608,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, qrCodes, pag
     }
 
     // Check plan limits before creating link
-    const canCreate = checkCanCreateLink(links, 'link_in_bio', profile.tier)
+    const canCreate = checkCanCreateLink(links, 'link_in_bio', profile.tier, qrCodes)
     if (!canCreate.canCreate) {
       toast.error(canCreate.reason || 'Cannot create link')
       return
@@ -930,14 +930,13 @@ export function AppearanceCustomizer({ profile, socialLinks, links, qrCodes, pag
       }
 
       // Check plan limits before creating widget (including current widgets in session)
-      const linkTypeForCheck = widget.type === 'media' || widget.type === 'image' ? 'link_in_bio' : 'link_in_bio'
-      const currentWidgetCount = widgets.length
-      const activeLinksCount = links.filter(link => link && link.is_active !== false).length
-      const totalLinksCount = activeLinksCount + currentWidgetCount
-      const planLimit = profile.tier === 'pro' ? 50 : 5
+      const linkTypeForCheck = widget.type === 'qr_code' ? 'qr_code' : 'link_in_bio'
+      const currentWidgetCount = widgets.filter(w => w.type !== 'qr_code').length
+      const currentLinksForCheck = [...links, ...Array(currentWidgetCount).fill({ is_active: true })]
+      const canCreate = checkCanCreateLink(currentLinksForCheck, linkTypeForCheck, profile.tier, qrCodes)
       
-      if (totalLinksCount >= planLimit) {
-        toast.error(`You've reached the maximum number of links (${planLimit}) for your ${profile.tier} plan.`)
+      if (!canCreate.canCreate) {
+        toast.error(canCreate.reason || 'Cannot create widget')
         return
       }
 
