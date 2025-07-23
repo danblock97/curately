@@ -608,7 +608,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, qrCodes, pag
     }
 
     // Check plan limits before creating link
-    const canCreate = checkCanCreateLink(links, 'link_in_bio', profile.tier, qrCodes)
+    const canCreate = checkCanCreateLink(links, 'link_in_bio', profile.tier, qrCodes.map(qr => ({ is_active: true })))
     if (!canCreate.canCreate) {
       toast.error(canCreate.reason || 'Cannot create link')
       return
@@ -933,7 +933,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, qrCodes, pag
       const linkTypeForCheck = widget.type === 'qr_code' ? 'qr_code' : 'link_in_bio'
       const currentWidgetCount = widgets.filter(w => w.type !== 'qr_code').length
       const currentLinksForCheck = [...links, ...Array(currentWidgetCount).fill({ is_active: true })]
-      const canCreate = checkCanCreateLink(currentLinksForCheck, linkTypeForCheck, profile.tier, qrCodes)
+      const canCreate = checkCanCreateLink(currentLinksForCheck, linkTypeForCheck, profile.tier, qrCodes.map(qr => ({ is_active: true })))
       
       if (!canCreate.canCreate) {
         toast.error(canCreate.reason || 'Cannot create widget')
@@ -1959,9 +1959,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links, qrCodes, pag
       
       const renderQRCodeWidget = () => {
         // Get QR code data from the widget
-        const qrData = widget.data.qr_codes?.[0]
+        const qrData = widget.data
         
-        if (!qrData?.qr_code_data) {
+        if (!qrData?.url) {
           return (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
@@ -1976,18 +1976,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links, qrCodes, pag
         return (
           <div className="flex flex-col items-center justify-center h-full p-2">
             <div className="flex-1 flex items-center justify-center">
-              {qrData.format === 'SVG' ? (
-                <div 
-                  className="w-full h-full max-w-20 max-h-20 [&>svg]:w-full [&>svg]:h-full"
-                  dangerouslySetInnerHTML={{ __html: qrData.qr_code_data }}
-                />
-              ) : (
-                <img 
-                  src={qrData.qr_code_data}
-                  alt={`QR Code: ${widget.data.title}`}
-                  className="w-full h-full max-w-20 max-h-20 object-contain"
-                />
-              )}
+              <div className="text-center">
+                <QrCode className="w-8 h-8 mx-auto text-gray-400" />
+              </div>
             </div>
             <div className="text-xs text-gray-700 text-center mt-1 line-clamp-1">
               {widget.data.title}

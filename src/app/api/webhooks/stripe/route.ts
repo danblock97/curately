@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
               .eq('stripe_customer_id', customerId)
               .single()
 
-            const { data: existingProfile, error: profileError } = await profileQuery
+            const { data: existingProfile } = await profileQuery
 
             let targetUserId: string | null = null
 
@@ -63,14 +63,7 @@ export async function POST(request: NextRequest) {
 
             // Update user profile
 
-            // First check if the profile actually exists
-            const { data: checkProfile, error: checkError } = await supabase
-              .from('profiles')
-              .select('id, tier, stripe_customer_id')
-              .eq('id', targetUserId)
-              .single()
-
-            const { data, error, count } = await supabase
+            const { error } = await supabase
               .from('profiles')
               .update({
                 tier: 'pro',
@@ -79,7 +72,6 @@ export async function POST(request: NextRequest) {
                 subscription_status: subscription.status,
               })
               .eq('id', targetUserId)
-              .select()
 
             if (error) {
               console.error('❌ Error updating profile after checkout:', error)
@@ -134,7 +126,7 @@ export async function POST(request: NextRequest) {
                 },
                 body: JSON.stringify({ userId: profile.id }),
               })
-              const downgradeResult = await downgradeResponse.json()
+              await downgradeResponse.json()
             } catch (downgradeError) {
               console.error('Error triggering downgrade:', downgradeError)
             }
@@ -182,7 +174,7 @@ export async function POST(request: NextRequest) {
               },
               body: JSON.stringify({ userId: profile.id }),
             })
-            const downgradeResult = await downgradeResponse.json()
+            await downgradeResponse.json()
           } catch (downgradeError) {
             console.error('Error triggering downgrade:', downgradeError)
           }

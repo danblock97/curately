@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         } else {
           return NextResponse.json({ error: `Failed to fetch Linktree page: ${response.status} ${response.statusText}` }, { status: 400 })
         }
-      } catch (fetchError) {
+      } catch {
         if (retryCount === maxRetries) {
           return NextResponse.json({ error: 'Failed to fetch Linktree page after retries' }, { status: 400 })
         }
@@ -84,7 +84,7 @@ function parseLinktreeHTML(html: string) {
       if (jsonData.mainEntity && jsonData.mainEntity.url) {
         // This is for the main profile, let's look for other patterns
       }
-    } catch (e) {
+    } catch {
       // JSON parsing failed, continue with HTML parsing
     }
   }
@@ -165,7 +165,7 @@ function parseLinktreeHTML(html: string) {
           }
         }
       }
-    } catch (e) {
+    } catch {
       // Failed to parse pageProps
     }
   }
@@ -213,7 +213,7 @@ function parseLinktreeHTML(html: string) {
           }
         }
       }
-    } catch (e) {
+    } catch {
       // Failed to parse __NEXT_DATA__
     }
   }
@@ -774,7 +774,7 @@ function extractUsername(url: string, platform?: string): string | undefined {
       default:
         return segments[0]
     }
-  } catch (e) {
+  } catch {
     return undefined
   }
 }

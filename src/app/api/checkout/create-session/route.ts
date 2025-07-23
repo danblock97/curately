@@ -88,16 +88,19 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Checkout session error:', error)
     
     // Handle specific Stripe errors
-    if (error?.type === 'StripeInvalidRequestError') {
-      if (error.code === 'resource_missing' && error.param?.includes('price')) {
-        return NextResponse.json(
-          { error: 'Pricing configuration error. Please contact support.' },
-          { status: 500 }
-        )
+    if (error && typeof error === 'object' && 'type' in error) {
+      const stripeError = error as { type: string; code?: string; param?: string }
+      if (stripeError.type === 'StripeInvalidRequestError') {
+        if (stripeError.code === 'resource_missing' && stripeError.param?.includes('price')) {
+          return NextResponse.json(
+            { error: 'Pricing configuration error. Please contact support.' },
+            { status: 500 }
+          )
+        }
       }
     }
     

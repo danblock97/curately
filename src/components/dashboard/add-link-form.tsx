@@ -61,7 +61,7 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
     e.preventDefault()
     
     // Check plan limits first
-    const limitCheck = checkCanCreateLink(existingLinks, 'link_in_bio', userTier, existingQrCodes)
+    const limitCheck = checkCanCreateLink(existingLinks, 'link_in_bio', userTier, existingQrCodes.map(qr => ({ is_active: true })))
     if (!limitCheck.canCreate) {
       toast.error(limitCheck.reason || 'Cannot create more links')
       return
@@ -105,7 +105,7 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
     e.preventDefault()
     
     // Check plan limits first
-    const limitCheck = checkCanCreateLink(existingLinks, 'deeplink', userTier, existingQrCodes)
+    const limitCheck = checkCanCreateLink(existingLinks, 'deeplink', userTier, existingQrCodes.map(qr => ({ is_active: true })))
     if (!limitCheck.canCreate) {
       toast.error(limitCheck.reason || 'Cannot create more links')
       return
@@ -152,7 +152,7 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
     e.preventDefault()
     
     // Check plan limits first
-    const limitCheck = checkCanCreateLink(existingLinks, 'qr_code', userTier, existingQrCodes)
+    const limitCheck = checkCanCreateLink(existingLinks, 'qr_code', userTier, existingQrCodes.map(qr => ({ is_active: true })))
     if (!limitCheck.canCreate) {
       toast.error(limitCheck.reason || 'Cannot create more QR codes')
       return
