@@ -340,8 +340,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 
 							return {
 								id: link.id,
-								type: (link.widget_type || "link") as const,
-								size: (link.size || "thin") as const,
+								type: (link.widget_type || "link") as Widget['type'],
+								size: (link.size || "thin") as Widget['size'],
 								data: {
 									title: link.title || "",
 									url: link.url || "",
@@ -573,8 +573,18 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 		const widgetContent = () => {
 			const renderSocialWidget = () => {
 				// Handle QR Code widgets first - QR codes only support square layouts
-				if (widget.data.link_type === 'qr_code' && widget.data.qr_codes) {
-					const qrData = widget.data.qr_codes
+				// Type assertion for extended widget data that includes database fields
+				const extendedData = widget.data as typeof widget.data & {
+					link_type?: string;
+					qr_codes?: {
+						qr_code_data: string;
+						format: string;
+						[key: string]: unknown;
+					};
+				};
+				
+				if (extendedData.link_type === 'qr_code' && extendedData.qr_codes) {
+					const qrData = extendedData.qr_codes
 					
 					// Square layouts only - match exact AppearanceCustomizer styling
 					return (

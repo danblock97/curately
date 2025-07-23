@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import Link from 'next/link'
 import { PricingSection } from '@/components/pricing-section'
 import { Navbar } from '@/components/navbar'
 
@@ -29,7 +30,7 @@ export default async function PricingPage() {
             Choose Your Plan
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Start free and upgrade when you're ready to unlock more features and grow your link-in-bio presence.
+            Start free and upgrade when you&apos;re ready to unlock more features and grow your link-in-bio presence.
           </p>
         </div>
       </section>
@@ -59,10 +60,10 @@ export default async function PricingPage() {
 
             <div>
               <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                What's the difference between links, deeplinks, and QR codes?
+                What&apos;s the difference between links, deeplinks, and QR codes?
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                <strong>Links</strong> are regular web links that take users to any website. <strong>Deeplinks</strong> are smart links that detect the user's device and automatically redirect to the iOS App Store, Google Play, or a web fallback. <strong>QR codes</strong> can be customized with your logo and downloaded for print materials.
+                <strong>Links</strong> are regular web links that take users to any website. <strong>Deeplinks</strong> are smart links that detect the user&apos;s device and automatically redirect to the iOS App Store, Google Play, or a web fallback. <strong>QR codes</strong> can be customized with your logo and downloaded for print materials.
               </p>
             </div>
 
@@ -98,7 +99,7 @@ export default async function PricingPage() {
                 What happens if I hit my limits on the free plan?
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                When you reach 5 links or 5 QR codes, you'll be prompted to upgrade to Pro or delete existing items to make room for new ones. Your existing content stays active and functional - you just can't add more until you upgrade or make space.
+                When you reach 5 links or 5 QR codes, you&apos;ll be prompted to upgrade to Pro or delete existing items to make room for new ones. Your existing content stays active and functional - you just can&apos;t add more until you upgrade or make space.
               </p>
             </div>
 
@@ -107,7 +108,7 @@ export default async function PricingPage() {
                 Can I downgrade from Pro to Free anytime?
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Yes! When downgrading, your first 5 links and 5 QR codes stay active. Additional content becomes inactive (but isn't deleted). You can reactivate everything by upgrading again, or manually choose which items to keep active.
+                Yes! When downgrading, your first 5 links and 5 QR codes stay active. Additional content becomes inactive (but isn&apos;t deleted). You can reactivate everything by upgrading again, or manually choose which items to keep active.
               </p>
             </div>
           </div>
@@ -124,12 +125,12 @@ export default async function PricingPage() {
             Join thousands of users who trust Curately for their link-in-bio needs.
           </p>
           {!user && (
-            <a
+            <Link
               href="/auth"
               className="inline-flex items-center px-8 py-4 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-full transition-all duration-300 hover:scale-105"
             >
               Create Free Account
-            </a>
+            </Link>
           )}
         </div>
       </section>

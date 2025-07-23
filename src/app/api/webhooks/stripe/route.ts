@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
             const subscription = await stripe.subscriptions.retrieve(subscriptionId)
 
             // First try to find profile by customer ID (more reliable)
-            let profileQuery = supabase
+            const profileQuery = supabase
               .from('profiles')
               .select('id')
               .eq('stripe_customer_id', customerId)

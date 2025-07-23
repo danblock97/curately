@@ -36,7 +36,7 @@ function defaultKeyGenerator(req: NextRequest): string {
   // Get IP from various headers
   const forwarded = req.headers.get('x-forwarded-for')
   const realIp = req.headers.get('x-real-ip')
-  const ip = forwarded?.split(',')[0] || realIp || req.ip || 'unknown'
+  const ip = forwarded?.split(',')[0] || realIp || 'unknown'
   
   return `ip:${ip}`
 }
@@ -140,11 +140,11 @@ export const rateLimiters = {
 /**
  * Rate limit middleware wrapper for API routes
  */
-export function withRateLimit<T extends any[], R>(
+export function withRateLimit<R>(
   limiter: ReturnType<typeof rateLimit>,
-  handler: (...args: T) => Promise<R>
+  handler: (req: NextRequest, ...args: unknown[]) => Promise<R>
 ) {
-  return async (req: NextRequest, ...args: T): Promise<R> => {
+  return async (req: NextRequest, ...args: unknown[]): Promise<R> => {
     const result = limiter.check(req)
     
     if (!result.allowed) {
@@ -256,23 +256,22 @@ export function getRateLimitHeaders(
  * Rate limit decorator for API route functions
  */
 export function RateLimit(config: RateLimitConfig) {
-  return function<T extends any[], R>(
-    target: any,
+  return function(
+    target: unknown,
     propertyKey: string,
-    descriptor: TypedPropertyDescriptor<(...args: T) => Promise<R>>
+    descriptor: TypedPropertyDescriptor<(req: NextRequest, ...args: unknown[]) => Promise<unknown>>
   ) {
     const originalMethod = descriptor.value!
     const limiter = rateLimit(config)
     
-    descriptor.value = async function(...args: T): Promise<R> {
-      const req = args[0] as NextRequest
+    descriptor.value = async function(req: NextRequest, ...args: unknown[]): Promise<unknown> {
       const result = limiter.check(req)
       
       if (!result.allowed) {
         throw new RateLimitError()
       }
       
-      return originalMethod.apply(this, args)
+      return originalMethod.apply(this, [req, ...args])
     }
     
     return descriptor

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -519,9 +520,9 @@ export function SettingsForm({ user, profile, pages }: SettingsFormProps) {
                 </p>
                 {profile.tier === 'pro' ? (
                   <Button asChild variant="outline" size="sm" className="border-gray-300">
-                    <a href="/dashboard/appearance">
+                    <Link href="/dashboard/appearance">
                       Go to Appearance
-                    </a>
+                    </Link>
                   </Button>
                 ) : (
                   <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">

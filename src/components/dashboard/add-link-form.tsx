@@ -13,6 +13,7 @@ import { LoadingButton } from '@/components/ui/loading'
 import { checkCanCreateLink } from '@/hooks/use-plan-limits'
 
 type Link = Database['public']['Tables']['links']['Row']
+type QRCode = Database['public']['Tables']['qr_codes']['Row']
 
 interface PlatformType {
   name: string
@@ -24,7 +25,7 @@ interface PlatformType {
 
 interface AddLinkFormProps {
   onLinkAdded: (link: Link) => void
-  onQrCodeAdded?: (qrCode: any) => void
+  onQrCodeAdded?: (qrCode: QRCode) => void
   onCancel: () => void
   nextOrder: number
   selectedPlatform?: PlatformType | null
@@ -305,7 +306,7 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
           </div>
         </form>
       ) : (
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'link_in_bio' | 'deeplink' | 'qr_code')}>
           <TabsList className="grid w-full grid-cols-3 bg-gray-100">
             <TabsTrigger value="link_in_bio" className="flex items-center space-x-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <Link2 className="w-4 h-4" />

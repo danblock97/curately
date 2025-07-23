@@ -370,7 +370,7 @@ export function logSecurityAudit(
       url: request.url,
       method: request.method,
       userAgent: request.headers.get('user-agent'),
-      ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip,
+      ip: request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || 'unknown',
       score: result.score,
       criticalIssues: criticalIssues.length,
       highIssues: highIssues.length,
@@ -386,10 +386,10 @@ export function logSecurityAudit(
 /**
  * Security audit middleware
  */
-export function withSecurityAudit<T extends any[], R>(
-  handler: (...args: T) => Promise<R>
+export function withSecurityAudit<R>(
+  handler: (request: NextRequest, ...args: unknown[]) => Promise<R>
 ) {
-  return async (request: NextRequest, ...args: T): Promise<R> => {
+  return async (request: NextRequest, ...args: unknown[]): Promise<R> => {
     const auditResult = performSecurityAudit(request)
     
     logSecurityAudit(request, auditResult)

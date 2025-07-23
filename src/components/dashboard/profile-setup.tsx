@@ -266,7 +266,7 @@ export function ProfileSetup({ userId }: ProfileSetupProps) {
                     Welcome to Curately!
                   </h1>
                   <p className="text-gray-600 text-lg">
-                    Let's set up your profile and create your first page
+                    Let&apos;s set up your profile and create your first page
                   </p>
                 </div>
               </div>

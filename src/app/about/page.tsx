@@ -2,9 +2,8 @@ import { Navbar } from '@/components/navbar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Heart, Users, Zap, Target, ArrowRight, Code, Palette, BarChart3, QrCode, Link2, Smartphone } from 'lucide-react'
+import { ArrowRight, Code, Palette, BarChart3, QrCode, Link2, Smartphone } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
 
 export default function AboutPage() {
   return (
@@ -22,7 +21,7 @@ export default function AboutPage() {
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">link-in-bio</span>
           </h1>
           <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-            We believe your link-in-bio should be as unique as you are. That's why we built Curately with a 
+            We believe your link-in-bio should be as unique as you are. That&apos;s why we built Curately with a 
             split-screen design that puts your personality front and center.
           </p>
           
@@ -62,12 +61,12 @@ export default function AboutPage() {
               <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
                 <p>
                   Most link-in-bio tools treat your page like a boring list. We thought, 
-                  "Why can't it showcase who you really are?"
+                  &ldquo;Why can&apos;t it showcase who you really are?&rdquo;
                 </p>
                 <p>
-                  That's when we created the <strong className="text-gray-900">split-screen design</strong> - 
+                  That&apos;s when we created the <strong className="text-gray-900">split-screen design</strong> - 
                   your profile and personality on the left, your links and widgets on the right. 
-                  It's not just functional, it's personal.
+                  It&apos;s not just functional, it&apos;s personal.
                 </p>
                 <p>
                   From QR codes with your logo to deeplinks that work perfectly across devices, 
@@ -205,11 +204,11 @@ export default function AboutPage() {
             OUR MISSION
           </Badge>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-8">
-            Link-in-bio that doesn't{' '}
+            Link-in-bio that doesn&apos;t{' '}
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">suck</span>
           </h2>
           <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-            We're building the link-in-bio tool we always wanted to use - one that showcases your personality, 
+            We&apos;re building the link-in-bio tool we always wanted to use - one that showcases your personality, 
             works flawlessly across devices, and gives you the analytics you actually need.
           </p>
           
@@ -250,7 +249,7 @@ export default function AboutPage() {
           <p className="text-gray-600">
             Have questions about Curately or want to share your feedback?{' '}
             <Link href="/contact" className="text-gray-900 font-medium hover:underline">
-              We'd love to hear from you
+              We&apos;d love to hear from you
             </Link>
             .
           </p>

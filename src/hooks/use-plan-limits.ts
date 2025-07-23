@@ -71,7 +71,11 @@ export interface PlanUsage {
   }
 }
 
-export function usePlanLimits(links: Link[] = [], currentPlan: UserTier = 'free', pagesCount: number = 1, qrCodes: any[] = []): PlanUsage {
+interface QRCode {
+  is_active?: boolean
+}
+
+export function usePlanLimits(links: Link[] = [], currentPlan: UserTier = 'free', pagesCount: number = 1, qrCodes: QRCode[] = []): PlanUsage {
   const limits = useMemo(() => {
     return PLAN_LIMITS[currentPlan] || PLAN_LIMITS.free
   }, [currentPlan])
@@ -122,7 +126,7 @@ export function checkCanCreateLink(
   links: Link[], 
   linkType: 'link_in_bio' | 'deeplink' | 'qr_code' = 'link_in_bio',
   currentPlan: UserTier = 'free',
-  qrCodes: any[] = []
+  qrCodes: QRCode[] = []
 ): {
   canCreate: boolean
   reason?: string

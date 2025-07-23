@@ -6,16 +6,9 @@ import { createClient } from '@/lib/supabase/client'
 import { DashboardHeader } from '@/components/dashboard/header'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { User } from '@supabase/supabase-js'
+import { Database } from '@/lib/supabase/types'
 
-interface Profile {
-  id: string
-  tier: string
-  display_name: string | null
-  bio: string | null
-  avatar_url: string | null
-  created_at: string
-  updated_at: string
-}
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 interface Page {
   id: string
@@ -57,7 +50,7 @@ export default function DashboardLayout({
         // Get user profile with display fields
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('id, tier, display_name, bio, avatar_url, created_at, updated_at')
+          .select('*')
           .eq('id', user.id)
           .single()
 

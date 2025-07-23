@@ -114,7 +114,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
         }
 
         // Check plan limits before starting import
-        const activeLinksCount = links.filter(link => link && link.is_active !== false).length
+        const activeLinksCount = links.filter((link: Database['public']['Tables']['links']['Row']) => link && link.is_active !== false).length
         const planLimits = userTier === 'pro' ? 50 : 5
         const remainingSlots = planLimits - activeLinksCount
         
@@ -169,8 +169,8 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
       // Handle normal widget creation
       const widget: Widget = {
         id: Date.now().toString(),
-        type: selectedWidget.startsWith('social') || selectedWidget.startsWith('music') ? 'social' : 
-              selectedWidget.startsWith('essential') ? widgetData.type || 'link' : 'link',
+        type: (selectedWidget.startsWith('social') || selectedWidget.startsWith('music') ? 'social' : 
+              selectedWidget.startsWith('essential') ? widgetData.type || 'link' : 'link') as Widget['type'],
         size: 'small-square',
         data: {
           ...widgetData,

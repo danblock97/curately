@@ -214,7 +214,7 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
                     <div>
                       <div className="flex items-center space-x-2">
                         <h3 className="font-semibold text-gray-900">
-                          {page.display_name || page.username}
+                          {page.page_title || page.username}
                         </h3>
                         {page.is_primary && (
                           <Badge variant="default" className="text-xs">
@@ -228,8 +228,8 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
                         )}
                       </div>
                       <p className="text-sm text-gray-600">@{page.username}</p>
-                      {page.bio && (
-                        <p className="text-sm text-gray-500 mt-1">{page.bio}</p>
+                      {page.page_description && (
+                        <p className="text-sm text-gray-500 mt-1">{page.page_description}</p>
                       )}
                     </div>
                   </div>

@@ -49,8 +49,8 @@ export default function TermsOfServicePage() {
                 <div>
                   <h2 className="text-xl font-bold text-purple-900 mb-3">Agreement to Terms</h2>
                   <p className="text-purple-800 leading-relaxed">
-                    These Terms of Service ("Terms") constitute a legally binding agreement between you and Curately 
-                    ("we," "us," or "our") regarding your use of our link-in-bio platform service. By accessing or 
+                    These Terms of Service (&quot;Terms&quot;) constitute a legally binding agreement between you and Curately 
+                    (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) regarding your use of our link-in-bio platform service. By accessing or 
                     using our service, you agree to be bound by these Terms.
                   </p>
                 </div>
@@ -288,7 +288,7 @@ export default function TermsOfServicePage() {
                 <div className="bg-white rounded-lg p-4 border border-yellow-200">
                   <h3 className="text-lg font-semibold text-yellow-900 mb-3">Service Warranty</h3>
                   <p className="text-yellow-800 text-sm mb-2">
-                    OUR SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND, INCLUDING:
+                    OUR SERVICE IS PROVIDED &quot;AS IS&quot; WITHOUT WARRANTIES OF ANY KIND, INCLUDING:
                   </p>
                   <ul className="list-disc list-inside text-yellow-800 space-y-1 text-sm ml-4">
                     <li>Merchantability or fitness for a particular purpose</li>
@@ -454,7 +454,7 @@ export default function TermsOfServicePage() {
 export async function generateMetadata() {
   return {
     title: 'Terms of Service - Curately | Legal Agreement & User Guidelines',
-    description: 'Read Curately\'s Terms of Service to understand your rights and responsibilities when using our link-in-bio platform.',
+    description: 'Read Curately&apos;s Terms of Service to understand your rights and responsibilities when using our link-in-bio platform.',
     openGraph: {
       title: 'Terms of Service - Curately',
       description: 'Legal terms and conditions for using Curately\'s link-in-bio platform.',

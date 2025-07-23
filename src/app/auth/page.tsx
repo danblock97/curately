@@ -225,7 +225,7 @@ export default function AuthPage() {
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold text-gray-900">Check your email</h2>
                 <p className="text-gray-600">
-                  We've sent a magic link to{' '}
+                  We&apos;ve sent a magic link to{' '}
                   <span className="text-gray-900 font-medium">{email}</span>
                 </p>
                 <p className="text-sm text-gray-500">

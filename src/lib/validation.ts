@@ -101,6 +101,7 @@ export const deeplinkSchema = z.object({
   androidUrl: optionalUrlSchema,
   desktopUrl: optionalUrlSchema,
   fallbackUrl: optionalUrlSchema,
+  pageId: z.string().uuid(),
 })
 
 export const qrCodeSchema = z.object({
@@ -167,7 +168,7 @@ export function validateAuthData(data: unknown) {
 }
 
 // Client-side form validation hook
-export function useFormValidation<T extends z.ZodSchema>(schema: T) {
+export function useFormValidation<T extends z.ZodObject<z.ZodRawShape>>(schema: T) {
   return {
     validate: (data: unknown) => {
       const result = schema.safeParse(data)
@@ -184,12 +185,14 @@ export function useFormValidation<T extends z.ZodSchema>(schema: T) {
     
     validateField: (fieldName: string, value: unknown) => {
       try {
-        const fieldSchema = schema.shape[fieldName]
-        if (!fieldSchema) return null
-        
-        const result = fieldSchema.safeParse(value)
+        // Create a partial object with just the field to validate
+        const testObject = { [fieldName]: value }
+        const result = schema.partial().safeParse(testObject)
         if (!result.success) {
-          return result.error.issues[0]?.message || 'Invalid value'
+          const fieldError = result.error.issues.find(issue => 
+            issue.path.includes(fieldName)
+          )
+          return fieldError?.message || 'Invalid value'
         }
         return null
       } catch {
@@ -208,8 +211,8 @@ export function getFormData(formData: FormData): Record<string, string> {
   return data
 }
 
-export function sanitizeFormData(data: Record<string, any>): Record<string, any> {
-  const sanitized: Record<string, any> = {}
+export function sanitizeFormData(data: Record<string, unknown>): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = {}
   
   for (const [key, value] of Object.entries(data)) {
     if (typeof value === 'string') {

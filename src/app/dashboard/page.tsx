@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { LinkManager } from '@/components/dashboard/link-manager'
 import { ProfileSetup } from '@/components/dashboard/profile-setup'
 import { InactiveContentManager } from '@/components/dashboard/inactive-content-manager'
@@ -15,7 +16,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, tier, display_name, bio, avatar_url, created_at, updated_at')
+    .select('*')
     .eq('id', user.id)
     .single()
 
@@ -54,12 +55,12 @@ export default async function DashboardPage() {
                 Upgrade to Pro for 50 links, 50 QR codes, 2 pages, and advanced analytics
               </p>
             </div>
-            <a
+            <Link
               href="/pricing"
               className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-full transition-all duration-300 hover:scale-105 whitespace-nowrap ml-4"
             >
               Upgrade to Pro
-            </a>
+            </Link>
           </div>
         </div>
       )}

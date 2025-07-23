@@ -42,7 +42,7 @@ const socialPlatforms = [
 export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: AppearanceFormProps) {
   const [displayName, setDisplayName] = useState(profile.display_name || '')
   const [bio, setBio] = useState(profile.bio || '')
-  const [theme, setTheme] = useState(profile.theme)
+  const [theme, setTheme] = useState('light')
   const [socialLinks, setSocialLinks] = useState(initialSocialLinks)
   const [isLoading, setIsLoading] = useState(false)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
@@ -213,9 +213,9 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
           <form onSubmit={handleProfileUpdate} className="space-y-4">
             <div className="flex items-center space-x-4">
               <Avatar className="w-20 h-20">
-                <AvatarImage src={profile.avatar_url || ''} alt={profile.display_name || profile.username} />
+                <AvatarImage src={profile.avatar_url || ''} alt={profile.display_name || 'User'} />
                 <AvatarFallback className="text-xl">
-                  {(profile.display_name || profile.username).charAt(0).toUpperCase()}
+                  {(profile.display_name || 'User').charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
@@ -292,7 +292,7 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
                   className={`relative cursor-pointer rounded-lg border-2 transition-colors ${
                     theme === themeOption.value ? 'border-blue-500' : 'border-gray-200'
                   }`}
-                  onClick={() => setTheme(themeOption.value as Database['public']['Tables']['profiles']['Row']['theme'])}
+                  onClick={() => setTheme(themeOption.value)}
                 >
                   <div className={`p-4 rounded-lg ${themeOption.preview}`}>
                     <div className="text-sm font-medium">{themeOption.label}</div>
@@ -314,11 +314,11 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
                 <div className="text-center space-y-3">
                   <div className="w-16 h-16 mx-auto rounded-full bg-current/20 flex items-center justify-center">
                     <span className="text-lg font-bold">
-                      {(displayName || profile.display_name || profile.username).charAt(0).toUpperCase()}
+                      {(displayName || profile.display_name || 'User').charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <h3 className="text-lg font-bold">
-                    {displayName || profile.display_name || profile.username}
+                    {displayName || profile.display_name || 'User'}
                   </h3>
                   {(bio || profile.bio) && (
                     <p className="text-sm opacity-80">
@@ -335,7 +335,7 @@ export function AppearanceForm({ profile, socialLinks: initialSocialLinks }: App
             </div>
 
             {/* Save Theme Button */}
-            {theme !== profile.theme && (
+            {theme !== 'light' && (
               <div className="flex justify-center">
                 <Button onClick={handleThemeUpdate} disabled={isUpdatingTheme}>
                   {isUpdatingTheme ? 'Saving Theme...' : 'Save Theme'}

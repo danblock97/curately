@@ -8,6 +8,39 @@ interface PageProps {
   }>
 }
 
+interface QRCodeRecord {
+  id: string
+  user_id: string
+  page_id: string
+  title: string
+  url: string
+  clicks: number
+  is_active: boolean
+  short_code: string
+  order_index: number
+  qr_code_data: string
+  created_at: string
+  updated_at: string
+  size?: number
+  platform?: string
+  username?: string
+  display_name?: string
+  profile_image_url?: string
+  widget_type?: string
+  content?: string
+  caption?: string
+  foreground_color?: string
+  background_color?: string
+  price?: string
+  app_store_url?: string
+  play_store_url?: string
+  file_url?: string
+  widget_position?: string
+  web_position?: string
+  mobile_position?: string
+  format?: string
+}
+
 export default async function UserProfilePage({ params }: PageProps) {
   const resolvedParams = await params
   const supabase = await createClient()
@@ -28,7 +61,7 @@ export default async function UserProfilePage({ params }: PageProps) {
   // Get profile data separately
   const { data: profile } = await supabase
     .from('profiles')
-    .select('display_name, bio, avatar_url, tier')
+    .select('*')
     .eq('id', page.user_id)
     .single()
 
@@ -57,7 +90,7 @@ export default async function UserProfilePage({ params }: PageProps) {
 
   // Combine links and QR codes into a single array for the ProfilePage component
   // QR codes need to be converted to look like links with qr_codes data embedded
-  const qrCodesAsLinks = (qrCodes || []).map((qr: any) => ({
+  const qrCodesAsLinks = (qrCodes || []).map((qr: QRCodeRecord) => ({
     id: qr.id,
     user_id: qr.user_id,
     page_id: qr.page_id,
@@ -97,7 +130,9 @@ export default async function UserProfilePage({ params }: PageProps) {
   // Combine all items and sort by order
   const allLinks = [...(links || []), ...qrCodesAsLinks].sort((a, b) => (a.order || 0) - (b.order || 0))
 
-
+  if (!profile) {
+    notFound()
+  }
 
   return (
     <ProfilePage

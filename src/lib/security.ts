@@ -125,7 +125,7 @@ export function isValidOrigin(request: NextRequest): boolean {
 export function getClientIP(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for')
   const realIp = request.headers.get('x-real-ip')
-  const ip = forwarded?.split(',')[0] || realIp || request.ip || 'unknown'
+  const ip = forwarded?.split(',')[0] || realIp || 'unknown'
   return ip.trim()
 }
 
@@ -301,10 +301,10 @@ function isPrivateIP(ip: string): boolean {
 /**
  * Security middleware wrapper
  */
-export function withSecurity<T extends any[], R>(
-  handler: (...args: T) => Promise<R>
+export function withSecurity<R>(
+  handler: (request: NextRequest, ...args: unknown[]) => Promise<R>
 ) {
-  return async (request: NextRequest, ...args: T): Promise<R> => {
+  return async (request: NextRequest, ...args: unknown[]): Promise<R> => {
     // Validate origin for non-GET requests
     if (request.method !== 'GET' && !isValidOrigin(request)) {
       throw new Error('Invalid origin')

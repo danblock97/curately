@@ -1,8 +1,21 @@
 import Script from 'next/script'
 
+interface BreadcrumbItem {
+  '@type': 'ListItem'
+  position: number
+  name: string
+  item: string
+}
+
+interface BreadcrumbListData {
+  '@context': string
+  '@type': 'BreadcrumbList'
+  itemListElement: BreadcrumbItem[]
+}
+
 interface StructuredDataProps {
   type?: 'WebApplication' | 'Organization' | 'WebSite' | 'BreadcrumbList'
-  data?: any
+  data?: BreadcrumbListData
 }
 
 export function StructuredData({ type = 'WebApplication', data }: StructuredDataProps) {
@@ -136,6 +149,6 @@ export function WebSiteStructuredData() {
   return <StructuredData type="WebSite" />
 }
 
-export function BreadcrumbStructuredData({ breadcrumbs }: { breadcrumbs?: any }) {
+export function BreadcrumbStructuredData({ breadcrumbs }: { breadcrumbs?: BreadcrumbListData }) {
   return <StructuredData type="BreadcrumbList" data={breadcrumbs} />
 }

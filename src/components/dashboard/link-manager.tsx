@@ -18,11 +18,19 @@ type Link = Database['public']['Tables']['links']['Row'] & {
     foreground_color: string
     background_color: string
   } | null
+  order_index?: number
+}
+type QRCode = Database['public']['Tables']['qr_codes']['Row'] & {
+  page_id?: string
+  order?: number
+  order_index?: number
+  is_active?: boolean
+  clicks?: number
 }
 
 interface LinkManagerProps {
   links: Link[]
-  qrCodes: any[]
+  qrCodes: QRCode[]
   userId: string
   profile: Database['public']['Tables']['profiles']['Row']
   pages: Database['public']['Tables']['pages']['Row'][]
@@ -49,7 +57,7 @@ const popularPlatforms: PlatformType[] = [
 
 export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, userId, profile, pages }: LinkManagerProps) {
   const [links, setLinks] = useState<Link[]>([])
-  const [qrCodes, setQrCodes] = useState<any[]>([])
+  const [qrCodes, setQrCodes] = useState<QRCode[]>([])
   const [showAddForm, setShowAddForm] = useState(false)
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType | null>(null)
   const [defaultTab, setDefaultTab] = useState<'link_in_bio' | 'deeplink' | 'qr_code'>('link_in_bio')
@@ -96,15 +104,9 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
     return qr.page_id === currentPage?.id
   })
   
-  // Combine and sort by order/created_at for unified display
-  const pageItems = [
-    ...pageLinks.filter(link => link).map(link => ({ ...link, type: 'link' })),
-    ...pageQrCodes.filter(qr => qr).map(qr => ({ ...qr, type: 'qr_code' }))
-  ].sort((a, b) => {
-    const orderA = (a?.order || a?.order_index || 0)
-    const orderB = (b?.order || b?.order_index || 0)
-    return orderA - orderB
-  })
+  // For now, only work with links since QR codes have different structure
+  // TODO: Refactor to properly handle QR codes as separate entities
+  const pageItems = pageLinks.filter(link => link).map(link => ({ ...link, type: 'link' as const }))
   
   
   // Pagination logic
@@ -114,7 +116,7 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
   const endIndex = startIndex + itemsPerPage
   const paginatedItems = pageItems.slice(startIndex, endIndex)
   
-  const planUsage = usePlanLimits(links, profile.tier, pages.filter(page => page.is_active !== false).length, qrCodes)
+  const planUsage = usePlanLimits(links, profile.tier, pages.filter(page => page.is_active !== false).length, qrCodes.map(qr => ({ is_active: qr.is_active })))
 
   // Handle hydration and initialize with server data
   useEffect(() => {
@@ -134,7 +136,7 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
     setSelectedPlatform(null)
   }
 
-  const handleQrCodeAdded = (newQrCode: any) => {
+  const handleQrCodeAdded = (newQrCode: QRCode) => {
     setQrCodes(prev => [...prev, newQrCode])
     setShowAddForm(false)
     setSelectedPlatform(null)
@@ -210,14 +212,10 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
       return sum + clicks
     }, 0)
     
-    const qrClicks = pageQrCodes.reduce((sum, qr) => {
-      if (!qr || typeof qr !== 'object') return sum
-      const clicks = typeof qr.clicks === 'number' && !isNaN(qr.clicks) ? qr.clicks : 0
-      return sum + clicks
-    }, 0)
+    // TODO: Add QR code clicks when QR code architecture is properly implemented
     
-    return linkClicks + qrClicks
-  }, [pageLinks, pageQrCodes, isHydrated])
+    return linkClicks
+  }, [pageLinks, isHydrated])
 
   // Show loading state until hydration is complete
   if (!isHydrated) {
@@ -275,7 +273,7 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
               >
                 {pages.map((page) => (
                   <option key={page.id} value={page.id}>
-                    {page.display_name || page.username} {page.is_primary ? '(Primary)' : ''}
+                    {page.page_title || page.username} {page.is_primary ? '(Primary)' : ''}
                   </option>
                 ))}
               </select>

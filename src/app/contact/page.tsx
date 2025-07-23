@@ -6,7 +6,7 @@ import { Navbar } from '@/components/navbar'
 import { ContactForm } from '@/components/contact-form'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Mail, MessageCircle, Clock, Users, ArrowRight, CheckCircle, Zap, Globe, Bug } from 'lucide-react'
+import { Mail, MessageCircle, Clock, Users, ArrowRight, CheckCircle, Globe, Bug } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ContactPage() {
@@ -39,7 +39,7 @@ export default function ContactPage() {
     }
 
     checkUserTier()
-  }, [])
+  }, [supabase])
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -51,7 +51,7 @@ export default function ContactPage() {
             CONTACT US
           </Badge>
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            We'd love to{' '}
+            We&apos;d love to{' '}
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">hear from you</span>
           </h1>
           <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
@@ -87,7 +87,7 @@ export default function ContactPage() {
                     <h2 className="text-2xl font-bold text-gray-900">
                       Send us a message
                     </h2>
-                    <p className="text-gray-600">We'll get back to you soon</p>
+                    <p className="text-gray-600">We&apos;ll get back to you soon</p>
                   </div>
                 </div>
                 <ContactForm />
@@ -101,7 +101,7 @@ export default function ContactPage() {
                   Other ways to reach us
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Choose the method that works best for you. We're here to help!
+                  Choose the method that works best for you. We&apos;re here to help!
                 </p>
               </div>
 
@@ -150,7 +150,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h4 className="font-bold text-gray-900 mb-2">Response Times</h4>
-                      <p className="text-gray-600 text-sm mb-3">We're committed to helping you quickly</p>
+                      <p className="text-gray-600 text-sm mb-3">We&apos;re committed to helping you quickly</p>
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2">
                           <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
@@ -184,7 +184,7 @@ export default function ContactPage() {
                           <p className="text-gray-700 text-sm mb-3">You have priority support! Expect responses within 4 hours.</p>
                           <div className="inline-flex items-center text-green-600 font-semibold text-sm">
                             <CheckCircle className="w-4 h-4 mr-1" />
-                            You're all set!
+                            You&apos;re all set!
                           </div>
                         </div>
                       </div>
@@ -267,7 +267,7 @@ export default function ContactPage() {
                       Can I cancel my subscription?
                     </h3>
                     <p className="text-gray-600 leading-relaxed">
-                      Yes! You can cancel anytime from your account settings. You'll continue to have Pro features until the end of your current billing period, then automatically downgrade to the free plan.
+                      Yes! You can cancel anytime from your account settings. You&apos;ll continue to have Pro features until the end of your current billing period, then automatically downgrade to the free plan.
                     </p>
                   </div>
                 </div>

@@ -45,7 +45,7 @@ export function BrandedQRCode({
         })
 
         // Load and draw logo - make it smaller to not interfere with QR scanning
-        const logo = new (window as any).Image()
+        const logo = document.createElement('img')
         logo.crossOrigin = 'anonymous'
         logo.onload = () => {
           // Make logo smaller relative to QR code size for better scanning

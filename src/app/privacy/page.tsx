@@ -49,7 +49,7 @@ export default function PrivacyPolicyPage() {
                 <div>
                   <h2 className="text-xl font-bold text-blue-900 mb-3">Our Commitment to Your Privacy</h2>
                   <p className="text-blue-800 leading-relaxed">
-                    At Curately ("we," "our," or "us"), we are committed to protecting your privacy and ensuring transparency 
+                    At Curately (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;), we are committed to protecting your privacy and ensuring transparency 
                     about how we collect, use, and safeguard your personal information. This Privacy Policy explains our 
                     data practices for our link-in-bio platform service.
                   </p>

@@ -17,11 +17,19 @@ type Link = Database['public']['Tables']['links']['Row'] & {
     background_color: string
   } | null
 }
+type QRCode = Database['public']['Tables']['qr_codes']['Row'] & {
+  clicks?: number
+  is_active?: boolean
+  title?: string
+  url?: string
+  link_type?: string
+}
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 interface AnalyticsClientProps {
   links: Link[]
-  qrCodes: any[]
-  profile: any
+  qrCodes: QRCode[]
+  profile: Profile
 }
 
 export function AnalyticsClient({ links, qrCodes, profile }: AnalyticsClientProps) {

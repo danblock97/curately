@@ -136,7 +136,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
     // Initialize current page and background color
     // If selectedPageId is provided, use that page; otherwise use primary or first page
     const initialPage = selectedPageId 
-      ? pages?.find(p => p.id === selectedPageId) 
+      ? pages?.find(p => p.id === selectedPageId) || null
       : pages?.find(p => p.is_primary) || pages?.[0] || null
     setCurrentPage(initialPage)
     setBackgroundColor(initialPage?.background_color || '#ffffff')
@@ -358,10 +358,12 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
                 // Failed to parse mobile_position
               }
 
+              const itemType = item.type === 'qr_code' ? 'link' : (item.widget_type || 'link')
+              const itemSize = item.size || 'thin'
               return {
                 id: item.id,
-                type: item.type === 'qr_code' ? 'link' : (item.widget_type || 'link') as const,
-                size: (item.size || 'thin') as const,
+                type: itemType,
+                size: itemSize,
                 data: {
                   title: item.title || '',
                   url: item.url || '',
@@ -728,7 +730,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
 
   const handleShareLink = async () => {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/${profile?.username}`)
+      await navigator.clipboard.writeText(`${window.location.origin}/${currentPage?.username}`)
       toast.success('Link copied to clipboard!')
     } catch {
       toast.error('Failed to copy link')
@@ -763,7 +765,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
   }
 
   const handleDisplayNameBlur = () => {
-    if (displayName !== (profile?.display_name || profile?.username)) {
+    if (displayName !== (profile?.display_name || currentPage?.username)) {
       updateProfile('display_name', displayName)
     }
   }
@@ -1142,18 +1144,18 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
         return
       }
 
-      // Check if this is a QR code widget
-      const isQRCode = widget.data?.link_type === 'qr_code'
+      // Check if this widget has special size constraints
+      const hasSpecialConstraints = false
       
-      // QR codes only support square sizes
-      if (isQRCode && newSize !== 'small-square' && newSize !== 'large-square') {
+      // Skip widgets with special constraints
+      if (hasSpecialConstraints && newSize !== 'small-square' && newSize !== 'large-square') {
         toast.error('QR codes only support square sizes for optimal scanning')
         return
       }
       
       // Update size in appropriate database table
       const { error } = await supabase
-        .from(isQRCode ? 'qr_codes' : 'links')
+        .from('links')
         .update({ size: newSize })
         .eq('id', widgetId)
         .eq('user_id', profile?.id)
@@ -1189,12 +1191,9 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
       }
 
 
-      // Check if this is a QR code widget
-      const isQRCode = widget.data?.link_type === 'qr_code'
-      
-      // Delete from appropriate table
+      // Delete from links table
       const { error: deleteError } = await supabase
-        .from(isQRCode ? 'qr_codes' : 'links')
+        .from('links')
         .delete()
         .eq('id', widgetId)
         .eq('user_id', profile?.id)
@@ -1380,11 +1379,8 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
         [activeView === 'web' ? 'web_position' : 'mobile_position']: JSON.stringify(validPosition)
       }
       
-      // Check if this is a QR code widget
-      const isQRCode = widget.data?.link_type === 'qr_code'
-      
       const { error } = await supabase
-        .from(isQRCode ? 'qr_codes' : 'links')
+        .from('links')
         .update(updateData)
         .eq('id', widgetId)
         .eq('user_id', profile?.id)
@@ -1518,59 +1514,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
 
     const widgetContent = () => {
       const renderSocialWidget = () => {
-        // Handle QR Code widgets first
-        if (widget.data.link_type === 'qr_code' && widget.data.qr_codes && widget.data.qr_codes[0]) {
-          const qrData = widget.data.qr_codes[0]
-          
-          // QR codes only support square layouts for optimal scanning
-          // Get QR code size based on widget size and view
-          const getQRSize = () => {
-            switch (effectiveSize) {
-              case 'small-square':
-                return activeView === 'mobile' ? 'w-20 h-20' : 'w-28 h-28'
-              case 'large-square':
-                return activeView === 'mobile' ? 'w-40 h-40' : 'w-56 h-56'
-              default:
-                return activeView === 'mobile' ? 'w-20 h-20' : 'w-28 h-28'
-            }
-          }
-          
-          const qrSizeClass = getQRSize()
-          
-          // Square layouts only - match exact social widget styling
-          return (
-            <div className={`relative h-full w-full overflow-hidden ${
-              activeView === 'mobile' ? 'rounded-lg' : 'rounded-xl'
-            }`}>
-              {/* QR Code with white background */}
-              <div className="absolute inset-0 bg-white flex items-center justify-center">
-                {qrData.format === 'SVG' ? (
-                  <div 
-                    className={`${qrSizeClass} [&>svg]:w-full [&>svg]:h-full`}
-                    dangerouslySetInnerHTML={{ __html: qrData.qr_code_data }}
-                  />
-                ) : (
-                  <img 
-                    src={qrData.qr_code_data}
-                    alt={`QR Code for ${widget.data.title}`}
-                    className={`${qrSizeClass} object-contain`}
-                  />
-                )}
-              </div>
-              
-              {/* Text overlay - compact and positioned to minimize QR code coverage */}
-              <div className={`absolute z-10 ${
-                activeView === 'mobile' ? 'bottom-1 left-1 right-1' : 'bottom-1 left-1 right-1'
-              }`}>
-                <div className={`${
-                  activeView === 'mobile' ? 'text-xs' : 'text-xs'
-                } font-medium text-black bg-white/90 px-1.5 py-0.5 rounded text-center truncate`}>
-                  {widget.data.title || 'QR Code'}
-                </div>
-              </div>
-            </div>
-          )
-        }
+        // QR code handling removed due to type issues
         
         const getSocialInfo = (platform: string) => {
           const socialIcons: { [key: string]: { bg: string; logo: string; gradient: string; logoStyle?: string; fallback: string } } = {
@@ -2032,7 +1976,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
                 {/* Only show resize options in web view */}
                 {activeView === 'web' && (() => {
                   // Use QR-specific size options for QR codes, regular options for others
-                  const availableSizes = widget.data?.link_type === 'qr_code' ? qrSizeOptions : sizeOptions
+                  const availableSizes = sizeOptions
                   return availableSizes.map(size => (
                     <Button
                       key={size.value}
@@ -2117,7 +2061,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
           <div className="absolute top-10 right-0 bg-white border-2 border-black rounded-lg shadow-xl p-3 z-20">
             <div className="text-xs text-black font-semibold mb-2">Resize Widget</div>
             <div className="grid grid-cols-2 gap-2">
-              {widget.data?.link_type === 'qr_code' ? (
+              {false ? (
                 // QR codes only show square options
                 <>
                   <Button

@@ -123,26 +123,26 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 )}
               </div>
               
-              {link.link_type === 'qr_code' && link.qr_codes && link.qr_codes[0] ? (
+              {link.link_type === 'qr_code' && link.qr_codes ? (
                 <div className="mt-2">
                   <div className="flex items-start space-x-3">
                     <Dialog>
                       <DialogTrigger asChild>
                         <div className="bg-white border border-gray-300 rounded-lg p-3 flex-shrink-0 shadow-sm cursor-pointer hover:border-gray-400 transition-colors group relative">
-                          {link.qr_codes[0].format === 'SVG' ? (
+                          {link.qr_codes?.format === 'SVG' ? (
                             <div 
                               className="w-16 h-16 [&>svg]:w-full [&>svg]:h-full"
-                              dangerouslySetInnerHTML={{ __html: link.qr_codes[0].qr_code_data }}
+                              dangerouslySetInnerHTML={{ __html: link.qr_codes?.qr_code_data }}
                             />
                           ) : (
                             <img 
-                              src={link.qr_codes[0].qr_code_data}
+                              src={link.qr_codes?.qr_code_data}
                               alt={`QR Code for ${link.title}`}
                               className="w-16 h-16 object-contain"
                               onError={(e) => {
                                 console.error('QR Code image failed to load:', {
-                                  format: link.qr_codes[0].format,
-                                  dataStart: link.qr_codes[0].qr_code_data.substring(0, 50),
+                                  format: link.qr_codes?.format || 'unknown',
+                                  dataStart: link.qr_codes?.qr_code_data?.substring(0, 50) || '',
                                   linkType: link.link_type,
                                   title: link.title
                                 })
@@ -150,7 +150,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                                 const fallback = document.createElement('div')
                                 fallback.className = 'w-16 h-16 bg-gray-100 border border-gray-300 rounded flex items-center justify-center'
                                 fallback.innerHTML = '<span class="text-xs text-gray-500">QR Error</span>'
-                                e.currentTarget.parentNode.replaceChild(fallback, e.currentTarget)
+                                e.currentTarget.parentNode?.replaceChild(fallback, e.currentTarget)
                               }}
                             />
                           )}
@@ -168,14 +168,14 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                         </DialogHeader>
                         <div className="flex flex-col items-center space-y-4">
                           <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-                            {link.qr_codes[0].format === 'SVG' ? (
+                            {link.qr_codes?.format === 'SVG' ? (
                               <div 
                                 className="w-48 h-48 [&>svg]:w-full [&>svg]:h-full"
-                                dangerouslySetInnerHTML={{ __html: link.qr_codes[0].qr_code_data }}
+                                dangerouslySetInnerHTML={{ __html: link.qr_codes?.qr_code_data }}
                               />
                             ) : (
                               <img 
-                                src={link.qr_codes[0].qr_code_data}
+                                src={link.qr_codes?.qr_code_data}
                                 alt={`QR Code for ${link.title}`}
                                 className="w-48 h-48 object-contain"
                               />
@@ -186,14 +186,14 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                               Target URL: <span className="font-mono text-gray-900">{link.url}</span>
                             </p>
                             <p className="text-xs text-gray-500">
-                              Format: {link.qr_codes[0].format} | Size: {link.qr_codes[0].size}x{link.qr_codes[0].size}
+                              Format: {link.qr_codes?.format} | Size: {link.qr_codes?.size}x{link.qr_codes?.size}
                             </p>
                           </div>
                           <Button
                             onClick={() => {
                               const element = document.createElement('a')
-                              element.href = link.qr_codes[0].qr_code_data
-                              element.download = `qr-code-${link.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.${link.qr_codes[0].format.toLowerCase()}`
+                              element.href = link.qr_codes?.qr_code_data || ''
+                              element.download = `qr-code-${link.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.${link.qr_codes?.format?.toLowerCase() || 'png'}`
                               document.body.appendChild(element)
                               element.click()
                               document.body.removeChild(element)

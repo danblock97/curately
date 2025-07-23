@@ -120,7 +120,7 @@ export function handleApiError(error: unknown): NextResponse {
 /**
  * Async error handler wrapper for API routes
  */
-export function withErrorHandling<T extends any[], R>(
+export function withErrorHandling<T extends unknown[], R>(
   fn: (...args: T) => Promise<R>
 ) {
   return async (...args: T): Promise<R | NextResponse> => {
@@ -196,7 +196,7 @@ export function createErrorResponse(message: string, statusCode: number = 500, c
  * Validate required fields
  */
 export function validateRequired(
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   requiredFields: string[]
 ): void {
   const missingFields = requiredFields.filter(field => !data[field])
@@ -252,8 +252,13 @@ export function sanitizeInput(input: string): string {
 /**
  * Log error with context
  */
-export function logError(error: unknown, request?: any, context?: string) {
-  const errorData: any = {
+interface LogRequest {
+  url?: string
+  method?: string
+}
+
+export function logError(error: unknown, request?: LogRequest, context?: string) {
+  const errorData: Record<string, unknown> = {
     message: error instanceof Error ? error.message : String(error),
     statusCode: error instanceof AppError ? error.statusCode : 500,
     timestamp: new Date().toISOString()

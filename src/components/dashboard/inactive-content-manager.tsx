@@ -11,6 +11,8 @@ import { Trash2, RotateCcw, Clock, AlertTriangle } from 'lucide-react'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 type Link = Database['public']['Tables']['links']['Row']
+type QRCode = Database['public']['Tables']['qr_codes']['Row']
+type Page = Database['public']['Tables']['pages']['Row']
 
 interface InactiveContentManagerProps {
   profile: Profile
@@ -71,14 +73,14 @@ export function InactiveContentManager({ profile }: InactiveContentManagerProps)
           title: link.title,
           type: 'link' as const,
           updated_at: link.updated_at,
-          page_name: (link.pages as any)?.page_title
+          page_name: 'Page'
         })),
         ...(inactiveQrCodes || []).map(qr => ({
           id: qr.id,
           title: qr.title,
           type: 'qr_code' as const,
           updated_at: qr.updated_at,
-          page_name: (qr.pages as any)?.page_title
+          page_name: 'Page'
         }))
       ].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
 

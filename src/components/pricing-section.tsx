@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -112,7 +113,7 @@ export function PricingSection({ showUpgradeButtons = false, currentTier }: Pric
             Choose your plan
           </h2>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Choose the plan that's right for you. Start free, upgrade anytime.
+            Choose the plan that&apos;s right for you. Start free, upgrade anytime.
           </p>
           
           {/* Billing Toggle */}
@@ -246,9 +247,9 @@ export function PricingSection({ showUpgradeButtons = false, currentTier }: Pric
                           : "w-full bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-300"
                       }
                     >
-                      <a href="/auth">
+                      <Link href="/auth">
                         {plan.name === 'Free' ? 'Get Started Free' : 'Upgrade to Pro'}
-                      </a>
+                      </Link>
                     </Button>
                   )}
                 </div>

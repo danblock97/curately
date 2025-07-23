@@ -65,7 +65,7 @@ export function LandingPage() {
                   <Button size="lg" className="bg-gray-900 hover:bg-gray-800 text-white px-12 py-6 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300" asChild>
                     <Link href="/auth">Create an account</Link>
                   </Button>
-                  <p className="text-base text-gray-500 mt-4 font-medium">(It's free)</p>
+                  <p className="text-base text-gray-500 mt-4 font-medium">(It&apos;s free)</p>
                 </>
               )}
             </div>

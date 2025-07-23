@@ -8,7 +8,7 @@ import { rateLimiters } from '@/lib/rate-limit'
 import { withSecurity, sanitizeInput, sanitizeUrl, getSecureHeaders } from '@/lib/security'
 import { checkCanCreateLink } from '@/hooks/use-plan-limits'
 
-export const POST = withErrorHandling(withSecurity(async (request: NextRequest) => {
+export const POST = withErrorHandling(async (request: NextRequest, _context: { params: Promise<Record<string, string>> }) => {
   // Apply rate limiting
   const rateLimitResult = rateLimiters.qrCode.check(request)
   if (!rateLimitResult.allowed) {
@@ -200,4 +200,4 @@ export const POST = withErrorHandling(withSecurity(async (request: NextRequest) 
   })
 
   return response
-}))
+})
