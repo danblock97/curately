@@ -24,7 +24,8 @@ import {
   Trash2,
   Mic,
   Package,
-  Palette
+  Palette,
+  QrCode
 } from 'lucide-react'
 import { Database } from '@/lib/supabase/types'
 import { toast } from 'sonner'
@@ -35,19 +36,21 @@ import { usePlanLimits, checkCanCreateLink } from '@/hooks/use-plan-limits'
 type Profile = Database['public']['Tables']['profiles']['Row']
 type SocialLink = Database['public']['Tables']['social_media_links']['Row']
 type Link = Database['public']['Tables']['links']['Row']
+type QRCode = Database['public']['Tables']['qr_codes']['Row']
 type Page = Database['public']['Tables']['pages']['Row']
 
 interface AppearanceCustomizerProps {
   profile: Profile
   socialLinks: SocialLink[]
   links: Link[]
+  qrCodes: QRCode[]
   pages: Page[]
   selectedPageId?: string
 }
 
 export interface Widget {
   id: string
-  type: 'social' | 'link' | 'image' | 'text' | 'voice' | 'product' | 'app' | 'media'
+  type: 'social' | 'link' | 'qr_code' | 'image' | 'text' | 'voice' | 'product' | 'app' | 'media'
   size: 'thin' | 'small-square' | 'medium-square' | 'large-square' | 'wide' | 'tall'
   data: {
     platform?: string
@@ -91,7 +94,7 @@ const qrSizeOptions = [
 
 // Mobile widgets are always small squares - no size options needed
 
-export function AppearanceCustomizer({ profile, socialLinks, links, pages, selectedPageId }: AppearanceCustomizerProps) {
+export function AppearanceCustomizer({ profile, socialLinks, links, qrCodes, pages, selectedPageId }: AppearanceCustomizerProps) {
   const router = useRouter()
   const [activeView, setActiveView] = useState<'web' | 'mobile'>('web')
   const [showWidgetModal, setShowWidgetModal] = useState(false)
@@ -358,7 +361,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
                 // Failed to parse mobile_position
               }
 
-              const itemType = item.type === 'qr_code' ? 'link' : (item.widget_type || 'link')
+              const itemType = item.type === 'qr_code' ? 'qr_code' : (item.widget_type || 'link')
               const itemSize = item.size || 'thin'
               return {
                 id: item.id,
@@ -420,7 +423,7 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
       // If no profile, just finish loading
       setIsLoadingWidgets(false)
     }
-  }, [links?.length, currentPage?.id, profile?.id])
+  }, [links?.length, qrCodes?.length, currentPage?.id, profile?.id])
 
   const fetchLinkMetadata = async (url: string) => {
     try {
@@ -1154,8 +1157,10 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
       }
       
       // Update size in appropriate database table
+      const tableName = widget.type === 'qr_code' ? 'qr_codes' : 'links'
+      
       const { error } = await supabase
-        .from('links')
+        .from(tableName)
         .update({ size: newSize })
         .eq('id', widgetId)
         .eq('user_id', profile?.id)
@@ -1191,9 +1196,11 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
       }
 
 
-      // Delete from links table
+      // Delete from appropriate table based on widget type
+      const tableName = widget.type === 'qr_code' ? 'qr_codes' : 'links'
+      
       const { error: deleteError } = await supabase
-        .from('links')
+        .from(tableName)
         .delete()
         .eq('id', widgetId)
         .eq('user_id', profile?.id)
@@ -1373,14 +1380,17 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
     const validPosition = findValidPosition(widget, newPosition)
     
     try {
-      // Update position in database
+      // Update position in database - check widget type to determine table
       const updateData = {
         widget_position: JSON.stringify(validPosition),
         [activeView === 'web' ? 'web_position' : 'mobile_position']: JSON.stringify(validPosition)
       }
       
+      // For QR codes, update qr_codes table; for links, update links table
+      const tableName = widget.type === 'qr_code' ? 'qr_codes' : 'links'
+      
       const { error } = await supabase
-        .from('links')
+        .from(tableName)
         .update(updateData)
         .eq('id', widgetId)
         .eq('user_id', profile?.id)
@@ -1948,11 +1958,52 @@ export function AppearanceCustomizer({ profile, socialLinks, links, pages, selec
         }
       }
       
+      const renderQRCodeWidget = () => {
+        // Get QR code data from the widget
+        const qrData = widget.data.qr_codes?.[0]
+        
+        if (!qrData?.qr_code_data) {
+          return (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <QrCode className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                <div className="text-xs text-gray-500">QR Code</div>
+                <div className="text-xs text-gray-400 mt-1">{widget.data.title}</div>
+              </div>
+            </div>
+          )
+        }
+        
+        return (
+          <div className="flex flex-col items-center justify-center h-full p-2">
+            <div className="flex-1 flex items-center justify-center">
+              {qrData.format === 'SVG' ? (
+                <div 
+                  className="w-full h-full max-w-20 max-h-20 [&>svg]:w-full [&>svg]:h-full"
+                  dangerouslySetInnerHTML={{ __html: qrData.qr_code_data }}
+                />
+              ) : (
+                <img 
+                  src={qrData.qr_code_data}
+                  alt={`QR Code: ${widget.data.title}`}
+                  className="w-full h-full max-w-20 max-h-20 object-contain"
+                />
+              )}
+            </div>
+            <div className="text-xs text-gray-700 text-center mt-1 line-clamp-1">
+              {widget.data.title}
+            </div>
+          </div>
+        )
+      }
+      
       switch (widget.type) {
         case 'social':
           return renderSocialWidget()
         case 'link':
           return renderSocialWidget()
+        case 'qr_code':
+          return renderQRCodeWidget()
         default:
           return renderOtherWidget()
       }

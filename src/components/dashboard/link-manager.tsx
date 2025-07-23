@@ -104,9 +104,29 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
     return qr.page_id === currentPage?.id
   })
   
-  // For now, only work with links since QR codes have different structure
-  // TODO: Refactor to properly handle QR codes as separate entities
-  const pageItems = pageLinks.filter(link => link).map(link => ({ ...link, type: 'link' as const }))
+  // Combine links and QR codes into a unified list for display
+  const linkItems = pageLinks.filter(link => link).map(link => ({ 
+    ...link, 
+    type: 'link' as const,
+    display_order: link.order_index || 0
+  }))
+  
+  const qrItems = pageQrCodes.filter(qr => qr).map(qr => ({ 
+    ...qr, 
+    type: 'qr_code' as const,
+    display_order: qr.order_index || 0,
+    // Map QR code fields to match link interface for consistent display
+    title: qr.title,
+    url: qr.url,
+    is_active: qr.is_active,
+    // Add QR code specific data for rendering
+    qr_code_data: qr.qr_code_data,
+    format: qr.format,
+    clicks: qr.clicks || 0
+  }))
+  
+  // Combine and sort by display order
+  const pageItems = [...linkItems, ...qrItems].sort((a, b) => a.display_order - b.display_order)
   
   
   // Pagination logic

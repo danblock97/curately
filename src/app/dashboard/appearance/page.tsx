@@ -52,6 +52,13 @@ export default async function AppearancePage({
     .eq('user_id', user.id)
     .order('order')
 
+  // Also fetch standalone QR codes
+  const { data: qrCodes } = await supabase
+    .from('qr_codes')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('order_index')
+
   if (!profile) {
     redirect('/dashboard')
   }
@@ -61,6 +68,7 @@ export default async function AppearancePage({
       profile={profile} 
       socialLinks={socialLinks || []} 
       links={links || []}
+      qrCodes={qrCodes || []}
       pages={pages || []}
       selectedPageId={resolvedSearchParams.pageId}
     />

@@ -115,7 +115,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 <Badge variant={link.is_active ? "default" : "secondary"} className={link.is_active ? "bg-green-100 text-green-700 border-green-300" : "bg-gray-100 text-gray-600 border-gray-300"}>
                   {link.is_active ? 'Active' : 'Inactive'}
                 </Badge>
-                {link.link_type === 'qr_code' && (
+                {(link.link_type === 'qr_code' || link.type === 'qr_code') && (
                   <Badge className="bg-purple-100 text-purple-700 border-purple-300">
                     <QrCode className="w-3 h-3 mr-1" />
                     QR Code
@@ -123,37 +123,43 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 )}
               </div>
               
-              {link.link_type === 'qr_code' && link.qr_codes ? (
+              {(link.link_type === 'qr_code' && link.qr_codes) || (link.type === 'qr_code' && link.qr_code_data) ? (
                 <div className="mt-2">
                   <div className="flex items-start space-x-3">
                     <Dialog>
                       <DialogTrigger asChild>
                         <div className="bg-white border border-gray-300 rounded-lg p-3 flex-shrink-0 shadow-sm cursor-pointer hover:border-gray-400 transition-colors group relative">
-                          {link.qr_codes?.format === 'SVG' ? (
-                            <div 
-                              className="w-16 h-16 [&>svg]:w-full [&>svg]:h-full"
-                              dangerouslySetInnerHTML={{ __html: link.qr_codes?.qr_code_data }}
-                            />
-                          ) : (
-                            <img 
-                              src={link.qr_codes?.qr_code_data}
-                              alt={`QR Code for ${link.title}`}
-                              className="w-16 h-16 object-contain"
-                              onError={(e) => {
-                                console.error('QR Code image failed to load:', {
-                                  format: link.qr_codes?.format || 'unknown',
-                                  dataStart: link.qr_codes?.qr_code_data?.substring(0, 50) || '',
-                                  linkType: link.link_type,
-                                  title: link.title
-                                })
-                                // Show fallback
-                                const fallback = document.createElement('div')
-                                fallback.className = 'w-16 h-16 bg-gray-100 border border-gray-300 rounded flex items-center justify-center'
-                                fallback.innerHTML = '<span class="text-xs text-gray-500">QR Error</span>'
-                                e.currentTarget.parentNode?.replaceChild(fallback, e.currentTarget)
-                              }}
-                            />
-                          )}
+                          {(() => {
+                            // Get QR data from either nested structure (legacy) or direct structure (standalone)
+                            const qrData = link.qr_codes?.qr_code_data || (link as any).qr_code_data
+                            const qrFormat = link.qr_codes?.format || (link as any).format
+                            
+                            return qrFormat === 'SVG' ? (
+                              <div 
+                                className="w-16 h-16 [&>svg]:w-full [&>svg]:h-full"
+                                dangerouslySetInnerHTML={{ __html: qrData }}
+                              />
+                            ) : (
+                              <img 
+                                src={qrData}
+                                alt={`QR Code for ${link.title}`}
+                                className="w-16 h-16 object-contain"
+                                onError={(e) => {
+                                  console.error('QR Code image failed to load:', {
+                                    format: qrFormat || 'unknown',
+                                    dataStart: qrData?.substring(0, 50) || '',
+                                    linkType: link.link_type || link.type,
+                                    title: link.title
+                                  })
+                                  // Show fallback
+                                  const fallback = document.createElement('div')
+                                  fallback.className = 'w-16 h-16 bg-gray-100 border border-gray-300 rounded flex items-center justify-center'
+                                  fallback.innerHTML = '<span class="text-xs text-gray-500">QR Error</span>'
+                                  e.currentTarget.parentNode?.replaceChild(fallback, e.currentTarget)
+                                }}
+                              />
+                            )
+                          })()}
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all duration-200 flex items-center justify-center">
                             <Eye className="w-5 h-5 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                           </div>
@@ -168,18 +174,24 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                         </DialogHeader>
                         <div className="flex flex-col items-center space-y-4">
                           <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-                            {link.qr_codes?.format === 'SVG' ? (
-                              <div 
-                                className="w-48 h-48 [&>svg]:w-full [&>svg]:h-full"
-                                dangerouslySetInnerHTML={{ __html: link.qr_codes?.qr_code_data }}
-                              />
-                            ) : (
-                              <img 
-                                src={link.qr_codes?.qr_code_data}
-                                alt={`QR Code for ${link.title}`}
-                                className="w-48 h-48 object-contain"
-                              />
-                            )}
+                            {(() => {
+                              // Get QR data from either nested structure (legacy) or direct structure (standalone)
+                              const qrData = link.qr_codes?.qr_code_data || (link as any).qr_code_data
+                              const qrFormat = link.qr_codes?.format || (link as any).format
+                              
+                              return qrFormat === 'SVG' ? (
+                                <div 
+                                  className="w-48 h-48 [&>svg]:w-full [&>svg]:h-full"
+                                  dangerouslySetInnerHTML={{ __html: qrData }}
+                                />
+                              ) : (
+                                <img 
+                                  src={qrData}
+                                  alt={`QR Code for ${link.title}`}
+                                  className="w-48 h-48 object-contain"
+                                />
+                              )
+                            })()}
                           </div>
                           <div className="text-center space-y-2">
                             <p className="text-sm text-gray-600">

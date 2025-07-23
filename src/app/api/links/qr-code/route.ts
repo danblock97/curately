@@ -45,9 +45,15 @@ export const POST = withErrorHandling(async (request: NextRequest, _context: { p
     .eq('user_id', user.id)
     .eq('is_active', true)
 
+  const { data: userQrCodes } = await supabase
+    .from('qr_codes')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+
   // Check plan limits for QR code creation
   if (profile && userLinks) {
-    const canCreate = checkCanCreateLink(userLinks, 'qr_code', profile.tier)
+    const canCreate = checkCanCreateLink(userLinks, 'qr_code', profile.tier, userQrCodes || [])
     if (!canCreate.canCreate) {
       return NextResponse.json(
         { error: canCreate.reason || 'Plan limit exceeded' },
