@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    
-    // Check for webhook authentication
+    // Check for webhook authentication first
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
     const isWebhook = cronSecret && authHeader === `Bearer ${cronSecret}`
+    
+    // Use service role client for webhook calls, regular client for user calls
+    const supabase = isWebhook 
+      ? createServiceClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+      : await createClient()
     
     let userId: string
     

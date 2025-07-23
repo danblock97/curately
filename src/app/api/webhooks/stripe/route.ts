@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
           // If subscription became inactive, trigger downgrade process
           if (tier === 'free') {
             try {
-              await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/plan/downgrade`, {
+              const downgradeResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/plan/downgrade`, {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${process.env.CRON_SECRET}`,
@@ -134,6 +134,7 @@ export async function POST(request: NextRequest) {
                 },
                 body: JSON.stringify({ userId: profile.id }),
               })
+              const downgradeResult = await downgradeResponse.json()
             } catch (downgradeError) {
               console.error('Error triggering downgrade:', downgradeError)
             }
@@ -173,7 +174,7 @@ export async function POST(request: NextRequest) {
         } else {
           // Trigger downgrade process to deactivate excess content
           try {
-            await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/plan/downgrade`, {
+            const downgradeResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/plan/downgrade`, {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${process.env.CRON_SECRET}`,
@@ -181,6 +182,7 @@ export async function POST(request: NextRequest) {
               },
               body: JSON.stringify({ userId: profile.id }),
             })
+            const downgradeResult = await downgradeResponse.json()
           } catch (downgradeError) {
             console.error('Error triggering downgrade:', downgradeError)
           }
