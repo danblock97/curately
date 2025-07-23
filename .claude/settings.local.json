@@ -20,7 +20,9 @@
       "Bash(grep:*)",
       "Bash(git checkout:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(wc:*)",
+      "Bash(del:*)"
     ],
     "deny": []
   }
