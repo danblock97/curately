@@ -552,11 +552,17 @@ export function AppearanceCustomizer({
 											  ]
 											: undefined,
 									// QR code data directly accessible for rendering
-									qr_code_data: item.type === "qr_code" ? item.qr_code_data : undefined,
+									qr_code_data:
+										item.type === "qr_code" ? item.qr_code_data : undefined,
 									format: item.type === "qr_code" ? item.format : undefined,
-									size: item.type === "qr_code" ? (item.qr_size || item.size) : undefined,
-									foreground_color: item.type === "qr_code" ? item.foreground_color : undefined,
-									background_color: item.type === "qr_code" ? item.background_color : undefined,
+									size:
+										item.type === "qr_code"
+											? item.qr_size || item.size
+											: undefined,
+									foreground_color:
+										item.type === "qr_code" ? item.foreground_color : undefined,
+									background_color:
+										item.type === "qr_code" ? item.background_color : undefined,
 								},
 								position: widgetPosition,
 								webPosition: webPosition,
@@ -1411,8 +1417,8 @@ export function AppearanceCustomizer({
 				return;
 			}
 
-			// Check if this widget has special size constraints
-			const hasSpecialConstraints = false;
+			// Check if this widget has special size constraints (QR codes only support squares)
+			const hasSpecialConstraints = widget.type === "qr_code";
 
 			// Skip widgets with special constraints
 			if (
@@ -2513,19 +2519,25 @@ export function AppearanceCustomizer({
 					);
 				}
 
+				// Determine QR code size based on widget size
+				const qrSizeClass =
+					widget.size === "large-square"
+						? "max-w-52 max-h-52"
+						: "max-w-32 max-h-32";
+
 				return (
-					<div className="flex flex-col items-center justify-center h-full p-2">
+					<div className="flex flex-col items-center justify-center h-full p-1">
 						<div className="flex-1 flex items-center justify-center">
 							{qrFormat === "SVG" ? (
 								<div
-									className="w-full h-full max-w-20 max-h-20 [&>svg]:w-full [&>svg]:h-full"
+									className={`w-full h-full ${qrSizeClass} [&>svg]:w-full [&>svg]:h-full`}
 									dangerouslySetInnerHTML={{ __html: qrCodeData }}
 								/>
 							) : (
 								<img
 									src={qrCodeData}
 									alt={`QR Code: ${widget.data.title}`}
-									className="w-full h-full max-w-20 max-h-20 object-contain"
+									className={`w-full h-full ${qrSizeClass} object-contain`}
 								/>
 							)}
 						</div>
@@ -2567,7 +2579,7 @@ export function AppearanceCustomizer({
 								{activeView === "web" &&
 									(() => {
 										// Use QR-specific size options for QR codes, regular options for others
-										const availableSizes = sizeOptions;
+										const availableSizes = widget.type === 'qr_code' ? qrSizeOptions : sizeOptions;
 										return availableSizes.map((size) => (
 											<Button
 												key={size.value}
@@ -2639,7 +2651,7 @@ export function AppearanceCustomizer({
 						<div className="absolute -top-2 -right-2 bg-white border border-gray-200 rounded-lg p-1 shadow-lg flex items-center space-x-1">
 							{/* Only show resize options in web view */}
 							{activeView === "web" &&
-								sizeOptions.map((size) => (
+								(widget.type === 'qr_code' ? qrSizeOptions : sizeOptions).map((size) => (
 									<Button
 										key={size.value}
 										variant={effectiveSize === size.value ? "default" : "ghost"}
@@ -2848,7 +2860,7 @@ export function AppearanceCustomizer({
 				{/* Left Side - Profile Preview */}
 				<div
 					className={`${
-						activeView === "web" ? "w-1/2" : "w-full"
+						activeView === "web" ? "w-2/5" : "w-full"
 					} p-4 flex flex-col items-center`}
 				>
 					<div
@@ -2957,7 +2969,7 @@ export function AppearanceCustomizer({
 							<div className="flex justify-center">
 								<div
 									ref={gridRef}
-									className={`relative min-h-[600px] w-80 bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${
+									className={`relative min-h-[600px] w-[28rem] bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${
 										draggedWidget
 											? "border-blue-300 bg-blue-50"
 											: "border-gray-200"
@@ -3041,7 +3053,7 @@ export function AppearanceCustomizer({
 
 				{/* Right Side - Widget Grid (Web View Only) */}
 				{activeView === "web" && (
-					<div className="w-1/2 p-4">
+					<div className="w-3/5 p-4">
 						<div
 							ref={gridRef}
 							className={`relative min-h-[calc(100vh-250px)] w-full bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${
