@@ -29,6 +29,7 @@ export function PricingSection({ showUpgradeButtons = false, currentTier }: Pric
 
       if (error) {
         console.error('Checkout error:', error)
+        alert(error)
         return
       }
 

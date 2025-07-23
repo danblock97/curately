@@ -88,8 +88,19 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Checkout session error:', error)
+    
+    // Handle specific Stripe errors
+    if (error?.type === 'StripeInvalidRequestError') {
+      if (error.code === 'resource_missing' && error.param?.includes('price')) {
+        return NextResponse.json(
+          { error: 'Pricing configuration error. Please contact support.' },
+          { status: 500 }
+        )
+      }
+    }
+    
     return NextResponse.json(
       { error: 'Failed to create checkout session' },
       { status: 500 }
