@@ -3,14 +3,12 @@
 export interface CookiePreferences {
   necessary: boolean
   analytics: boolean
-  marketing: boolean
   functional: boolean
 }
 
 export const DEFAULT_COOKIE_PREFERENCES: CookiePreferences = {
   necessary: true, // Always required
   analytics: false,
-  marketing: false,
   functional: false,
 }
 
@@ -101,16 +99,39 @@ export function deleteCookie(name: string): void {
 
 // Initialize analytics based on consent
 export function initializeAnalytics(): void {
-  if (isCookieAllowed('analytics')) {
-    // Initialize analytics here (e.g., Google Analytics)
-    console.log('Analytics initialized')
+  if (!isCookieAllowed('analytics')) return
+  
+  // Google Analytics 4
+  const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+  if (GA_MEASUREMENT_ID && typeof window !== 'undefined') {
+    // Load Google Analytics script
+    const script = document.createElement('script')
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`
+    script.async = true
+    document.head.appendChild(script)
+    
+    // Initialize gtag
+    window.dataLayer = window.dataLayer || []
+    function gtag(...args: unknown[]) {
+      window.dataLayer.push(args)
+    }
+    window.gtag = gtag
+    
+    gtag('js', new Date())
+    gtag('config', GA_MEASUREMENT_ID, {
+      page_title: document.title,
+      page_location: window.location.href
+    })
   }
 }
 
-// Initialize marketing cookies based on consent  
-export function initializeMarketing(): void {
-  if (isCookieAllowed('marketing')) {
-    // Initialize marketing pixels here
-    console.log('Marketing cookies initialized')
-  }
+// Initialize functional cookies based on consent (user preferences, chat widgets, etc.)
+export function initializeFunctional(): void {
+  if (!isCookieAllowed('functional')) return
+  
+  // TODO: Add functional integrations as needed:
+  // - Intercom/Zendesk chat widgets
+  // - User preference storage
+  // - A/B testing tools
+  // - Performance monitoring tools
 }

@@ -12,7 +12,7 @@ import {
   DEFAULT_COOKIE_PREFERENCES,
   type CookiePreferences,
   initializeAnalytics,
-  initializeMarketing
+  initializeFunctional
 } from '@/lib/cookies'
 import { Cookie, Settings, X, Check, Shield } from 'lucide-react'
 import Link from 'next/link'
@@ -34,14 +34,13 @@ export function CookieBanner() {
     const allAccepted: CookiePreferences = {
       necessary: true,
       analytics: true,
-      marketing: true,
       functional: true,
     }
     setCookieConsent(true)
     setCookiePreferences(allAccepted)
     setShowBanner(false)
     initializeAnalytics()
-    initializeMarketing()
+    initializeFunctional()
   }
 
   const handleRejectAll = () => {
@@ -57,7 +56,7 @@ export function CookieBanner() {
     setShowSettings(false)
     
     if (preferences.analytics) initializeAnalytics()
-    if (preferences.marketing) initializeMarketing()
+    if (preferences.functional) initializeFunctional()
   }
 
   const handlePreferenceChange = (type: keyof CookiePreferences, enabled: boolean) => {
@@ -107,7 +106,7 @@ export function CookieBanner() {
 
                 <div className="space-y-3">
                   <p className="text-gray-700 leading-relaxed">
-                    We use cookies to enhance your experience, analyze site usage, and assist with marketing. 
+                    We use cookies to enhance your experience, analyze site usage, and assist with functional. 
                     Necessary cookies are always enabled to ensure the site functions properly.
                   </p>
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -214,13 +213,13 @@ export function CookieBanner() {
                       </p>
                     </div>
                     <button
-                      onClick={() => handlePreferenceChange('marketing', !preferences.marketing)}
+                      onClick={() => handlePreferenceChange('functional', !preferences.functional)}
                       className={`w-12 h-6 rounded-full transition-colors ${
-                        preferences.marketing ? 'bg-purple-500' : 'bg-gray-300'
+                        preferences.functional ? 'bg-purple-500' : 'bg-gray-300'
                       }`}
                     >
                       <div className={`w-4 h-4 bg-white rounded-full transition-transform ${
-                        preferences.marketing ? 'translate-x-7' : 'translate-x-1'
+                        preferences.functional ? 'translate-x-7' : 'translate-x-1'
                       }`} />
                     </button>
                   </div>
