@@ -114,15 +114,15 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
   const qrItems = pageQrCodes.filter(qr => qr).map(qr => ({ 
     ...qr, 
     type: 'qr_code' as const,
-    display_order: 0,
-    // Map QR code fields to match link interface for consistent display
-    title: 'QR Code',
-    url: '#',
-    is_active: true,
+    display_order: qr.order_index || 0,
+    // Use actual QR code data instead of placeholders
+    title: qr.title || 'QR Code',
+    url: qr.url || '#',
+    is_active: qr.is_active !== false,
     // Add QR code specific data for rendering
     qr_code_data: qr.qr_code_data,
     format: qr.format,
-    clicks: 0
+    clicks: qr.clicks || 0
   }))
   
   // Combine and sort by display order

@@ -115,7 +115,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 <Badge variant={link.is_active ? "default" : "secondary"} className={link.is_active ? "bg-green-100 text-green-700 border-green-300" : "bg-gray-100 text-gray-600 border-gray-300"}>
                   {link.is_active ? 'Active' : 'Inactive'}
                 </Badge>
-                {link.link_type === 'qr_code' && (
+                {(link.link_type === 'qr_code' || (link as any).type === 'qr_code') && (
                   <Badge className="bg-purple-100 text-purple-700 border-purple-300">
                     <QrCode className="w-3 h-3 mr-1" />
                     QR Code
@@ -123,7 +123,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 )}
               </div>
               
-              {link.link_type === 'qr_code' && link.qr_codes ? (
+              {(link.link_type === 'qr_code' && link.qr_codes) || ((link as any).type === 'qr_code' && (link as any).qr_code_data) ? (
                 <div className="mt-2">
                   <div className="flex items-start space-x-3">
                     <Dialog>
