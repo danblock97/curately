@@ -1,0 +1,45 @@
+{
+  "name": "Curately - Your Professional Link-in-Bio Tool",
+  "short_name": "Curately",
+  "description": "Create stunning, personalized link-in-bio pages with Curately. Boost your online presence with custom QR codes, deep links, and professional analytics.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-180x180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "apple-touch-icon"
+    },
+    {
+      "src": "/logo-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/logo-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["business", "productivity", "social"],
+  "lang": "en-GB",
+  "dir": "ltr",
+  "scope": "/",
+  "id": "curately-link-bio-tool"
+}

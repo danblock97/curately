@@ -22,7 +22,9 @@
       "mcp__ide__getDiagnostics",
       "Bash(curl:*)",
       "Bash(wc:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(copy:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }
