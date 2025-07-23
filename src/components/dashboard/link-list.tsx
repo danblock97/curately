@@ -428,29 +428,40 @@ export function LinkList({ links, onLinkUpdated, onLinkDeleted, onQrCodeDeleted,
 
   const handleToggleActive = async (link: Link) => {
     try {
+      // Determine if this is a QR code or regular link
+      const isQrCode = (link as any).type === 'qr_code'
+      const tableName = isQrCode ? 'qr_codes' : 'links'
+      
       const { data, error } = await supabase
-        .from('links')
+        .from(tableName)
         .update({ is_active: !link.is_active })
         .eq('id', link.id)
-        .select(`
-          *,
-          qr_codes (
-            qr_code_data,
-            format,
-            size,
-            foreground_color,
-            background_color
-          )
-        `)
+        .select('*')
         .single()
 
       if (error) {
-        toast.error('Error updating link status.')
+        toast.error(`Error updating ${isQrCode ? 'QR code' : 'link'} status.`)
         return
       }
 
-      onLinkUpdated(data)
-      toast.success(data.is_active ? 'Link activated' : 'Link deactivated')
+      // For unified display, we need to call the appropriate callback
+      if (isQrCode) {
+        // For QR codes, we need to transform the data back to the expected format
+        const transformedData = {
+          ...data,
+          type: 'qr_code' as const,
+          title: data.title || 'QR Code',
+          url: data.url || '#',
+          clicks: data.clicks || 0,
+          qr_code_data: data.qr_code_data,
+          format: data.format
+        }
+        onLinkUpdated(transformedData as any)
+      } else {
+        onLinkUpdated(data)
+      }
+      
+      toast.success(data.is_active ? `${isQrCode ? 'QR code' : 'Link'} activated` : `${isQrCode ? 'QR code' : 'Link'} deactivated`)
     } catch (error) {
       toast.error('An error occurred. Please try again.')
     }
