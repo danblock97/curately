@@ -6,7 +6,7 @@ import { Navbar } from '@/components/navbar'
 import { ContactForm } from '@/components/contact-form'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Mail, MessageCircle, Clock, Users, ArrowRight, CheckCircle, Zap, Globe } from 'lucide-react'
+import { Mail, MessageCircle, Clock, Users, ArrowRight, CheckCircle, Zap, Globe, Bug } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ContactPage() {
@@ -116,6 +116,24 @@ export default function ContactPage() {
                       <p className="text-gray-600 text-sm mb-3">For general inquiries and support</p>
                       <a href="mailto:hello@curately.co.uk" className="text-blue-600 font-semibold hover:text-blue-700 inline-flex items-center group">
                         hello@curately.co.uk
+                        <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                      </a>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-gray-200 hover:border-orange-300 transition-all duration-300 hover:shadow-lg group">
+                <CardContent className="p-6">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-orange-100 to-orange-200 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:from-orange-500 group-hover:to-orange-600 transition-all duration-300">
+                      <Bug className="w-6 h-6 text-orange-600 group-hover:text-white transition-colors duration-300" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900 mb-2">Bug Reports & Feature Requests</h4>
+                      <p className="text-gray-600 text-sm mb-3">Submit bugs and suggest new features</p>
+                      <a href="https://roomy-pick-4e2.notion.site/23905d85e5838176bfc2df81a22881c0?pvs=105" target="_blank" rel="noopener noreferrer" className="text-orange-600 font-semibold hover:text-orange-700 inline-flex items-center group">
+                        Submit via Notion Form
                         <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                       </a>
                     </div>
