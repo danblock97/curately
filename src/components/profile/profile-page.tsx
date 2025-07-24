@@ -792,10 +792,10 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									isMobile ? 'p-1' : 'p-1.5'
 								}`}
 							>
-								{widget.data.appLogo || socialInfo.logo ? (
+								{(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? (
 									<img
-										src={widget.data.appLogo || socialInfo.logo}
-										alt={platform}
+										src={widget.data.favicon || widget.data.appLogo || socialInfo.logo}
+										alt={platform || widget.data.title || "External Link"}
 										className={`w-full h-full object-contain ${
 											socialInfo.logoStyle || ""
 										}`}
@@ -828,7 +828,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									isMobile ? 'text-gray-900 text-xs' : 'text-gray-900 text-sm'
 								} truncate`}>
 									{isMobile
-										? (capitalizedPlatform || 'Link')
+										? (widget.data.title || widget.data.displayName || capitalizedPlatform || 'Link')
 										: (widget.data.displayName ||
 											(widget.data.username
 												? `@${widget.data.username}`
@@ -866,12 +866,12 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 								<div
 									className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}
 								>
-									{socialInfo.logo ? (
+									{(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? (
 										<img
-											src={socialInfo.logo}
-											alt={platform}
+											src={widget.data.favicon || widget.data.appLogo || socialInfo.logo}
+											alt={platform || widget.data.title || "External Link"}
 											className={`${
-												isMobile ? 'w-6 h-6' : 'w-8 h-8'
+												isMobile ? 'w-20 h-20' : 'w-28 h-28'
 											} object-contain ${
 												socialInfo.logoStyle || ""
 											}`}
@@ -888,7 +888,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 										className={`fallback-text ${
 											isMobile ? 'text-sm' : 'text-lg'
 										} font-bold text-white ${
-											socialInfo.logo ? "hidden" : ""
+											(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? "hidden" : ""
 										}`}
 									>
 										{socialInfo.fallback}
@@ -904,7 +904,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									isMobile ? 'text-xs' : 'text-xs'
 								} font-medium text-white leading-tight`}>
 									{isMobile
-										? (capitalizedPlatform || 'Link')
+										? (widget.data.title || widget.data.displayName || capitalizedPlatform || 'Link')
 										: (widget.data.displayName ||
 											(widget.data.username
 												? `@${widget.data.username}`
@@ -941,11 +941,11 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 								<div
 									className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}
 								>
-									{socialInfo.logo ? (
+									{(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? (
 										<img
-											src={socialInfo.logo}
-											alt={platform}
-											className={`w-12 h-12 object-contain ${
+											src={widget.data.favicon || widget.data.appLogo || socialInfo.logo}
+											alt={platform || widget.data.title || "External Link"}
+											className={`w-36 h-36 object-contain ${
 												socialInfo.logoStyle || ""
 											}`}
 											onError={(e) => {
@@ -959,7 +959,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									) : null}
 									<span
 										className={`fallback-text text-2xl font-bold text-white ${
-											socialInfo.logo ? "hidden" : ""
+											(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? "hidden" : ""
 										}`}
 									>
 										{socialInfo.fallback}
@@ -1009,7 +1009,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 															socialInfo.logo
 																? `<img src="${
 																		socialInfo.logo
-																  }" alt="${platform}" class="w-16 h-16 object-contain ${
+																  }" alt="${platform}" class="w-48 h-48 object-contain ${
 																		socialInfo.logoStyle || ""
 																  }" />`
 																: ""
@@ -1028,11 +1028,11 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 								<div
 									className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}
 								>
-									{socialInfo.logo ? (
+									{(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? (
 										<img
-											src={socialInfo.logo}
-											alt={platform}
-											className={`w-16 h-16 object-contain ${
+											src={widget.data.favicon || widget.data.appLogo || socialInfo.logo}
+											alt={platform || widget.data.title || "External Link"}
+											className={`w-48 h-48 object-contain ${
 												socialInfo.logoStyle || ""
 											}`}
 											onError={(e) => {
@@ -1046,7 +1046,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									) : null}
 									<span
 										className={`fallback-text text-3xl font-bold text-white ${
-											socialInfo.logo ? "hidden" : ""
+											(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? "hidden" : ""
 										}`}
 									>
 										{socialInfo.fallback}
@@ -1093,11 +1093,11 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 							<div
 								className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}
 							>
-								{socialInfo.logo ? (
+								{(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? (
 									<img
-										src={socialInfo.logo}
-										alt={platform}
-										className={`w-14 h-14 object-contain ${
+										src={widget.data.favicon || widget.data.appLogo || socialInfo.logo}
+										alt={platform || widget.data.title || "External Link"}
+										className={`w-32 h-32 object-contain ${
 											socialInfo.logoStyle || ""
 										}`}
 										onError={(e) => {
@@ -1111,7 +1111,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 								) : null}
 								<span
 									className={`fallback-text text-2xl font-bold text-white ${
-										socialInfo.logo ? "hidden" : ""
+										(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? "hidden" : ""
 									}`}
 								>
 									{socialInfo.fallback}

@@ -2044,10 +2044,16 @@ export function AppearanceCustomizer({
 									socialInfo.gradient
 								} ${activeView === "mobile" ? "p-1" : "p-1.5"}`}
 							>
-								{widget.data.appLogo || socialInfo.logo ? (
+								{widget.data.favicon ||
+								widget.data.appLogo ||
+								socialInfo.logo ? (
 									<img
-										src={widget.data.appLogo || socialInfo.logo}
-										alt={platform}
+										src={
+											widget.data.favicon ||
+											widget.data.appLogo ||
+											socialInfo.logo
+										}
+										alt={platform || widget.data.title || "External Link"}
 										className={`w-full h-full object-contain ${
 											socialInfo.logoStyle || ""
 										}`}
@@ -2086,7 +2092,7 @@ export function AppearanceCustomizer({
 									} truncate`}
 								>
 									{activeView === "mobile"
-										? capitalizedPlatform || "Link"
+										? widget.data.title || widget.data.displayName || capitalizedPlatform || "Link"
 										: widget.data.displayName ||
 										  (widget.data.username
 												? `@${widget.data.username}`
@@ -2127,12 +2133,18 @@ export function AppearanceCustomizer({
 								<div
 									className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}
 								>
-									{socialInfo.logo ? (
+									{widget.data.favicon ||
+									widget.data.appLogo ||
+									socialInfo.logo ? (
 										<img
-											src={socialInfo.logo}
-											alt={platform}
+											src={
+												widget.data.favicon ||
+												widget.data.appLogo ||
+												socialInfo.logo
+											}
+											alt={platform || widget.data.title || "External Link"}
 											className={`${
-												activeView === "mobile" ? "w-6 h-6" : "w-8 h-8"
+												activeView === "mobile" ? "w-20 h-20" : "w-28 h-28"
 											} object-contain ${socialInfo.logoStyle || ""}`}
 											onError={(e) => {
 												const target = e.target as HTMLImageElement;
@@ -2146,7 +2158,13 @@ export function AppearanceCustomizer({
 									<span
 										className={`fallback-text ${
 											activeView === "mobile" ? "text-sm" : "text-lg"
-										} font-bold text-white ${socialInfo.logo ? "hidden" : ""}`}
+										} font-bold text-white ${
+											widget.data.favicon ||
+											widget.data.appLogo ||
+											socialInfo.logo
+												? "hidden"
+												: ""
+										}`}
 									>
 										{socialInfo.fallback}
 									</span>
@@ -2167,7 +2185,7 @@ export function AppearanceCustomizer({
 									} font-medium text-white leading-tight`}
 								>
 									{activeView === "mobile"
-										? capitalizedPlatform || "Link"
+										? widget.data.title || widget.data.displayName || capitalizedPlatform || "Link"
 										: widget.data.displayName ||
 										  (widget.data.username
 												? `@${widget.data.username}`
@@ -2205,11 +2223,17 @@ export function AppearanceCustomizer({
 								<div
 									className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}
 								>
-									{socialInfo.logo ? (
+									{widget.data.favicon ||
+									widget.data.appLogo ||
+									socialInfo.logo ? (
 										<img
-											src={socialInfo.logo}
-											alt={platform}
-											className={`w-12 h-12 object-contain ${
+											src={
+												widget.data.favicon ||
+												widget.data.appLogo ||
+												socialInfo.logo
+											}
+											alt={platform || widget.data.title || "External Link"}
+											className={`w-36 h-36 object-contain ${
 												socialInfo.logoStyle || ""
 											}`}
 											onError={(e) => {
@@ -2223,7 +2247,11 @@ export function AppearanceCustomizer({
 									) : null}
 									<span
 										className={`fallback-text text-2xl font-bold text-white ${
-											socialInfo.logo ? "hidden" : ""
+											widget.data.favicon ||
+											widget.data.appLogo ||
+											socialInfo.logo
+												? "hidden"
+												: ""
 										}`}
 									>
 										{socialInfo.fallback}
@@ -2273,7 +2301,7 @@ export function AppearanceCustomizer({
 															socialInfo.logo
 																? `<img src="${
 																		socialInfo.logo
-																  }" alt="${platform}" class="w-16 h-16 object-contain ${
+																  }" alt="${platform}" class="w-48 h-48 object-contain ${
 																		socialInfo.logoStyle || ""
 																  }" />`
 																: ""
@@ -2292,11 +2320,17 @@ export function AppearanceCustomizer({
 								<div
 									className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}
 								>
-									{socialInfo.logo ? (
+									{widget.data.favicon ||
+									widget.data.appLogo ||
+									socialInfo.logo ? (
 										<img
-											src={socialInfo.logo}
-											alt={platform}
-											className={`w-16 h-16 object-contain ${
+											src={
+												widget.data.favicon ||
+												widget.data.appLogo ||
+												socialInfo.logo
+											}
+											alt={platform || widget.data.title || "External Link"}
+											className={`w-48 h-48 object-contain ${
 												socialInfo.logoStyle || ""
 											}`}
 											onError={(e) => {
@@ -2310,7 +2344,11 @@ export function AppearanceCustomizer({
 									) : null}
 									<span
 										className={`fallback-text text-3xl font-bold text-white ${
-											socialInfo.logo ? "hidden" : ""
+											widget.data.favicon ||
+											widget.data.appLogo ||
+											socialInfo.logo
+												? "hidden"
+												: ""
 										}`}
 									>
 										{socialInfo.fallback}
@@ -2357,11 +2395,17 @@ export function AppearanceCustomizer({
 							<div
 								className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}
 							>
-								{socialInfo.logo ? (
+								{widget.data.favicon ||
+								widget.data.appLogo ||
+								socialInfo.logo ? (
 									<img
-										src={socialInfo.logo}
-										alt={platform}
-										className={`w-14 h-14 object-contain ${
+										src={
+											widget.data.favicon ||
+											widget.data.appLogo ||
+											socialInfo.logo
+										}
+										alt={platform || widget.data.title || "External Link"}
+										className={`w-32 h-32 object-contain ${
 											socialInfo.logoStyle || ""
 										}`}
 										onError={(e) => {
@@ -2375,7 +2419,11 @@ export function AppearanceCustomizer({
 								) : null}
 								<span
 									className={`fallback-text text-2xl font-bold text-white ${
-										socialInfo.logo ? "hidden" : ""
+										widget.data.favicon ||
+										widget.data.appLogo ||
+										socialInfo.logo
+											? "hidden"
+											: ""
 									}`}
 								>
 									{socialInfo.fallback}
@@ -2579,7 +2627,8 @@ export function AppearanceCustomizer({
 								{activeView === "web" &&
 									(() => {
 										// Use QR-specific size options for QR codes, regular options for others
-										const availableSizes = widget.type === 'qr_code' ? qrSizeOptions : sizeOptions;
+										const availableSizes =
+											widget.type === "qr_code" ? qrSizeOptions : sizeOptions;
 										return availableSizes.map((size) => (
 											<Button
 												key={size.value}
@@ -2651,23 +2700,27 @@ export function AppearanceCustomizer({
 						<div className="absolute -top-2 -right-2 bg-white border border-gray-200 rounded-lg p-1 shadow-lg flex items-center space-x-1">
 							{/* Only show resize options in web view */}
 							{activeView === "web" &&
-								(widget.type === 'qr_code' ? qrSizeOptions : sizeOptions).map((size) => (
-									<Button
-										key={size.value}
-										variant={effectiveSize === size.value ? "default" : "ghost"}
-										size="sm"
-										className="w-6 h-6 p-0"
-										onClick={() =>
-											handleResizeWidget(
-												widget.id,
-												size.value as Widget["size"]
-											)
-										}
-										title={size.label}
-									>
-										{size.icon}
-									</Button>
-								))}
+								(widget.type === "qr_code" ? qrSizeOptions : sizeOptions).map(
+									(size) => (
+										<Button
+											key={size.value}
+											variant={
+												effectiveSize === size.value ? "default" : "ghost"
+											}
+											size="sm"
+											className="w-6 h-6 p-0"
+											onClick={() =>
+												handleResizeWidget(
+													widget.id,
+													size.value as Widget["size"]
+												)
+											}
+											title={size.label}
+										>
+											{size.icon}
+										</Button>
+									)
+								)}
 							<Button
 								variant="ghost"
 								size="sm"
