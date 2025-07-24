@@ -326,7 +326,7 @@ export default function PrivacyPolicyPage() {
 
               <div className="mt-6 p-4 bg-white rounded-lg border border-green-200">
                 <p className="text-green-800 text-sm">
-                  <strong>To exercise your rights:</strong> Contact us at privacy@curately.co.uk or through your account settings. 
+                  <strong>To exercise your rights:</strong> Contact us on <a href="https://discord.gg/X2yQ6mpBSc" target="_blank" rel="noopener noreferrer" className="text-green-700 hover:text-green-800 underline">Discord</a> or through your account settings. 
                   We will respond within 30 days and may request verification of your identity.
                 </p>
               </div>
@@ -388,9 +388,9 @@ export default function PrivacyPolicyPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
-                  <strong className="text-gray-900 w-24">Email:</strong>
-                  <Link href="mailto:privacy@curately.co.uk" className="text-blue-600 hover:text-blue-700">
-                    privacy@curately.co.uk
+                  <strong className="text-gray-900 w-24">Discord:</strong>
+                  <Link href="https://discord.gg/X2yQ6mpBSc" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700">
+                    Join our Discord
                   </Link>
                 </div>
                 <div className="flex items-center space-x-3">

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Navbar } from '@/components/navbar'
-import { ContactForm } from '@/components/contact-form'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Mail, MessageCircle, Clock, Users, ArrowRight, CheckCircle, Globe, Bug } from 'lucide-react'
@@ -76,8 +75,9 @@ export default function ContactPage() {
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-3 gap-16">
-            {/* Contact Form */}
-            <div className="lg:col-span-2">
+            {/* Contact Options */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Notion Form Card */}
               <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <div className="flex items-center space-x-3 mb-8">
                   <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
@@ -85,12 +85,54 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900">
-                      Send us a message
+                      Contact Form
                     </h2>
-                    <p className="text-gray-600">We&apos;ll get back to you soon</p>
+                    <p className="text-gray-600">Submit your questions, feedback, or support requests</p>
                   </div>
                 </div>
-                <ContactForm />
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 text-center">
+                  <p className="text-gray-600 mb-6">
+                    Use our contact form to send us your questions, feedback, or support requests. We&apos;ll get back to you as soon as possible.
+                  </p>
+                  <a 
+                    href="https://roomy-pick-4e2.notion.site/23905d85e5838176bfc2df81a22881c0?pvs=105" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl group"
+                  >
+                    Open Contact Form
+                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Discord Card */}
+              <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="flex items-center space-x-3 mb-8">
+                  <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <Users className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      Join Our Community
+                    </h2>
+                    <p className="text-gray-600">Connect with other users and get real-time support</p>
+                  </div>
+                </div>
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 text-center">
+                  <p className="text-gray-600 mb-6">
+                    Join our Discord community for real-time support, feature discussions, and to connect with other Curately users.
+                  </p>
+                  <a 
+                    href="https://discord.gg/X2yQ6mpBSc" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl group"
+                  >
+                    Join Discord Server
+                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -112,10 +154,10 @@ export default function ContactPage() {
                       <Mail className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors duration-300" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-gray-900 mb-2">Email Support</h4>
-                      <p className="text-gray-600 text-sm mb-3">For general inquiries and support</p>
-                      <a href="mailto:hello@curately.co.uk" className="text-blue-600 font-semibold hover:text-blue-700 inline-flex items-center group">
-                        hello@curately.co.uk
+                      <h4 className="font-bold text-gray-900 mb-2">Discord Support</h4>
+                      <p className="text-gray-600 text-sm mb-3">For general inquiries and real-time support</p>
+                      <a href="https://discord.gg/X2yQ6mpBSc" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold hover:text-blue-700 inline-flex items-center group">
+                        Join our Discord
                         <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                       </a>
                     </div>

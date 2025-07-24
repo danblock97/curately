@@ -70,8 +70,7 @@ export function StructuredData({ type = 'WebApplication', data }: StructuredData
           contactPoint: {
             '@type': 'ContactPoint',
             contactType: 'Customer Service',
-            email: 'hello@curately.co.uk',
-            url: `${baseUrl}/contact`
+            url: 'https://discord.gg/X2yQ6mpBSc'
           },
           sameAs: [
             'https://twitter.com/curately',

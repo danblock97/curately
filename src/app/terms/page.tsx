@@ -406,9 +406,9 @@ export default function TermsOfServicePage() {
                     <h4 className="font-semibold text-gray-900 mb-2">General Inquiries</h4>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-3">
-                        <span className="text-gray-600 w-16">Email:</span>
-                        <Link href="mailto:legal@curately.co.uk" className="text-blue-600 hover:text-blue-700">
-                          legal@curately.co.uk
+                        <span className="text-gray-600 w-16">Discord:</span>
+                        <Link href="https://discord.gg/X2yQ6mpBSc" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700">
+                          Join our Discord
                         </Link>
                       </div>
                       <div className="flex items-center space-x-3">
