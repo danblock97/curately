@@ -81,6 +81,7 @@ export default async function UserProfilePage({ params }: PageProps) {
     .eq('is_active', true)
     .order('order_index', { ascending: true })
 
+
   // Get social media links for the user
   const { data: socialLinks } = await supabase
     .from('social_media_links')
@@ -89,8 +90,30 @@ export default async function UserProfilePage({ params }: PageProps) {
 
 
   // Combine links and QR codes into a single array for the ProfilePage component
+  // First, enhance links with QR code data if they have matching QR codes
+  const enhancedLinks = (links || []).map(link => {
+    // Check if this link has a matching QR code
+    const matchingQRCode = (qrCodes || []).find(qr => qr.url === link.url || qr.title === link.title)
+    if (matchingQRCode) {
+      return {
+        ...link,
+        link_type: 'qr_code', // Override link_type to qr_code
+        qr_codes: {
+          qr_code_data: matchingQRCode.qr_code_data,
+          format: matchingQRCode.format,
+          size: matchingQRCode.size,
+          foreground_color: matchingQRCode.foreground_color,
+          background_color: matchingQRCode.background_color
+        }
+      }
+    }
+    return link
+  })
+
   // QR codes need to be converted to look like links with qr_codes data embedded
-  const qrCodesAsLinks = (qrCodes || []).map((qr: QRCodeRecord) => ({
+  const qrCodesAsLinks = (qrCodes || [])
+    .filter(qr => !(links || []).some(link => qr.url === link.url || qr.title === link.title)) // Exclude QR codes already merged with links
+    .map((qr: QRCodeRecord) => ({
     id: qr.id,
     user_id: qr.user_id,
     page_id: qr.page_id,
@@ -129,7 +152,7 @@ export default async function UserProfilePage({ params }: PageProps) {
   }))
 
   // Combine all items and sort by order
-  const allLinks = [...(links || []), ...qrCodesAsLinks].sort((a, b) => (a.order || 0) - (b.order || 0))
+  const allLinks = [...enhancedLinks, ...qrCodesAsLinks].sort((a, b) => (a.order || 0) - (b.order || 0))
 
   if (!profile) {
     notFound()

@@ -142,7 +142,11 @@ export function validateDeeplinkConfig(config: {
  * Generate a short URL for the given short code
  */
 export function generateShortUrl(shortCode: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  // Use production URL when in production, fallback to env var or localhost for development
+  const isProduction = process.env.NODE_ENV === 'production'
+  const baseUrl = isProduction 
+    ? 'https://curately.co.uk'
+    : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
   return `${baseUrl}/l/${shortCode}`
 }
 
