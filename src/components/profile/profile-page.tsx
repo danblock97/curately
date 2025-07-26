@@ -1292,10 +1292,18 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 	return (
 		<div className="min-h-screen" style={{ backgroundColor: page.background_color || '#ffffff' }}>
 			{/* Main Content */}
-			<div className={`${isMobile ? 'flex flex-col' : 'flex'} min-h-screen`}>
+			<div className={`${isMobile ? 'flex flex-col' : 'flex justify-center'} min-h-screen`}>
 				{/* Profile Section */}
-				<div className={`${isMobile ? 'w-full p-4' : 'w-1/2 p-8'} flex flex-col items-center`}>
-					<div className="w-full max-w-md">
+				<div className={`${
+					isMobile 
+						? 'w-full p-4' 
+						: 'w-[340px] lg:w-[400px] xl:w-[480px] 2xl:w-[520px] p-8 mx-4'
+				} flex flex-col items-center`}>
+					<div className={`w-full ${
+						isMobile 
+							? 'max-w-md' 
+							: 'max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl'
+					}`}>
 						{/* Profile Section */}
 						<div className="text-center mb-6">
 							<div className="mb-6">
@@ -1379,14 +1387,21 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				</div>
 
 				{/* Widgets Section */}
-				<div className={`${isMobile ? 'w-full p-4' : 'w-1/2 p-8 relative'}`}>
+				<div className={`${isMobile ? 'w-full p-4' : 'w-[740px] p-4 relative'}`}>
 					{isMobile ? (
-						<div className="flex justify-center">
+						<div className="flex justify-center lg:justify-end">
 							<div
-								className="relative min-h-[calc(100vh-250px)] w-80 rounded-lg p-6"
+								className="relative w-80 rounded-lg p-6"
 								style={{
 									maxWidth: "320px",
-									overflow: "hidden",
+									overflow: "visible",
+									minHeight: widgets.length > 0 ? Math.max(
+										600,
+										widgets.reduce((max, w) => {
+											const pos = w.mobilePosition || { y: 0 };
+											return Math.max(max, pos.y + 128 + 40); // widget height + padding
+										}, 600)
+									) + "px" : "600px",
 								}}
 							>
 								{!isHydrated || isLoadingWidgets ? (
@@ -1447,10 +1462,17 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 						</div>
 					) : (
 						<div
-							className="relative min-h-[calc(100vh-250px)] w-full rounded-lg p-6"
+							className="relative w-full rounded-lg p-6"
 							style={{
 								maxWidth: "100%",
-								overflow: "hidden",
+								overflow: "visible",
+								minHeight: widgets.length > 0 ? Math.max(
+									600,
+									widgets.reduce((max, w) => {
+										const pos = w.position || { y: 0 };
+										return Math.max(max, pos.y + 128 + 40); // widget height + padding
+									}, 600)
+								) + "px" : "600px",
 							}}
 						>
 							{!isHydrated || isLoadingWidgets ? (
