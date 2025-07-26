@@ -97,6 +97,7 @@ export default async function UserProfilePage({ params }: PageProps) {
     title: qr.title,
     url: qr.url,
     link_type: 'qr_code',
+    type: 'qr_code', // Add type property for ProfilePage component compatibility
     order: qr.order_index,
     clicks: qr.clicks,
     is_active: qr.is_active,
@@ -107,7 +108,7 @@ export default async function UserProfilePage({ params }: PageProps) {
     username: qr.username,
     display_name: qr.display_name,
     profile_image_url: qr.profile_image_url,
-    widget_type: qr.widget_type,
+    widget_type: qr.widget_type || 'qr_code',
     content: qr.content,
     caption: qr.caption,
     price: qr.price,

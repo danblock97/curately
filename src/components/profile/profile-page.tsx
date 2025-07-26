@@ -1241,6 +1241,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 					return renderSocialWidget();
 				case "link":
 					return renderSocialWidget();
+				case "qr_code":
+					return renderSocialWidget();
 				default:
 					return renderOtherWidget();
 			}
