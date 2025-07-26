@@ -13,26 +13,73 @@ import { AdvantagesSection } from '@/components/advantages-section'
 import { TestimonialsSection } from '@/components/testimonials-section'
 import { Footer } from '@/components/footer'
 import { AnimatedGridBackground } from '@/components/ui/animated-grid-background'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
 
 export function LandingPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [user, setUser] = useState<{ name: string } | null>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<{ display_name?: string } | null>(null)
+  const supabase = createClient()
 
-  // Check authentication status on mount
+  // Check authentication status on mount and listen for auth changes
   useEffect(() => {
-    const checkAuth = () => {
-      // Replace this with your actual auth check
-      const token = localStorage.getItem('auth-token')
-      if (token) {
-        setIsAuthenticated(true)
-        setUser({
-          name: 'John Smith' // This would come from your auth provider
-        })
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (user) {
+          setIsAuthenticated(true)
+          setUser(user)
+          
+          // Fetch user profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', user.id)
+            .single()
+          
+          setProfile(profile)
+        } else {
+          setIsAuthenticated(false)
+          setUser(null)
+          setProfile(null)
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error)
+        setIsAuthenticated(false)
+        setUser(null)
+        setProfile(null)
       }
     }
     
     checkAuth()
-  }, [])
+    
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setIsAuthenticated(true)
+        setUser(session.user)
+        
+        // Fetch user profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', session.user.id)
+          .single()
+        
+        setProfile(profile)
+      } else if (event === 'SIGNED_OUT') {
+        setIsAuthenticated(false)
+        setUser(null)
+        setProfile(null)
+      }
+    })
+    
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [supabase])
 
   return (
     <AnimatedGridBackground className="min-h-screen w-full bg-white">
@@ -58,7 +105,7 @@ export function LandingPage() {
                       <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </Button>
-                  <p className="text-base text-gray-500 mt-4 font-medium">Welcome back, {user?.name}!</p>
+                  <p className="text-base text-gray-500 mt-4 font-medium">Welcome back, {profile?.display_name || user?.email}!</p>
                 </>
               ) : (
                 <>
