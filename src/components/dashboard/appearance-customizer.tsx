@@ -2092,7 +2092,10 @@ export function AppearanceCustomizer({
 									} truncate`}
 								>
 									{activeView === "mobile"
-										? widget.data.title || widget.data.displayName || capitalizedPlatform || "Link"
+										? widget.data.title ||
+										  widget.data.displayName ||
+										  capitalizedPlatform ||
+										  "Link"
 										: widget.data.displayName ||
 										  (widget.data.username
 												? `@${widget.data.username}`
@@ -2185,7 +2188,10 @@ export function AppearanceCustomizer({
 									} font-medium text-white leading-tight`}
 								>
 									{activeView === "mobile"
-										? widget.data.title || widget.data.displayName || capitalizedPlatform || "Link"
+										? widget.data.title ||
+										  widget.data.displayName ||
+										  capitalizedPlatform ||
+										  "Link"
 										: widget.data.displayName ||
 										  (widget.data.username
 												? `@${widget.data.username}`
@@ -2913,12 +2919,16 @@ export function AppearanceCustomizer({
 				{/* Left Side - Profile Preview */}
 				<div
 					className={`${
-						activeView === "web" ? "w-2/5" : "w-full"
+						activeView === "web"
+							? "w-[340px] lg:w-[400px] xl:w-[480px] 2xl:w-[1000px]"
+							: "w-full"
 					} p-4 flex flex-col items-center`}
 				>
 					<div
 						className={`w-full ${
-							activeView === "web" ? "max-w-md" : "max-w-7xl"
+							activeView === "web"
+								? "max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl"
+								: "max-w-7xl"
 						}`}
 					>
 						{/* Profile Section */}
@@ -3019,7 +3029,7 @@ export function AppearanceCustomizer({
 
 						{/* Widgets Area - Only for mobile view */}
 						{activeView === "mobile" && (
-							<div className="flex justify-center">
+							<div className="flex justify-center lg:justify-end">
 								<div
 									ref={gridRef}
 									className={`relative min-h-[600px] w-[28rem] bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${
@@ -3038,7 +3048,7 @@ export function AppearanceCustomizer({
 										}px, rgba(0,0,0,0.08) 1px, transparent 1px)`,
 										backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
 										maxWidth: "320px",
-										overflow: "auto",
+										overflow: "visible",
 										scrollBehavior: "smooth",
 										minHeight:
 											Math.max(
@@ -3048,7 +3058,6 @@ export function AppearanceCustomizer({
 													return Math.max(max, pos.y + 128 + 40); // widget height + padding
 												}, 600)
 											) + "px",
-										maxHeight: "calc(100vh - 250px)",
 									}}
 								>
 									{!isHydrated || isLoadingWidgets ? (
@@ -3106,7 +3115,7 @@ export function AppearanceCustomizer({
 
 				{/* Right Side - Widget Grid (Web View Only) */}
 				{activeView === "web" && (
-					<div className="w-3/5 p-4">
+					<div className="w-[740px] p-4">
 						<div
 							ref={gridRef}
 							className={`relative min-h-[calc(100vh-250px)] w-full bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${
@@ -3121,7 +3130,18 @@ export function AppearanceCustomizer({
 								}px ${GRID_SIZE / 2}px, rgba(0,0,0,0.08) 1px, transparent 1px)`,
 								backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
 								maxWidth: "100%",
-								overflow: "hidden",
+								overflow: "visible",
+								minHeight:
+									widgets.length > 0
+										? Math.max(
+												600,
+												widgets.reduce((max, w) => {
+													const pos = w.position || { y: 0 };
+													const dims = getWidgetDimensions(w.size);
+													return Math.max(max, pos.y + dims.height + 40); // widget height + padding
+												}, 600)
+										  ) + "px"
+										: "600px",
 							}}
 						>
 							{!isHydrated || isLoadingWidgets ? (
