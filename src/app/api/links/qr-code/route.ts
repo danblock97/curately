@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { generateQRCode, generateQRCodeSVG, getQRCodeUrl } from '@/lib/qr-code'
+import { generateQRCode, generateQRCodeSVG } from '@/lib/qr-code'
 import { generateShortCode, formatUrl } from '@/lib/deeplink'
 import { withErrorHandling, AuthError, ValidationError, createSuccessResponse } from '@/lib/error-handler'
 import { validateQRCodeData } from '@/lib/validation'
@@ -138,16 +138,15 @@ export const POST = withErrorHandling(async (request: NextRequest, _context: { p
       .select('*', { count: 'exact' })
       .eq('user_id', user.id)
 
-    // Generate QR code
-    const shortUrl = getQRCodeUrl(shortCode)
+    // Generate QR code - use the actual target URL directly, not the short URL
     const qrCodeData = format === 'SVG' 
-      ? await generateQRCodeSVG(shortUrl, {
+      ? await generateQRCodeSVG(url, {
           size,
           errorCorrectionLevel: errorCorrection as 'L' | 'M' | 'Q' | 'H',
           foregroundColor,
           backgroundColor,
         })
-      : await generateQRCode(shortUrl, {
+      : await generateQRCode(url, {
           size,
           errorCorrectionLevel: errorCorrection as 'L' | 'M' | 'Q' | 'H',
           foregroundColor,
@@ -194,7 +193,7 @@ export const POST = withErrorHandling(async (request: NextRequest, _context: { p
 
   const response = createSuccessResponse({
     qrCode: qrCode,
-    shortUrl,
+    shortUrl: url, // Return the actual target URL since that's what the QR code points to
     shortCode,
     qrCodeData,
   }, 'QR code created successfully')
