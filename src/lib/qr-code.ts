@@ -116,7 +116,11 @@ export async function generateQRCodeBase64(
  * Get QR code URL for short code
  */
 export function getQRCodeUrl(shortCode: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  // Use production URL when in production, fallback to env var or localhost for development
+  const isProduction = process.env.NODE_ENV === 'production'
+  const baseUrl = isProduction 
+    ? 'https://curately.co.uk'
+    : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
   return `${baseUrl}/l/${shortCode}`
 }
 
