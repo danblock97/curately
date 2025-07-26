@@ -42,6 +42,7 @@ export interface Widget {
 	type:
 		| "social"
 		| "link"
+		| "qr_code"
 		| "image"
 		| "text"
 		| "voice"
