@@ -593,8 +593,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				if (extendedData.link_type === 'qr_code' && extendedData.qr_codes) {
 					const qrData = extendedData.qr_codes
 					
-					// Determine QR code size based on widget size
-					const qrSize = effectiveSize === 'large-square' ? 224 : 112 // 56*4=224, 28*4=112 for better quality
+					// Use the actual QR code size from database, same as appearance customizer
+					const qrSize = widget.data.size || 200 // Use database size or default to 200px for scannability
 					
 					// Get platform logo if it's a social media link
 					let logoUrl = ''
@@ -615,7 +615,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 							isMobile ? 'rounded-lg' : 'rounded-xl'
 						}`}>
 							{/* QR Code with branding */}
-							<div className="absolute inset-0 bg-white flex items-center justify-center">
+							<div className="absolute inset-0 bg-white flex items-center justify-center" style={{ pointerEvents: 'auto' }}>
 								<BrandedQRCode
 									url={widget.data.url || ''}
 									size={qrSize}
@@ -628,16 +628,6 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 								/>
 							</div>
 							
-							{/* Text overlay - compact and positioned to minimize QR code coverage */}
-							<div className={`absolute z-10 ${
-								isMobile ? 'bottom-1 left-1 right-1' : 'bottom-1 left-1 right-1'
-							}`}>
-								<div className={`${
-									isMobile ? 'text-xs' : 'text-xs'
-								} font-medium text-black bg-white/90 px-1.5 py-0.5 rounded text-center truncate`}>
-									{widget.data.title || 'QR Code'}
-								</div>
-							</div>
 						</div>
 					)
 				}
@@ -1270,17 +1260,17 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				key={widget.id}
 				className={`${
 					isMobile 
-						? `${sizeClass} transition-all duration-150 ease-out cursor-pointer mb-2 ${
+						? `${sizeClass} transition-all duration-150 ease-out ${widget.data.link_type !== 'qr_code' ? 'cursor-pointer' : ''} mb-2 ${
 							effectiveSize === 'small-square' || effectiveSize === 'medium-square' || effectiveSize === 'large-square' 
 								? 'mr-2' : ''
 						}` 
-						: `absolute ${sizeClass} transition-all duration-150 ease-out cursor-pointer`
+						: `absolute ${sizeClass} transition-all duration-150 ease-out ${widget.data.link_type !== 'qr_code' ? 'cursor-pointer' : ''}`
 				}`}
 				style={isMobile ? {} : {
 					transform: `translate(${currentPosition.x}px, ${currentPosition.y}px)`,
 					zIndex: 1,
 				}}
-				onClick={() => handleLinkClick(widget.id, widget.data.url || "")}
+				{...(widget.data.link_type !== 'qr_code' && { onClick: () => handleLinkClick(widget.id, widget.data.url || "") })}
 			>
 				<Card className={`h-full relative ${
 					isMobile 
