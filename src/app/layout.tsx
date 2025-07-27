@@ -63,17 +63,10 @@ export const metadata: Metadata = {
 			"Create stunning, personalized link-in-bio pages with Curately. Boost your online presence with custom QR codes, deep links, and professional analytics.",
 		images: [
 			{
-				url: "/logo-512x512.png",
-				width: 512,
-				height: 512,
-				alt: "Curately Logo",
-				type: "image/png",
-			},
-			{
-				url: "/logo-192x192.png",
-				width: 192,
-				height: 192,
-				alt: "Curately Logo",
+				url: "/og-image.png",
+				width: 1200,
+				height: 630,
+				alt: "Curately - Professional Link-in-Bio Tool",
 				type: "image/png",
 			},
 		],
@@ -83,7 +76,7 @@ export const metadata: Metadata = {
 		title: "Curately - Your Professional Link-in-Bio Tool",
 		description:
 			"Create stunning, personalized link-in-bio pages with Curately. Boost your online presence with custom QR codes, deep links, and professional analytics.",
-		images: ["/logo-512x512.png"],
+		images: ["/og-image.png"],
 		creator: "@curately",
 		site: "@curately",
 	},
