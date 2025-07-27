@@ -58,6 +58,17 @@ const essentialWidgets = [
   { name: 'Product', icon: Package, value: 'product', description: 'Highlight a product', color: 'bg-orange-500' },
 ]
 
+const qrCodePlatforms = [
+  { name: 'Instagram', icon: Instagram, value: 'instagram', color: 'bg-gradient-to-r from-purple-600 to-pink-600', baseUrl: 'https://instagram.com/' },
+  { name: 'TikTok', icon: Package, value: 'tiktok', color: 'bg-black', baseUrl: 'https://tiktok.com/@' },
+  { name: 'YouTube', icon: Youtube, value: 'youtube', color: 'bg-red-600', baseUrl: 'https://youtube.com/' },
+  { name: 'Twitter/X', icon: Twitter, value: 'x', color: 'bg-black', baseUrl: 'https://x.com/' },
+  { name: 'LinkedIn', icon: Linkedin, value: 'linkedin', color: 'bg-blue-600', baseUrl: 'https://linkedin.com/in/' },
+  { name: 'Spotify', icon: Music, value: 'spotify', color: 'bg-green-500', baseUrl: 'https://open.spotify.com/' },
+  { name: 'GitHub', icon: Github, value: 'github', color: 'bg-gray-800', baseUrl: 'https://github.com/' },
+  { name: 'Website', icon: Globe, value: 'website', color: 'bg-blue-500', baseUrl: 'https://' },
+]
+
 export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, userTier = 'free' }: WidgetModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedWidget, setSelectedWidget] = useState<string | null>(null)
@@ -164,6 +175,69 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
         return
       } finally {
         setIsConverting(false)
+      }
+    } else if (selectedWidget.startsWith('qr_')) {
+      // Handle QR code widget creation
+      if (!widgetData.url) {
+        toast.error('Please enter a URL for the QR code')
+        return
+      }
+
+      // Create QR code via API
+      try {
+        const response = await fetch('/api/links/qr-code', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: widgetData.title || `${widgetData.platform} QR Code`,
+            url: widgetData.url,
+            size: 200,
+            format: 'PNG',
+            errorCorrection: 'H',
+            foregroundColor: '#000000',
+            backgroundColor: '#FFFFFF',
+            platform: widgetData.platform,
+          }),
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Failed to create QR code')
+        }
+
+        const result = await response.json()
+        if (result.success && result.data.qrCode) {
+          // Create a widget for the QR code so it appears in the customizer
+          const qrWidget: Widget = {
+            id: result.data.qrCode.id, // Use the actual database ID
+            type: 'qr_code',
+            size: 'small-square',
+            data: {
+              title: widgetData.title || `${widgetData.platform} QR Code`,
+              url: widgetData.url,
+              platform: widgetData.platform,
+              description: `QR Code with ${widgetData.platform} logo`,
+              qr_code_data: result.data.qrCode.qr_code_data,
+              format: result.data.qrCode.format,
+              size: result.data.qrCode.qr_size,
+              foreground_color: result.data.qrCode.foreground_color,
+              background_color: result.data.qrCode.background_color,
+            },
+            position: { x: 0, y: 0 },
+            webPosition: { x: 0, y: 0 },
+            mobilePosition: { x: 0, y: 0 }
+          }
+
+          onAddWidget(qrWidget)
+          toast.success('QR code created successfully!')
+        } else {
+          throw new Error('Failed to create QR code')
+        }
+      } catch (error) {
+        console.error('QR code creation error:', error)
+        toast.error(`Failed to create QR code: ${error instanceof Error ? error.message : 'Unknown error'}`)
       }
     } else {
       // Handle normal widget creation
@@ -482,6 +556,47 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                 </div>
               </div>
 
+              {/* QR Codes with Platform Logos */}
+              <div>
+                <h3 className="font-medium text-gray-900 mb-3">QR Codes with Platform Logos</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {qrCodePlatforms.map((platform) => (
+                    <Card
+                      key={platform.value}
+                      className={`cursor-pointer bg-white hover:bg-gray-50 transition-colors border ${
+                        selectedWidget === `qr_${platform.value}` ? 'ring-2 ring-blue-500' : 'border-gray-200'
+                      }`}
+                      onClick={() => {
+                        setSelectedWidget(`qr_${platform.value}`)
+                        setWidgetData({ 
+                          platform: platform.value,
+                          title: platform.name,
+                          url: platform.baseUrl,
+                          baseUrl: platform.baseUrl
+                        })
+                      }}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-8 h-8 ${platform.color} rounded flex items-center justify-center`}>
+                              <platform.icon className="w-4 h-4 text-white" />
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900">{platform.name} QR</div>
+                              <div className="text-sm text-gray-500">QR code with {platform.name} logo</div>
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50">
+                            Add
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
               {/* Music & Podcasts */}
               <div>
                 <h3 className="font-medium text-gray-900 mb-3">Music & Podcasts</h3>
@@ -550,47 +665,62 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
               <div className="p-6 space-y-4">
                 <h3 className="font-medium text-gray-900">Configure Widget</h3>
                 
-                {(selectedWidget.startsWith('social_') || selectedWidget.startsWith('music_')) && (
+                {(selectedWidget.startsWith('social_') || selectedWidget.startsWith('music_') || selectedWidget.startsWith('qr_')) && (
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="username" className="text-gray-900">
-                        {widgetData.platform === 'website' ? 'Domain' : widgetData.platform === 'podcast' ? 'Podcast Name' : 'Username'}
+                        {widgetData.platform === 'website' ? 'Domain' : 
+                         widgetData.platform === 'podcast' ? 'Podcast Name' : 
+                         selectedWidget.startsWith('qr_') ? 'URL' : 'Username'}
                       </Label>
                       <Input
                         id="username"
-                        placeholder={widgetData.platform === 'website' ? 'example.com' : widgetData.platform === 'podcast' ? 'My Podcast' : 'username'}
-                        value={widgetData.username || ''}
+                        placeholder={widgetData.platform === 'website' ? 'example.com' : 
+                                    widgetData.platform === 'podcast' ? 'My Podcast' : 
+                                    selectedWidget.startsWith('qr_') ? 'https://tiktok.com/@username' : 'username'}
+                        value={selectedWidget.startsWith('qr_') ? widgetData.url || '' : widgetData.username || ''}
                         onChange={(e) => {
-                          const username = e.target.value
-                          const baseUrl = widgetData.baseUrl || ''
-                          let constructedUrl = ''
-                          
-                          if (widgetData.platform === 'website') {
-                            constructedUrl = username ? `https://${username}` : 'https://'
-                          } else if (widgetData.platform === 'podcast') {
-                            constructedUrl = username
+                          if (selectedWidget.startsWith('qr_')) {
+                            setWidgetData({...widgetData, url: e.target.value})
                           } else {
-                            constructedUrl = username ? baseUrl + username : baseUrl
+                            const username = e.target.value
+                            const baseUrl = widgetData.baseUrl || ''
+                            let constructedUrl = ''
+                            
+                            if (widgetData.platform === 'website') {
+                              constructedUrl = username ? `https://${username}` : 'https://'
+                            } else if (widgetData.platform === 'podcast') {
+                              constructedUrl = username
+                            } else {
+                              constructedUrl = username ? baseUrl + username : baseUrl
+                            }
+                            
+                            setWidgetData({...widgetData, username, url: constructedUrl})
                           }
-                          
-                          setWidgetData({...widgetData, username, url: constructedUrl})
                         }}
                         className="text-gray-900 bg-white"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="url" className="text-gray-900">Profile URL</Label>
+                      <Label htmlFor="url" className="text-gray-900">
+                        {selectedWidget.startsWith('qr_') ? 'QR Code URL' : 'Profile URL'}
+                      </Label>
                       <Input
                         id="url"
                         placeholder="https://..."
                         value={widgetData.url || widgetData.baseUrl || ''}
                         onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
-                        readOnly={widgetData.platform !== 'website' && widgetData.platform !== 'podcast'}
-                        className={`text-gray-900 ${widgetData.platform !== 'website' && widgetData.platform !== 'podcast' ? 'bg-gray-100' : 'bg-white'}`}
+                        readOnly={widgetData.platform !== 'website' && widgetData.platform !== 'podcast' && !selectedWidget.startsWith('qr_')}
+                        className={`text-gray-900 ${widgetData.platform !== 'website' && widgetData.platform !== 'podcast' && !selectedWidget.startsWith('qr_') ? 'bg-gray-100' : 'bg-white'}`}
                       />
-                      {widgetData.platform !== 'website' && widgetData.platform !== 'podcast' && (
+                      {widgetData.platform !== 'website' && widgetData.platform !== 'podcast' && !selectedWidget.startsWith('qr_') && (
                         <p className="text-xs text-gray-500 mt-1">
                           URL is automatically generated based on username
+                        </p>
+                      )}
+                      {selectedWidget.startsWith('qr_') && (
+                        <p className="text-xs text-blue-600 mt-1">
+                          💡 Platform logo will be automatically added to your QR code!
                         </p>
                       )}
                     </div>

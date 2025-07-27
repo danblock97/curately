@@ -12,6 +12,13 @@ export interface QRCodeSVGOptions extends QRCodeOptions {
   width?: number
 }
 
+export interface BrandedQRCodeOptions extends QRCodeOptions {
+  logoUrl?: string
+  logoSize?: number
+  logoBackgroundColor?: string
+  logoBorderColor?: string
+}
+
 /**
  * Generate QR code as PNG data URL
  */
@@ -196,20 +203,248 @@ export function getOptimalQRCodeSize(content: string): number {
 }
 
 /**
+ * Calculate optimal logo size based on QR code size for better visual appearance
+ */
+export function getOptimalLogoSize(qrSize: number): number {
+  if (qrSize <= 150) {
+    // Small QR codes: 40% of size, min 32px
+    return Math.max(qrSize * 0.40, 32)
+  } else if (qrSize <= 300) {
+    // Medium QR codes: 35% of size, min 60px, max 140px
+    const calculatedSize = qrSize * 0.35
+    return Math.max(Math.min(calculatedSize, 140), 60)
+  } else {
+    // Large QR codes: 30% of size, min 90px, max 200px
+    const calculatedSize = qrSize * 0.30
+    return Math.max(Math.min(calculatedSize, 200), 90)
+  }
+}
+
+/**
  * Generate QR code with custom branding (logo in center)
  */
 export async function generateBrandedQRCode(
   text: string,
-  options: QRCodeOptions & { logoUrl?: string } = {}
+  options: BrandedQRCodeOptions = {}
 ): Promise<string> {
-  // For now, just generate a regular QR code
-  // This could be enhanced to overlay a logo in the center
-  const qrCode = await generateQRCode(text, options)
-  
-  // Future enhancement: Add logo overlay functionality
-  // This would require canvas manipulation or image processing
-  
-  return qrCode
+  const {
+    size = 200,
+    errorCorrectionLevel = 'H', // Use high error correction for logo overlay
+    foregroundColor = '#000000',
+    backgroundColor = '#FFFFFF',
+    margin = 2, // Smaller margin for logo overlay
+    logoUrl,
+    logoSize = getOptimalLogoSize(size), // Dynamic sizing based on QR code size
+    logoBackgroundColor = '#FFFFFF',
+    logoBorderColor = '#E5E7EB'
+  } = options
+
+  try {
+    // Generate base QR code with high error correction
+    const qrCodeDataUrl = await QRCode.toDataURL(text, {
+      width: size,
+      errorCorrectionLevel,
+      color: {
+        dark: foregroundColor,
+        light: backgroundColor
+      },
+      margin
+    })
+
+    // If no logo, return the base QR code
+    if (!logoUrl) {
+      return qrCodeDataUrl
+    }
+
+    // Create canvas for logo overlay
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    if (!ctx) {
+      throw new Error('Failed to get canvas context')
+    }
+
+    // Set canvas size
+    canvas.width = size
+    canvas.height = size
+
+    // Load QR code image
+    const qrImage = new Image()
+    qrImage.crossOrigin = 'anonymous'
+    
+    await new Promise<void>((resolve, reject) => {
+      qrImage.onload = () => {
+        // Draw QR code
+        ctx.drawImage(qrImage, 0, 0, size, size)
+        
+        // Load and draw logo
+        const logoImage = new Image()
+        logoImage.crossOrigin = 'anonymous'
+        
+        logoImage.onload = () => {
+          // Calculate logo position (center)
+          const logoX = (size - logoSize) / 2
+          const logoY = (size - logoSize) / 2
+          const backdropSize = logoSize + 12 // 6px padding on each side
+
+          // Draw white backdrop circle
+          ctx.fillStyle = logoBackgroundColor
+          ctx.beginPath()
+          ctx.arc(size / 2, size / 2, backdropSize / 2, 0, 2 * Math.PI)
+          ctx.fill()
+
+          // Draw border around backdrop
+          ctx.strokeStyle = logoBorderColor
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          ctx.arc(size / 2, size / 2, backdropSize / 2, 0, 2 * Math.PI)
+          ctx.stroke()
+
+          // Draw logo
+          ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize)
+          
+          resolve()
+        }
+        
+        logoImage.onerror = () => {
+          // If logo fails to load, just return the QR code without logo
+          resolve()
+        }
+        
+        logoImage.src = logoUrl
+      }
+      
+      qrImage.onerror = () => {
+        reject(new Error('Failed to load QR code image'))
+      }
+      
+      qrImage.src = qrCodeDataUrl
+    })
+
+    return canvas.toDataURL('image/png')
+  } catch (error) {
+    console.error('Error generating branded QR code:', error)
+    // Fallback to regular QR code if branding fails
+    return generateQRCode(text, { size, errorCorrectionLevel, foregroundColor, backgroundColor, margin })
+  }
+}
+
+/**
+ * Generate branded QR code as PNG with logo overlay (server-side)
+ */
+export async function generateBrandedQRCodeServer(
+  text: string,
+  options: BrandedQRCodeOptions = {}
+): Promise<string> {
+  const {
+    size = 200,
+    errorCorrectionLevel = 'H', // Use high error correction for logo overlay
+    foregroundColor = '#000000',
+    backgroundColor = '#FFFFFF',
+    margin = 2, // Smaller margin for logo overlay
+    logoUrl,
+    logoSize = getOptimalLogoSize(size), // Dynamic sizing based on QR code size
+    logoBackgroundColor = '#FFFFFF',
+    logoBorderColor = '#E5E7EB'
+  } = options
+
+  try {
+    // Generate base QR code as buffer
+    const qrCodeBuffer = await QRCode.toBuffer(text, {
+      width: size,
+      errorCorrectionLevel,
+      color: {
+        dark: foregroundColor,
+        light: backgroundColor
+      },
+      margin
+    })
+
+    // If no logo, return the base QR code as data URL
+    if (!logoUrl) {
+      return `data:image/png;base64,${qrCodeBuffer.toString('base64')}`
+    }
+
+    // For server-side, we'll use a simpler approach
+    // Since we can't easily overlay images on the server without additional libraries,
+    // we'll return the base QR code and let the client handle logo overlay
+    // In a production environment, you might want to use a library like Sharp or Jimp
+    
+    console.log('Server-side branded QR: Logo URL provided but server-side overlay not implemented')
+    return `data:image/png;base64,${qrCodeBuffer.toString('base64')}`
+  } catch (error) {
+    console.error('Error generating branded QR code (server):', error)
+    // Fallback to regular QR code if branding fails
+    return generateQRCode(text, { size, errorCorrectionLevel, foregroundColor, backgroundColor, margin })
+  }
+}
+
+/**
+ * Generate branded QR code as SVG (for server-side use)
+ */
+export async function generateBrandedQRCodeSVG(
+  text: string,
+  options: BrandedQRCodeOptions & { width?: number } = {}
+): Promise<string> {
+  const {
+    width = 200,
+    errorCorrectionLevel = 'H',
+    foregroundColor = '#000000',
+    backgroundColor = '#FFFFFF',
+    margin = 2,
+    logoUrl,
+    logoSize = getOptimalLogoSize(width),
+    logoBackgroundColor = '#FFFFFF',
+    logoBorderColor = '#E5E7EB'
+  } = options
+
+  try {
+    // Generate base SVG QR code
+    const qrCodeSVG = await QRCode.toString(text, {
+      type: 'svg',
+      width,
+      errorCorrectionLevel,
+      color: {
+        dark: foregroundColor,
+        light: backgroundColor
+      },
+      margin
+    })
+
+    // If no logo, return the base SVG
+    if (!logoUrl) {
+      return qrCodeSVG
+    }
+
+    // For SVG, we'll return the base QR code with a comment about logo overlay
+    // In a real implementation, you'd need to parse the SVG and add logo elements
+    // For now, we'll return the base SVG and handle logo overlay on the client side
+    return qrCodeSVG
+  } catch (error) {
+    console.error('Error generating branded QR code SVG:', error)
+    throw new Error('Failed to generate branded QR code SVG')
+  }
+}
+
+/**
+ * Get platform logo URL for social media QR codes
+ */
+export function getPlatformLogoUrl(platform: string): string | null {
+  const platformLogos: Record<string, string> = {
+    'instagram': '/platform-logos/instagram.png',
+    'tiktok': '/platform-logos/tiktok.png',
+    'twitter': '/platform-logos/x.png',
+    'x': '/platform-logos/x.png',
+    'facebook': '/platform-logos/facebook.png',
+    'linkedin': '/platform-logos/linkedin.png',
+    'youtube': '/platform-logos/youtube.png',
+    'spotify': '/platform-logos/spotify.png',
+    'apple_music': '/platform-logos/apple-music.png',
+    'soundcloud': '/platform-logos/soundcloud.png',
+    'github': '/platform-logos/github.png',
+    'website': '/platform-logos/website.png'
+  }
+
+  return platformLogos[platform.toLowerCase()] || null
 }
 
 /**

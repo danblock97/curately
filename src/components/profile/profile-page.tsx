@@ -16,6 +16,8 @@ import {
 	Smartphone,
 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
+import { getPlatformLogoUrl, getOptimalLogoSize } from "@/lib/qr-code";
+import { BrandedQRCode } from "@/components/ui/branded-qr-code";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Page = Database["public"]["Tables"]["pages"]["Row"];
@@ -76,6 +78,7 @@ export interface Widget {
 		appStoreUrl?: string;
 		playStoreUrl?: string;
 		fileUrl?: string;
+		customLogoUrl?: string;
 	};
 	position: { x: number; y: number };
 	webPosition: { x: number; y: number };
@@ -361,6 +364,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									appStoreUrl: link.app_store_url || "",
 									playStoreUrl: link.play_store_url || "",
 									fileUrl: link.file_url || "",
+									customLogoUrl: link.custom_logo_url || "",
 									link_type: link.link_type || undefined,
 									qr_codes: link.qr_codes || undefined,
 								},
@@ -587,29 +591,39 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				if (extendedData.link_type === 'qr_code' && extendedData.qr_codes) {
 					const qrData = extendedData.qr_codes
 					
+					// Determine QR code size based on widget size
+					const qrSize = effectiveSize === 'large-square' ? 224 : 112 // 56*4=224, 28*4=112 for better quality
+					
+					// Get platform logo if it's a social media link
+					let logoUrl = ''
+					if (widget.data.platform) {
+						logoUrl = getPlatformLogoUrl(widget.data.platform) || ''
+					}
+					
+					// For custom branding, check if user has uploaded a custom logo
+					// This would be stored in the widget data or profile
+					const customLogoUrl = widget.data.customLogoUrl || ''
+					
+					// Use custom logo if available, otherwise platform logo
+					const finalLogoUrl = customLogoUrl || logoUrl
+					
 					// Square layouts only - match exact AppearanceCustomizer styling
 					return (
 						<div className={`relative h-full w-full overflow-hidden ${
 							isMobile ? 'rounded-lg' : 'rounded-xl'
 						}`}>
-							{/* QR Code with white background */}
+							{/* QR Code with branding */}
 							<div className="absolute inset-0 bg-white flex items-center justify-center">
-								{qrData.format === 'SVG' ? (
-									<div 
-										className={`${
-											effectiveSize === 'large-square' ? 'w-56 h-56' : 'w-28 h-28'
-										} [&>svg]:w-full [&>svg]:h-full`}
-										dangerouslySetInnerHTML={{ __html: qrData.qr_code_data }}
-									/>
-								) : (
-									<img 
-										src={qrData.qr_code_data}
-										alt={`QR Code for ${widget.data.title}`}
-										className={`${
-											effectiveSize === 'large-square' ? 'w-56 h-56' : 'w-28 h-28'
-										} object-contain`}
-									/>
-								)}
+								<BrandedQRCode
+									url={widget.data.url || ''}
+									size={qrSize}
+									logoUrl={finalLogoUrl}
+									logoSize={getOptimalLogoSize(qrSize)}
+									errorCorrection="H"
+									foregroundColor={qrData.foreground_color || '#000000'}
+									backgroundColor={qrData.background_color || '#FFFFFF'}
+									className={effectiveSize === 'large-square' ? 'w-56 h-56' : 'w-28 h-28'}
+								/>
 							</div>
 							
 							{/* Text overlay - compact and positioned to minimize QR code coverage */}

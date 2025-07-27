@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { generateQRCode, generateQRCodeSVG } from '@/lib/qr-code'
+import { generateQRCode, generateQRCodeSVG, generateBrandedQRCodeServer, generateBrandedQRCodeSVG, getPlatformLogoUrl } from '@/lib/qr-code'
 import { generateShortCode, formatUrl } from '@/lib/deeplink'
 import { withErrorHandling, AuthError, ValidationError, createSuccessResponse } from '@/lib/error-handler'
 import { validateQRCodeData } from '@/lib/validation'
@@ -79,6 +79,8 @@ export const POST = withErrorHandling(async (request: NextRequest, _context: { p
     backgroundColor = '#FFFFFF',
     format = 'PNG',
     pageId,
+    logoFile, // Base64 encoded logo file for pro users
+    platform, // Platform for automatic logo detection
   } = validation.data
 
   // Sanitize inputs
@@ -103,6 +105,54 @@ export const POST = withErrorHandling(async (request: NextRequest, _context: { p
     }
     
     finalPageId = primaryPage.id
+  }
+
+  // Handle logo upload and platform logos
+  let logoUrl: string | null = null
+  
+  // Platform logos are available for all users
+  if (platform) {
+    logoUrl = getPlatformLogoUrl(platform)
+  }
+  
+  // Custom logo upload is pro-only
+  if (logoFile && profile?.tier === 'pro') {
+    try {
+      const fileExt = 'png' // Assume PNG for logo uploads
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      const filePath = `${user.id}/qr-logos/${fileName}`
+
+      // Convert base64 to buffer
+      const base64Data = logoFile.replace(/^data:image\/[a-z]+;base64,/, '')
+      const buffer = Buffer.from(base64Data, 'base64')
+
+      const { error: uploadError } = await supabase.storage
+        .from('widget-uploads')
+        .upload(filePath, buffer, {
+          contentType: 'image/png',
+          cacheControl: '3600'
+        })
+
+      if (uploadError) {
+        console.error('Logo upload error:', uploadError)
+        return NextResponse.json(
+          { error: 'Failed to upload logo' },
+          { status: 500 }
+        )
+      }
+
+      const { data } = supabase.storage
+        .from('widget-uploads')
+        .getPublicUrl(filePath)
+
+      logoUrl = data.publicUrl
+    } catch (error) {
+      console.error('Logo upload error:', error)
+      return NextResponse.json(
+        { error: 'Failed to upload logo' },
+        { status: 500 }
+      )
+    }
   }
 
     // Generate unique short code
@@ -138,20 +188,43 @@ export const POST = withErrorHandling(async (request: NextRequest, _context: { p
       .select('*', { count: 'exact' })
       .eq('user_id', user.id)
 
-    // Generate QR code - use the actual target URL directly, not the short URL
-    const qrCodeData = format === 'SVG' 
-      ? await generateQRCodeSVG(url, {
-          size,
-          errorCorrectionLevel: errorCorrection as 'L' | 'M' | 'Q' | 'H',
-          foregroundColor,
-          backgroundColor,
-        })
-      : await generateQRCode(url, {
-          size,
-          errorCorrectionLevel: errorCorrection as 'L' | 'M' | 'Q' | 'H',
-          foregroundColor,
-          backgroundColor,
-        })
+    // Generate QR code - use branded QR code if logo is provided
+    let qrCodeData: string
+    
+    if (logoUrl) {
+      // For now, generate regular QR code and let client handle logo overlay
+      // In production, you might want to use a library like Sharp for server-side logo overlay
+      qrCodeData = format === 'SVG' 
+        ? await generateQRCodeSVG(url, {
+            width: size,
+            errorCorrectionLevel: 'H', // Use high error correction for logo overlay
+            foregroundColor,
+            backgroundColor,
+            margin: 2, // Smaller margin for logo overlay
+          })
+        : await generateQRCode(url, {
+            size,
+            errorCorrectionLevel: 'H', // Use high error correction for logo overlay
+            foregroundColor,
+            backgroundColor,
+            margin: 2, // Smaller margin for logo overlay
+          })
+    } else {
+      // Generate regular QR code
+      qrCodeData = format === 'SVG' 
+        ? await generateQRCodeSVG(url, {
+            width: size,
+            errorCorrectionLevel: errorCorrection as 'L' | 'M' | 'Q' | 'H',
+            foregroundColor,
+            backgroundColor,
+          })
+        : await generateQRCode(url, {
+            size,
+            errorCorrectionLevel: errorCorrection as 'L' | 'M' | 'Q' | 'H',
+            foregroundColor,
+            backgroundColor,
+          })
+    }
 
     // Create QR code directly in qr_codes table (no links table needed)
     const { data: qrCode, error: qrCodeError } = await supabase
@@ -168,9 +241,11 @@ export const POST = withErrorHandling(async (request: NextRequest, _context: { p
         format,
         qr_size: size, // Rename to qr_size for the pixel dimensions
         size: 'small-square', // Default widget size
-        error_correction: errorCorrection,
+        error_correction: logoUrl ? 'H' : errorCorrection, // Use high error correction if logo is present
         foreground_color: foregroundColor,
         background_color: backgroundColor,
+        logo_url: logoUrl,
+        platform: platform || null,
       })
       .select()
       .single()
@@ -196,6 +271,7 @@ export const POST = withErrorHandling(async (request: NextRequest, _context: { p
     shortUrl: url, // Return the actual target URL since that's what the QR code points to
     shortCode,
     qrCodeData,
+    logoUrl,
   }, 'QR code created successfully')
 
   // Add security headers

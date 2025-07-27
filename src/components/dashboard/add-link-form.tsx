@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { Database } from '@/lib/supabase/types'
-import { Link2, ExternalLink, QrCode } from 'lucide-react'
+import { Link2, ExternalLink, QrCode, Upload, X } from 'lucide-react'
 import { LoadingButton } from '@/components/ui/loading'
 import { checkCanCreateLink } from '@/hooks/use-plan-limits'
+import { getPlatformLogoUrl } from '@/lib/qr-code'
 
 type Link = Database['public']['Tables']['links']['Row']
 type QRCode = Database['public']['Tables']['qr_codes']['Row']
@@ -56,6 +57,9 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
   const [qrErrorCorrection, setQrErrorCorrection] = useState('M')
   const [qrForeground, setQrForeground] = useState('#000000')
   const [qrBackground, setQrBackground] = useState('#FFFFFF')
+  const [qrLogoFile, setQrLogoFile] = useState<File | null>(null)
+  const [qrLogoPreview, setQrLogoPreview] = useState<string | null>(null)
+  const [qrPlatform, setQrPlatform] = useState<string>('')
 
   const handleLinkInBioSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -107,7 +111,7 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
     // Check plan limits first
     const limitCheck = checkCanCreateLink(existingLinks, 'deeplink', userTier, existingQrCodes.map(qr => ({ is_active: true })))
     if (!limitCheck.canCreate) {
-      toast.error(limitCheck.reason || 'Cannot create more links')
+      toast.error(limitCheck.reason || 'Cannot create more deeplinks')
       return
     }
     
@@ -121,11 +125,12 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
         },
         body: JSON.stringify({
           title: title.trim(),
-          originalUrl: url.trim(),
+          url: url.trim(),
           iosUrl: iosUrl.trim() || undefined,
           androidUrl: androidUrl.trim() || undefined,
           desktopUrl: desktopUrl.trim() || undefined,
           fallbackUrl: fallbackUrl.trim() || undefined,
+          order: nextOrder,
           pageId: pageId,
         }),
       })
@@ -139,7 +144,7 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
       const result = await response.json()
       const link = result.success ? result.data.link : result.link
       onLinkAdded(link)
-      toast.success('Deeplink created successfully!')
+      toast.success('Deeplink added successfully!')
       resetForm()
     } catch (error) {
       toast.error('An error occurred. Please try again.')
@@ -161,6 +166,31 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
     setIsLoading(true)
 
     try {
+      // Convert logo file to base64 if provided
+      let logoFileBase64: string | undefined
+      if (qrLogoFile) {
+        const reader = new FileReader()
+        logoFileBase64 = await new Promise((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = reject
+          reader.readAsDataURL(qrLogoFile)
+        })
+      }
+
+      // Detect platform from URL if not manually set
+      let detectedPlatform = qrPlatform
+      if (!detectedPlatform && url) {
+        const urlLower = url.toLowerCase()
+        if (urlLower.includes('instagram.com')) detectedPlatform = 'instagram'
+        else if (urlLower.includes('tiktok.com')) detectedPlatform = 'tiktok'
+        else if (urlLower.includes('twitter.com') || urlLower.includes('x.com')) detectedPlatform = 'x'
+        else if (urlLower.includes('facebook.com')) detectedPlatform = 'facebook'
+        else if (urlLower.includes('linkedin.com')) detectedPlatform = 'linkedin'
+        else if (urlLower.includes('youtube.com')) detectedPlatform = 'youtube'
+        else if (urlLower.includes('spotify.com')) detectedPlatform = 'spotify'
+        else if (urlLower.includes('github.com')) detectedPlatform = 'github'
+      }
+
       const response = await fetch('/api/links/qr-code', {
         method: 'POST',
         headers: {
@@ -175,6 +205,8 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
           foregroundColor: qrForeground,
           backgroundColor: qrBackground,
           pageId: pageId,
+          logoFile: logoFileBase64,
+          platform: detectedPlatform,
         }),
       })
 
@@ -207,6 +239,43 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
     }
   }
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Check if user is pro for custom logo upload
+    if (userTier !== 'pro') {
+      toast.error('Custom logo upload is available for Pro users only')
+      return
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Logo file must be smaller than 2MB')
+      return
+    }
+
+    setQrLogoFile(file)
+
+    // Create preview
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setQrLogoPreview(e.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeLogo = () => {
+    setQrLogoFile(null)
+    setQrLogoPreview(null)
+  }
+
   const resetForm = () => {
     setTitle('')
     setUrl('')
@@ -219,6 +288,9 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
     setQrErrorCorrection('M')
     setQrForeground('#000000')
     setQrBackground('#FFFFFF')
+    setQrLogoFile(null)
+    setQrLogoPreview(null)
+    setQrPlatform('')
   }
 
   // Pre-fill form if platform is selected
@@ -226,9 +298,11 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
     if (selectedPlatform) {
       setTitle(selectedPlatform.name)
       setUrl(selectedPlatform.url)
+      setQrPlatform(selectedPlatform.name.toLowerCase())
     } else {
       setTitle('')
       setUrl('')
+      setQrPlatform('')
     }
   }, [selectedPlatform])
 
@@ -505,6 +579,60 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
                   required
                   className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
                 />
+              </div>
+
+              {/* Logo Upload Section */}
+              <div className="space-y-2">
+                <Label className="text-gray-900">Logo (Optional)</Label>
+                <div className="space-y-3">
+                  {qrLogoPreview ? (
+                    <div className="flex items-center space-x-3">
+                      <div className="relative">
+                        <img 
+                          src={qrLogoPreview} 
+                          alt="Logo preview" 
+                          className="w-12 h-12 object-cover rounded border border-gray-300"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeLogo}
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600">{qrLogoFile?.name}</p>
+                        <p className="text-xs text-gray-500">Logo will be automatically added to your QR code</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                        id="qr-logo-upload"
+                        disabled={userTier !== 'pro'}
+                      />
+                      <label htmlFor="qr-logo-upload" className={`cursor-pointer ${userTier !== 'pro' ? 'opacity-50' : ''}`}>
+                        <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-600">
+                          {userTier === 'pro' ? 'Click to upload custom logo' : 'Custom logos available on Pro'}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {userTier === 'pro' ? 'PNG, JPG up to 2MB' : 'Platform logos are automatically added'}
+                        </p>
+                      </label>
+                    </div>
+                  )}
+                </div>
+                {userTier !== 'pro' && (
+                  <p className="text-xs text-blue-600">
+                    💡 Platform logos (Instagram, TikTok, etc.) are automatically added to your QR codes!
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

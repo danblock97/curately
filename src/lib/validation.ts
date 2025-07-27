@@ -113,6 +113,8 @@ export const qrCodeSchema = z.object({
   foregroundColor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid hex color').default('#000000'),
   backgroundColor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid hex color').default('#FFFFFF'),
   pageId: z.string().uuid().optional(),
+  logoFile: z.string().optional(), // Base64 encoded logo file for pro users
+  platform: z.string().optional(), // Platform for automatic logo detection
 })
 
 // Social media validation

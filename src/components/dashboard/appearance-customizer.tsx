@@ -32,6 +32,8 @@ import { toast } from "sonner";
 import { WidgetModal } from "./widget-modal";
 import { createClient } from "@/lib/supabase/client";
 import { usePlanLimits, checkCanCreateLink } from "@/hooks/use-plan-limits";
+import { getPlatformLogoUrl, getOptimalLogoSize } from "@/lib/qr-code";
+import { BrandedQRCode } from "@/components/ui/branded-qr-code";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type SocialLink = Database["public"]["Tables"]["social_media_links"]["Row"];
@@ -1317,7 +1319,36 @@ export function AppearanceCustomizer({
 				}
 			}
 
-			// Save to links table
+			// Handle QR code widgets differently - they're already created in qr_codes table
+			if (widget.type === "qr_code") {
+				// QR code widgets are already created via API, just add to local state
+				const newWidget: Widget = {
+					id: widget.id,
+					type: widget.type,
+					size: widget.size,
+					data: {
+						...widget.data,
+						title: widget.data.title,
+						url: widget.data.url,
+						platform: widget.data.platform,
+						qr_code_data: widget.data.qr_code_data,
+						format: widget.data.format,
+						size: widget.data.size,
+						foreground_color: widget.data.foreground_color,
+						background_color: widget.data.background_color,
+					},
+					position: getInitialPosition(widget),
+					webPosition: getInitialPosition(widget),
+					mobilePosition: getInitialPosition(widget),
+				};
+
+				setWidgets((prev) => [...prev, newWidget]);
+				setShowWidgetModal(false);
+				toast.success("QR code widget added successfully");
+				return;
+			}
+
+			// Save to links table for non-QR code widgets
 			const { data: linkData, error: linkError } = await supabase
 				.from("links")
 				.insert({
@@ -2558,6 +2589,8 @@ export function AppearanceCustomizer({
 				// Get QR code data directly from widget (QR codes maintain database properties)
 				const qrCodeData = widget.data.qr_code_data;
 				const qrFormat = widget.data.format;
+				const platform = widget.data.platform;
+				const logoUrl = platform ? getPlatformLogoUrl(platform) : null;
 
 				if (!qrCodeData) {
 					return (
@@ -2579,6 +2612,31 @@ export function AppearanceCustomizer({
 						? "max-w-52 max-h-52"
 						: "max-w-32 max-h-32";
 
+				// If we have a platform logo, use the BrandedQRCode component
+				if (logoUrl && widget.data.url) {
+					return (
+						<div className="flex flex-col items-center justify-center h-full p-1">
+							<div className="flex-1 flex items-center justify-center">
+								<div className={`w-full h-full ${qrSizeClass}`}>
+									<BrandedQRCode
+										url={widget.data.url}
+										size={widget.data.size || 200}
+										logoUrl={logoUrl}
+										logoSize={getOptimalLogoSize(widget.data.size || 200)}
+										errorCorrection="H"
+										foregroundColor={widget.data.foreground_color || '#000000'}
+										backgroundColor={widget.data.background_color || '#FFFFFF'}
+									/>
+								</div>
+							</div>
+							<div className="text-xs text-gray-700 text-center mt-1 line-clamp-1">
+								{widget.data.title}
+							</div>
+						</div>
+					);
+				}
+
+				// Fallback to regular QR code display
 				return (
 					<div className="flex flex-col items-center justify-center h-full p-1">
 						<div className="flex-1 flex items-center justify-center">

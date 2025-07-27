@@ -251,49 +251,115 @@ export interface Database {
       qr_codes: {
         Row: {
           id: string
-          link_id: string
+          user_id: string
+          page_id: string | null
+          title: string
+          url: string
+          order_index: number
+          short_code: string
+          is_active: boolean
+          clicks: number
           qr_code_data: string
           format: string
-          size: number
+          qr_size: number
+          size: string
           error_correction: string
           foreground_color: string
           background_color: string
           logo_url: string | null
+          platform: string | null
+          username: string | null
+          display_name: string | null
+          profile_image_url: string | null
+          widget_type: string
+          content: string | null
+          caption: string | null
+          price: string | null
+          app_store_url: string | null
+          play_store_url: string | null
+          file_url: string | null
+          widget_position: Json | null
+          web_position: Json | null
+          mobile_position: Json | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
-          link_id: string
+          user_id: string
+          page_id?: string | null
+          title: string
+          url: string
+          order_index?: number
+          short_code: string
+          is_active?: boolean
+          clicks?: number
           qr_code_data: string
           format?: string
-          size?: number
+          qr_size?: number
+          size?: string
           error_correction?: string
           foreground_color?: string
           background_color?: string
           logo_url?: string | null
+          platform?: string | null
+          username?: string | null
+          display_name?: string | null
+          profile_image_url?: string | null
+          widget_type?: string
+          content?: string | null
+          caption?: string | null
+          price?: string | null
+          app_store_url?: string | null
+          play_store_url?: string | null
+          file_url?: string | null
+          widget_position?: Json | null
+          web_position?: Json | null
+          mobile_position?: Json | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
-          link_id?: string
+          user_id?: string
+          page_id?: string | null
+          title?: string
+          url?: string
+          order_index?: number
+          short_code?: string
+          is_active?: boolean
+          clicks?: number
           qr_code_data?: string
           format?: string
-          size?: number
+          qr_size?: number
+          size?: string
           error_correction?: string
           foreground_color?: string
           background_color?: string
           logo_url?: string | null
+          platform?: string | null
+          username?: string | null
+          display_name?: string | null
+          profile_image_url?: string | null
+          widget_type?: string
+          content?: string | null
+          caption?: string | null
+          price?: string | null
+          app_store_url?: string | null
+          play_store_url?: string | null
+          file_url?: string | null
+          widget_position?: Json | null
+          web_position?: Json | null
+          mobile_position?: Json | null
           created_at?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "qr_codes_link_id_fkey"
-            columns: ["link_id"]
-            isOneToOne: true
-            referencedRelation: "links"
+            foreignKeyName: "qr_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           }
         ]
