@@ -173,6 +173,7 @@ export function AppearanceCustomizer({
 	const [widgets, setWidgets] = useState<Widget[]>([]);
 	const [hoveredWidget, setHoveredWidget] = useState<string | null>(null);
 	const [draggedWidget, setDraggedWidget] = useState<string | null>(null);
+	const [widgetModalDefaultType, setWidgetModalDefaultType] = useState<string | null>(null);
 	const [dragPreview, setDragPreview] = useState<{
 		x: number;
 		y: number;
@@ -595,6 +596,21 @@ export function AppearanceCustomizer({
 			setIsLoadingWidgets(false);
 		}
 	}, [links?.length, qrCodes?.length, currentPage?.id, profile?.id]);
+
+	// Listen for widget modal events from dashboard
+	useEffect(() => {
+		const handleOpenWidgetsModal = (event: CustomEvent) => {
+			const { type } = event.detail;
+			setWidgetModalDefaultType(type);
+			setShowWidgetModal(true);
+		};
+
+		window.addEventListener('openWidgetsModal', handleOpenWidgetsModal as EventListener);
+
+		return () => {
+			window.removeEventListener('openWidgetsModal', handleOpenWidgetsModal as EventListener);
+		};
+	}, []);
 
 	const fetchLinkMetadata = async (url: string) => {
 		try {
@@ -3321,11 +3337,15 @@ export function AppearanceCustomizer({
 			{showWidgetModal && (
 				<WidgetModal
 					isOpen={showWidgetModal}
-					onClose={() => setShowWidgetModal(false)}
+					onClose={() => {
+						setShowWidgetModal(false);
+						setWidgetModalDefaultType(null);
+					}}
 					onAddWidget={handleAddWidget}
 					socialLinks={socialLinks}
 					links={links}
 					userTier={profile.tier}
+					defaultType={widgetModalDefaultType}
 				/>
 			)}
 

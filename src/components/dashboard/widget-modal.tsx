@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -37,6 +37,7 @@ interface WidgetModalProps {
   socialLinks: Database['public']['Tables']['social_media_links']['Row'][]
   links: Database['public']['Tables']['links']['Row'][]
   userTier?: Database['public']['Enums']['user_tier']
+  defaultType?: string | null
 }
 
 const socialPlatforms = [
@@ -69,10 +70,11 @@ const qrCodePlatforms = [
   { name: 'Website', icon: Globe, value: 'website', color: 'bg-blue-500', baseUrl: 'https://' },
 ]
 
-export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, userTier = 'free' }: WidgetModalProps) {
+export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, userTier = 'free', defaultType = null }: WidgetModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedWidget, setSelectedWidget] = useState<string | null>(null)
   const [isConverting, setIsConverting] = useState(false)
+  const [showDetailsPage, setShowDetailsPage] = useState(false)
   const [widgetData, setWidgetData] = useState<{
     platform?: string
     username?: string
@@ -86,7 +88,44 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
     price?: string
     appStoreUrl?: string
     playStoreUrl?: string
+    customLogoUrl?: string
   }>({})
+
+  // Handle defaultType from dashboard
+  React.useEffect(() => {
+    if (defaultType && isOpen) {
+      if (defaultType === 'link') {
+        setSelectedWidget('essential_link')
+        setWidgetData({ type: 'link', title: '', url: '' })
+        setShowDetailsPage(true)
+      } else if (defaultType === 'deeplink') {
+        setSelectedWidget('essential_deeplink')
+        setWidgetData({ type: 'deeplink', title: '', url: '' })
+        setShowDetailsPage(true)
+      } else if (defaultType === 'qr_code') {
+        // For QR codes, don't auto-select - show the QR code section
+        setShowDetailsPage(false)
+        // Scroll to QR codes section after a brief delay
+        setTimeout(() => {
+          const qrSection = document.querySelector('[data-section="qr-codes"]')
+          if (qrSection) {
+            qrSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }, 100)
+      }
+    }
+  }, [defaultType, isOpen])
+
+  // Reset state when modal closes
+  React.useEffect(() => {
+    if (!isOpen) {
+      setSelectedWidget(null)
+      setWidgetData({})
+      setShowDetailsPage(false)
+      setSearchTerm('')
+      setIsConverting(false)
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -277,11 +316,49 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
       url: selectedPlatform?.baseUrl || 'https://',
       baseUrl: selectedPlatform?.baseUrl || 'https://' 
     })
+    setShowDetailsPage(true)
   }
 
   const handleEssentialSelect = (type: string) => {
     setSelectedWidget(`essential_${type}`)
     setWidgetData({ type, title: '', url: '' })
+    setShowDetailsPage(true)
+  }
+
+  const handleQRSelect = (platform: string) => {
+    const selectedPlatform = qrCodePlatforms.find(p => p.value === platform)
+    setSelectedWidget(`qr_${platform}`)
+    setWidgetData({ 
+      platform: platform,
+      title: selectedPlatform?.name || platform,
+      url: selectedPlatform?.baseUrl || 'https://',
+      baseUrl: selectedPlatform?.baseUrl || 'https://'
+    })
+    setShowDetailsPage(true)
+  }
+
+  const handleMusicSelect = (platform: string) => {
+    const musicPlatforms = [
+      { name: 'Spotify', value: 'spotify', baseUrl: 'https://open.spotify.com/user/' },
+      { name: 'Apple Music', value: 'apple_music', baseUrl: 'https://music.apple.com/profile/' },
+      { name: 'SoundCloud', value: 'soundcloud', baseUrl: 'https://soundcloud.com/' },
+      { name: 'Podcast', value: 'podcast', baseUrl: '' },
+    ]
+    const selectedPlatform = musicPlatforms.find(p => p.value === platform)
+    setSelectedWidget(`music_${platform}`)
+    setWidgetData({ 
+      platform: platform, 
+      username: '', 
+      url: selectedPlatform?.baseUrl || 'https://',
+      baseUrl: selectedPlatform?.baseUrl || 'https://' 
+    })
+    setShowDetailsPage(true)
+  }
+
+  const handleBackToSelection = () => {
+    setShowDetailsPage(false)
+    setSelectedWidget(null)
+    setWidgetData({})
   }
 
   const filteredSocial = socialPlatforms.filter(platform =>
@@ -297,15 +374,248 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
       <div className="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-4xl max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Add a widget</h2>
+          <div className="flex items-center space-x-4">
+            {showDetailsPage && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleBackToSelection}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
+                Back
+              </Button>
+            )}
+            <h2 className="text-xl font-semibold text-gray-900">
+              {showDetailsPage ? 'Configure Widget' : 'Add a widget'}
+            </h2>
+          </div>
           <Button variant="ghost" size="sm" onClick={onClose} className="text-black hover:text-black">
             <X className="w-4 h-4" />
           </Button>
         </div>
 
-        <div className="flex h-[calc(90vh-200px)]">
-          {/* Left Side - Widget Selection */}
-          <div className="flex-1 overflow-y-auto">
+        {showDetailsPage ? (
+          /* Details Page */
+          <div className="p-6 overflow-y-auto h-[calc(90vh-200px)]">
+            <div className="max-w-2xl mx-auto space-y-6">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {selectedWidget?.startsWith('qr_') ? 'Create QR Code' :
+                   selectedWidget?.startsWith('social_') ? 'Add Social Link' :
+                   selectedWidget?.startsWith('music_') ? 'Add Music Link' :
+                   selectedWidget?.includes('deeplink') ? 'Create Deep Link' :
+                   'Add Link'}
+                </h3>
+                <p className="text-gray-600">
+                  {selectedWidget?.startsWith('qr_') ? 'Create a QR code with platform branding' :
+                   selectedWidget?.startsWith('social_') ? 'Connect your social media profile' :
+                   selectedWidget?.startsWith('music_') ? 'Share your music profile' :
+                   selectedWidget?.includes('deeplink') ? 'Create a link that redirects to your app' :
+                   'Add a custom link to your profile'}
+                </p>
+              </div>
+
+              {/* Details Form */}
+              <div className="space-y-4">
+                {selectedWidget?.includes('deeplink') ? (
+                  /* Deeplink Configuration */
+                  <>
+                    <div>
+                      <Label htmlFor="app-name" className="text-gray-900">App Name</Label>
+                      <Input
+                        id="app-name"
+                        placeholder="My App"
+                        value={widgetData.title || ''}
+                        onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                        className="text-gray-900 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="ios-url" className="text-gray-900">iOS App URL</Label>
+                      <Input
+                        id="ios-url"
+                        placeholder="https://apps.apple.com/app/your-app"
+                        value={widgetData.appStoreUrl || ''}
+                        onChange={(e) => setWidgetData({...widgetData, appStoreUrl: e.target.value})}
+                        className="text-gray-900 bg-white"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        App Store URL for iOS users
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="android-url" className="text-gray-900">Android App URL</Label>
+                      <Input
+                        id="android-url"
+                        placeholder="https://play.google.com/store/apps/details?id=your.app"
+                        value={widgetData.playStoreUrl || ''}
+                        onChange={(e) => setWidgetData({...widgetData, playStoreUrl: e.target.value})}
+                        className="text-gray-900 bg-white"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Play Store URL for Android users
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="fallback-url" className="text-gray-900">Fallback URL</Label>
+                      <Input
+                        id="fallback-url"
+                        placeholder="https://yourwebsite.com"
+                        value={widgetData.url || ''}
+                        onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
+                        className="text-gray-900 bg-white"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        URL for users who don't have the app installed
+                      </p>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-medium text-blue-900 mb-2">How Deeplinks Work</h4>
+                      <p className="text-sm text-blue-800">
+                        Deeplinks automatically detect the user's device and redirect them to:
+                      </p>
+                      <ul className="text-sm text-blue-800 mt-2 space-y-1">
+                        <li>• iOS App Store if on iPhone/iPad</li>
+                        <li>• Google Play Store if on Android</li>
+                        <li>• Fallback URL for other devices</li>
+                      </ul>
+                    </div>
+                  </>
+                ) : selectedWidget?.startsWith('qr_') ? (
+                  /* QR Code Configuration */
+                  <>
+                    <div>
+                      <Label htmlFor="qr-title" className="text-gray-900">QR Code Title</Label>
+                      <Input
+                        id="qr-title"
+                        placeholder="My QR Code"
+                        value={widgetData.title || ''}
+                        onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                        className="text-gray-900 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="qr-url" className="text-gray-900">
+                        {widgetData.platform === 'website' ? 'Website URL' : 
+                         widgetData.platform === 'instagram' ? 'Instagram Profile URL' :
+                         widgetData.platform === 'tiktok' ? 'TikTok Profile URL' :
+                         widgetData.platform === 'youtube' ? 'YouTube Channel URL' :
+                         widgetData.platform === 'x' ? 'X (Twitter) Profile URL' :
+                         widgetData.platform === 'linkedin' ? 'LinkedIn Profile URL' :
+                         widgetData.platform === 'spotify' ? 'Spotify Profile URL' :
+                         widgetData.platform === 'github' ? 'GitHub Profile URL' :
+                         'URL'}
+                      </Label>
+                      <Input
+                        id="qr-url"
+                        placeholder={
+                          widgetData.platform === 'website' ? 'https://yourwebsite.com' :
+                          widgetData.platform === 'instagram' ? 'https://instagram.com/yourusername' :
+                          widgetData.platform === 'tiktok' ? 'https://tiktok.com/@yourusername' :
+                          widgetData.platform === 'youtube' ? 'https://youtube.com/@yourchannel' :
+                          widgetData.platform === 'x' ? 'https://x.com/yourusername' :
+                          widgetData.platform === 'linkedin' ? 'https://linkedin.com/in/yourprofile' :
+                          widgetData.platform === 'spotify' ? 'https://open.spotify.com/user/yourusername' :
+                          widgetData.platform === 'github' ? 'https://github.com/yourusername' :
+                          'https://...'
+                        }
+                        value={widgetData.url || ''}
+                        onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
+                        className="text-gray-900 bg-white"
+                      />
+                    </div>
+
+                    {/* Custom Logo Upload for QR Codes on Pro Plan */}
+                    {userTier === 'pro' && (
+                      <div>
+                        <Label htmlFor="custom-logo" className="text-gray-900">Custom Logo (Pro)</Label>
+                        <Input
+                          id="custom-logo"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              // TODO: Upload file and set URL
+                              console.log('Custom logo file:', file)
+                            }
+                          }}
+                          className="text-gray-900 bg-white"
+                        />
+                        <p className="text-xs text-blue-600 mt-1">
+                          Upload a custom logo for your QR code (recommended: 200x200px, replaces platform logo)
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h4 className="font-medium text-green-900 mb-2">Platform Logo Included</h4>
+                      <p className="text-sm text-green-800">
+                        Your QR code will automatically include the {widgetData.platform === 'x' ? 'X (Twitter)' : 
+                        widgetData.platform?.charAt(0).toUpperCase() + widgetData.platform?.slice(1)} logo 
+                        {userTier === 'pro' ? ', or upload a custom logo above to replace it.' : '.'}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  /* Standard Link Configuration */
+                  <>
+                    <div>
+                      <Label htmlFor="title" className="text-gray-900">Title</Label>
+                      <Input
+                        id="title"
+                        placeholder="Link title"
+                        value={widgetData.title || ''}
+                        onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                        className="text-gray-900 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="url" className="text-gray-900">URL</Label>
+                      <Input
+                        id="url"
+                        placeholder="https://..."
+                        value={widgetData.url || ''}
+                        onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
+                        className="text-gray-900 bg-white"
+                      />
+                    </div>
+                    {selectedWidget?.startsWith('social_') && (
+                      <div>
+                        <Label htmlFor="username" className="text-gray-900">Username</Label>
+                        <Input
+                          id="username"
+                          placeholder="yourusername"
+                          value={widgetData.username || ''}
+                          onChange={(e) => {
+                            const username = e.target.value
+                            const baseUrl = widgetData.baseUrl || ''
+                            const constructedUrl = username ? baseUrl + username : baseUrl
+                            setWidgetData({...widgetData, username, url: constructedUrl})
+                          }}
+                          className="text-gray-900 bg-white"
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <Button 
+                onClick={handleAddWidget} 
+                className="w-full"
+                disabled={isConverting}
+              >
+                <ArrowRight className="w-4 h-4 mr-2" />
+                {isConverting ? 'Creating...' : 'Add Widget'}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex h-[calc(90vh-200px)]">
+            {/* Left Side - Widget Selection */}
+            <div className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-6">
               {/* Search */}
               <div className="relative">
@@ -557,7 +867,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
               </div>
 
               {/* QR Codes with Platform Logos */}
-              <div>
+              <div data-section="qr-codes">
                 <h3 className="font-medium text-gray-900 mb-3">QR Codes with Platform Logos</h3>
                 <div className="grid grid-cols-2 gap-3">
                   {qrCodePlatforms.map((platform) => (
@@ -566,15 +876,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                       className={`cursor-pointer bg-white hover:bg-gray-50 transition-colors border ${
                         selectedWidget === `qr_${platform.value}` ? 'ring-2 ring-blue-500' : 'border-gray-200'
                       }`}
-                      onClick={() => {
-                        setSelectedWidget(`qr_${platform.value}`)
-                        setWidgetData({ 
-                          platform: platform.value,
-                          title: platform.name,
-                          url: platform.baseUrl,
-                          baseUrl: platform.baseUrl
-                        })
-                      }}
+                      onClick={() => handleQRSelect(platform.value)}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -612,15 +914,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                       className={`cursor-pointer bg-white hover:bg-gray-50 transition-colors border ${
                         selectedWidget === `music_${platform.value}` ? 'ring-2 ring-blue-500' : 'border-gray-200'
                       }`}
-                      onClick={() => {
-                        setSelectedWidget(`music_${platform.value}`)
-                        setWidgetData({ 
-                          platform: platform.value, 
-                          username: '', 
-                          url: platform.baseUrl || 'https://',
-                          baseUrl: platform.baseUrl || 'https://' 
-                        })
-                      }}
+                      onClick={() => handleMusicSelect(platform.value)}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -657,264 +951,11 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
               </div>
 
             </div>
-          </div>
-
-          {/* Right Side - Widget Configuration */}
-          {selectedWidget && (
-            <div className="w-80 border-l border-gray-200 bg-gray-50">
-              <div className="p-6 space-y-4">
-                <h3 className="font-medium text-gray-900">Configure Widget</h3>
-                
-                {(selectedWidget.startsWith('social_') || selectedWidget.startsWith('music_') || selectedWidget.startsWith('qr_')) && (
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="username" className="text-gray-900">
-                        {widgetData.platform === 'website' ? 'Domain' : 
-                         widgetData.platform === 'podcast' ? 'Podcast Name' : 
-                         selectedWidget.startsWith('qr_') ? 'URL' : 'Username'}
-                      </Label>
-                      <Input
-                        id="username"
-                        placeholder={widgetData.platform === 'website' ? 'example.com' : 
-                                    widgetData.platform === 'podcast' ? 'My Podcast' : 
-                                    selectedWidget.startsWith('qr_') ? 'https://tiktok.com/@username' : 'username'}
-                        value={selectedWidget.startsWith('qr_') ? widgetData.url || '' : widgetData.username || ''}
-                        onChange={(e) => {
-                          if (selectedWidget.startsWith('qr_')) {
-                            setWidgetData({...widgetData, url: e.target.value})
-                          } else {
-                            const username = e.target.value
-                            const baseUrl = widgetData.baseUrl || ''
-                            let constructedUrl = ''
-                            
-                            if (widgetData.platform === 'website') {
-                              constructedUrl = username ? `https://${username}` : 'https://'
-                            } else if (widgetData.platform === 'podcast') {
-                              constructedUrl = username
-                            } else {
-                              constructedUrl = username ? baseUrl + username : baseUrl
-                            }
-                            
-                            setWidgetData({...widgetData, username, url: constructedUrl})
-                          }
-                        }}
-                        className="text-gray-900 bg-white"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="url" className="text-gray-900">
-                        {selectedWidget.startsWith('qr_') ? 'QR Code URL' : 'Profile URL'}
-                      </Label>
-                      <Input
-                        id="url"
-                        placeholder="https://..."
-                        value={widgetData.url || widgetData.baseUrl || ''}
-                        onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
-                        readOnly={widgetData.platform !== 'website' && widgetData.platform !== 'podcast' && !selectedWidget.startsWith('qr_')}
-                        className={`text-gray-900 ${widgetData.platform !== 'website' && widgetData.platform !== 'podcast' && !selectedWidget.startsWith('qr_') ? 'bg-gray-100' : 'bg-white'}`}
-                      />
-                      {widgetData.platform !== 'website' && widgetData.platform !== 'podcast' && !selectedWidget.startsWith('qr_') && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          URL is automatically generated based on username
-                        </p>
-                      )}
-                      {selectedWidget.startsWith('qr_') && (
-                        <p className="text-xs text-blue-600 mt-1">
-                          💡 Platform logo will be automatically added to your QR code!
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {selectedWidget.startsWith('essential_') && (
-                  <div className="space-y-4">
-                    {widgetData.type === 'text' ? (
-                      <div>
-                        <Label htmlFor="text-content" className="text-gray-900">Text Content</Label>
-                        <Textarea
-                          id="text-content"
-                          placeholder="Enter your text content..."
-                          value={widgetData.content || ''}
-                          onChange={(e) => setWidgetData({...widgetData, content: e.target.value, title: e.target.value})}
-                          className="text-gray-900 bg-white"
-                          rows={3}
-                        />
-                      </div>
-                    ) : widgetData.type === 'media' ? (
-                      <>
-                        <div>
-                          <Label htmlFor="media-file" className="text-gray-900">Upload Image/Video</Label>
-                          <Input
-                            id="media-file"
-                            type="file"
-                            accept="image/*,video/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0]
-                              if (file) {
-                                setWidgetData({...widgetData, file, title: file.name})
-                              }
-                            }}
-                            className="text-gray-900 bg-white"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="media-caption" className="text-gray-900">Caption (Optional)</Label>
-                          <Input
-                            id="media-caption"
-                            placeholder="Add a caption..."
-                            value={widgetData.caption || ''}
-                            onChange={(e) => setWidgetData({...widgetData, caption: e.target.value})}
-                            className="text-gray-900 bg-white"
-                          />
-                        </div>
-                      </>
-                    ) : widgetData.type === 'voice' ? (
-                      <div>
-                        <Label htmlFor="voice-file" className="text-gray-900">Upload Voice Message</Label>
-                        <Input
-                          id="voice-file"
-                          type="file"
-                          accept="audio/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) {
-                              setWidgetData({...widgetData, file, title: file.name})
-                            }
-                          }}
-                          className="text-gray-900 bg-white"
-                        />
-                      </div>
-                    ) : widgetData.type === 'product' ? (
-                      <>
-                        <div>
-                          <Label htmlFor="product-name" className="text-gray-900">Product Name</Label>
-                          <Input
-                            id="product-name"
-                            placeholder="Product name"
-                            value={widgetData.title || ''}
-                            onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
-                            className="text-gray-900 bg-white"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="product-url" className="text-gray-900">Product URL</Label>
-                          <Input
-                            id="product-url"
-                            placeholder="https://..."
-                            value={widgetData.url || ''}
-                            onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
-                            className="text-gray-900 bg-white"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="product-price" className="text-gray-900">Price (Optional)</Label>
-                          <Input
-                            id="product-price"
-                            placeholder="$99.99"
-                            value={widgetData.price || ''}
-                            onChange={(e) => setWidgetData({...widgetData, price: e.target.value})}
-                            className="text-gray-900 bg-white"
-                          />
-                        </div>
-                      </>
-                    ) : widgetData.type === 'app' ? (
-                      <>
-                        <div>
-                          <Label htmlFor="app-name" className="text-gray-900">App Name</Label>
-                          <Input
-                            id="app-name"
-                            placeholder="My App"
-                            value={widgetData.title || ''}
-                            onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
-                            className="text-gray-900 bg-white"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="app-store-url" className="text-gray-900">App Store URL</Label>
-                          <Input
-                            id="app-store-url"
-                            placeholder="https://apps.apple.com/..."
-                            value={widgetData.appStoreUrl || ''}
-                            onChange={(e) => setWidgetData({...widgetData, appStoreUrl: e.target.value})}
-                            className="text-gray-900 bg-white"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="play-store-url" className="text-gray-900">Play Store URL</Label>
-                          <Input
-                            id="play-store-url"
-                            placeholder="https://play.google.com/..."
-                            value={widgetData.playStoreUrl || ''}
-                            onChange={(e) => setWidgetData({...widgetData, playStoreUrl: e.target.value})}
-                            className="text-gray-900 bg-white"
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div>
-                          <Label htmlFor="title" className="text-gray-900">Title</Label>
-                          <Input
-                            id="title"
-                            placeholder="Widget title"
-                            value={widgetData.title || ''}
-                            onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
-                            className="text-gray-900 bg-white"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="url" className="text-gray-900">URL</Label>
-                          <Input
-                            id="url"
-                            placeholder="https://..."
-                            value={widgetData.url || ''}
-                            onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
-                            className="text-gray-900 bg-white"
-                          />
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {selectedWidget === 'convert_linktree' && (
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="linktree-url" className="text-gray-900">Linktree URL</Label>
-                      <Input
-                        id="linktree-url"
-                        placeholder="https://linktr.ee/yourusername"
-                        value={widgetData.url || ''}
-                        onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
-                        className="text-gray-900 bg-white"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Enter your Linktree URL to import your links
-                      </p>
-                    </div>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <p className="text-sm text-blue-800">
-                        <strong>Note:</strong> This will fetch your public links from Linktree and convert them to widgets. Your existing widgets will remain unchanged.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <Button 
-                  onClick={handleAddWidget} 
-                  className="w-full"
-                  disabled={isConverting}
-                >
-                  <ArrowRight className="w-4 h-4 mr-2" />
-                  {isConverting ? 'Converting...' : 
-                   selectedWidget === 'convert_linktree' ? 'Import Links' : 'Add Widget'}
-                </Button>
-              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )
 }
+

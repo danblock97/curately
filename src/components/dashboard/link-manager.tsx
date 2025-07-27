@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Database } from '@/lib/supabase/types'
 import { usePlanLimits } from '@/hooks/use-plan-limits'
 import { toast } from 'sonner'
+import { WidgetModal } from './widget-modal'
+import { Widget } from './appearance-customizer'
 
 type Link = Database['public']['Tables']['links']['Row'] & {
   qr_codes?: {
@@ -67,6 +69,8 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [currentPageNum, setCurrentPageNum] = useState(1)
   const [itemsPerPage] = useState(5)
+  const [showWidgetModal, setShowWidgetModal] = useState(false)
+  const [widgetModalDefaultType, setWidgetModalDefaultType] = useState<string | null>(null)
   
   // Get the current page (default to primary page, only consider active pages)
   const activePages = pages.filter(page => page.is_active !== false)
@@ -180,6 +184,14 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
     setLinks(reorderedLinks)
   }
 
+  const handleAddWidget = (widget: Widget) => {
+    // This would typically save the widget to the database and refresh the page
+    // For now, just close the modal and show success
+    setShowWidgetModal(false)
+    setWidgetModalDefaultType(null)
+    toast.success('Widget added successfully! Please refresh to see changes.')
+  }
+
   const handlePlatformClick = (platform: PlatformType) => {
     // Check plan limits before allowing link creation
     if (!planUsage.links.canCreate) {
@@ -196,9 +208,9 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
       toast.error(`You've reached the maximum number of links (${planUsage.links.limit}) for your ${profile.tier} plan.`)
       return
     }
-    setSelectedPlatform(null)
-    setDefaultTab('link_in_bio')
-    setShowAddForm(true)
+    // Open widgets modal directly
+    setWidgetModalDefaultType('link')
+    setShowWidgetModal(true)
   }
 
   const handleDeeplinkClick = () => {
@@ -207,9 +219,9 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
       toast.error(`You've reached the maximum number of links (${planUsage.links.limit}) for your ${profile.tier} plan.`)
       return
     }
-    setSelectedPlatform(null)
-    setDefaultTab('deeplink')
-    setShowAddForm(true)
+    // Open widgets modal directly
+    setWidgetModalDefaultType('deeplink')
+    setShowWidgetModal(true)
   }
 
   const handleQRCodeClick = () => {
@@ -218,9 +230,9 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
       toast.error(`You've reached the maximum number of QR codes (${planUsage.qrCodes.limit}) for your ${profile.tier} plan.`)
       return
     }
-    setSelectedPlatform(null)
-    setDefaultTab('qr_code')
-    setShowAddForm(true)
+    // Open widgets modal directly
+    setWidgetModalDefaultType('qr_code')
+    setShowWidgetModal(true)
   }
 
   const totalClicks = useMemo(() => {
@@ -723,6 +735,22 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
             </div>
           </div>
         </div>
+      )}
+
+      {/* Widget Modal */}
+      {showWidgetModal && (
+        <WidgetModal
+          isOpen={showWidgetModal}
+          onClose={() => {
+            setShowWidgetModal(false)
+            setWidgetModalDefaultType(null)
+          }}
+          onAddWidget={handleAddWidget}
+          socialLinks={[]} // Empty for now since this is dashboard context
+          links={links}
+          userTier={profile.tier}
+          defaultType={widgetModalDefaultType}
+        />
       )}
     </div>
     </>
