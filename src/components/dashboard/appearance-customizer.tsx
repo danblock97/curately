@@ -1571,7 +1571,7 @@ export function AppearanceCustomizer({
 		// Web view dimensions (original sizes)
 		switch (size) {
 			case "thin":
-				return { width: 320, height: 48 };
+				return { width: 320, height: 64 }; // Increased height for text wrapping
 			case "small-square":
 				return { width: 192, height: 192 };
 			case "medium-square":
@@ -1583,7 +1583,7 @@ export function AppearanceCustomizer({
 			case "tall":
 				return { width: 208, height: 320 };
 			default:
-				return { width: 320, height: 48 };
+				return { width: 320, height: 64 }; // Increased height for text wrapping
 		}
 	};
 
@@ -1867,7 +1867,7 @@ export function AppearanceCustomizer({
 		if (inRightPanel) {
 			switch (size) {
 				case "thin":
-					return "w-80 h-14";
+					return "w-80 min-h-14 h-auto";
 				case "small-square":
 					return "w-48 h-48";
 				case "medium-square":
@@ -1879,7 +1879,7 @@ export function AppearanceCustomizer({
 				case "tall":
 					return "w-52 h-80";
 				default:
-					return "w-full h-14";
+					return "w-full min-h-14 h-auto";
 			}
 		}
 
@@ -1891,7 +1891,7 @@ export function AppearanceCustomizer({
 		// Web view classes (original sizes)
 		switch (size) {
 			case "thin":
-				return "w-80 h-12";
+				return "w-80 min-h-12 h-auto";
 			case "small-square":
 				return "w-48 h-48";
 			case "medium-square":
@@ -1903,7 +1903,7 @@ export function AppearanceCustomizer({
 			case "tall":
 				return "w-52 h-80";
 			default:
-				return "w-full h-12";
+				return "w-full min-h-12 h-auto";
 		}
 	};
 
@@ -2140,7 +2140,7 @@ export function AppearanceCustomizer({
 										activeView === "mobile"
 											? "text-gray-900 text-xs"
 											: "text-gray-900 text-sm"
-									} truncate`}
+									} break-words leading-tight`}
 								>
 									{activeView === "mobile"
 										? widget.data.title ||
@@ -2517,7 +2517,7 @@ export function AppearanceCustomizer({
 									</div>
 									<div className="text-xs text-gray-500">Text</div>
 								</div>
-								<div className="flex-1 text-sm text-gray-900 line-clamp-3">
+								<div className="flex-1 text-sm text-gray-900 break-words">
 									{widget.data.content ||
 										widget.data.title ||
 										"Text content..."}
@@ -2650,7 +2650,7 @@ export function AppearanceCustomizer({
 									/>
 								</div>
 							</div>
-							<div className="text-xs text-gray-700 text-center mt-1 line-clamp-1">
+							<div className="text-xs text-gray-700 text-center mt-1 break-words leading-tight">
 								{widget.data.title}
 							</div>
 						</div>
@@ -2674,7 +2674,7 @@ export function AppearanceCustomizer({
 								/>
 							)}
 						</div>
-						<div className="text-xs text-gray-700 text-center mt-1 line-clamp-1">
+						<div className="text-xs text-gray-700 text-center mt-1 break-words leading-tight">
 							{widget.data.title}
 						</div>
 					</div>

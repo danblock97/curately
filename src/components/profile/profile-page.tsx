@@ -536,7 +536,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 		if (isMobile) {
 			switch (size) {
 				case "thin":
-					return "w-full h-12"; // Full width of mobile container
+					return "w-full min-h-12 h-auto"; // Full width with flexible height for text wrapping
 				case "small-square":
 					return "w-32 h-32"; // ~128px for 2 per row with margins
 				case "medium-square":
@@ -544,18 +544,18 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				case "large-square":
 					return "w-32 h-32"; // Convert to small for mobile
 				case "wide":
-					return "w-full h-12"; // Convert to thin for mobile
+					return "w-full min-h-12 h-auto"; // Convert to thin for mobile with text wrapping
 				case "tall":
-					return "w-full h-12"; // Convert to thin for mobile
+					return "w-full min-h-12 h-auto"; // Convert to thin for mobile with text wrapping
 				default:
-					return "w-full h-12";
+					return "w-full min-h-12 h-auto";
 			}
 		}
 
 		// Web view classes (original sizes)
 		switch (size) {
 			case "thin":
-				return "w-80 h-12";
+				return "w-80 min-h-12 h-auto";
 			case "small-square":
 				return "w-48 h-48";
 			case "medium-square":
@@ -567,7 +567,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 			case "tall":
 				return "w-52 h-80";
 			default:
-				return "w-80 h-14";
+				return "w-80 min-h-14 h-auto";
 		}
 	};
 
@@ -833,7 +833,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 							<div className="flex-1 min-w-0">
 								<div className={`font-medium ${
 									isMobile ? 'text-gray-900 text-xs' : 'text-gray-900 text-sm'
-								} truncate`}>
+								} break-words leading-tight`}>
 									{isMobile
 										? (widget.data.title || widget.data.displayName || capitalizedPlatform || 'Link')
 										: (widget.data.displayName ||
@@ -1155,7 +1155,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									</div>
 									<div className="text-xs text-gray-500">Text</div>
 								</div>
-								<div className="flex-1 text-sm text-gray-900 line-clamp-3">
+								<div className="flex-1 text-sm text-gray-900 break-words">
 									{widget.data.content ||
 										widget.data.title ||
 										"Text content..."}
