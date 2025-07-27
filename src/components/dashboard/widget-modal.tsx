@@ -29,6 +29,7 @@ import { Database } from '@/lib/supabase/types'
 import { Widget } from './appearance-customizer'
 import { toast } from 'sonner'
 import { checkCanCreateLink } from '@/hooks/use-plan-limits'
+import { createClient } from '@/lib/supabase/client'
 
 interface WidgetModalProps {
   isOpen: boolean
@@ -38,6 +39,7 @@ interface WidgetModalProps {
   links: Database['public']['Tables']['links']['Row'][]
   userTier?: Database['public']['Enums']['user_tier']
   defaultType?: string | null
+  profile?: Database['public']['Tables']['profiles']['Row']
 }
 
 const socialPlatforms = [
@@ -70,11 +72,13 @@ const qrCodePlatforms = [
   { name: 'Website', icon: Globe, value: 'website', color: 'bg-blue-500', baseUrl: 'https://' },
 ]
 
-export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, userTier = 'free', defaultType = null }: WidgetModalProps) {
+export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, userTier = 'free', defaultType = null, profile }: WidgetModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedWidget, setSelectedWidget] = useState<string | null>(null)
   const [isConverting, setIsConverting] = useState(false)
   const [showDetailsPage, setShowDetailsPage] = useState(false)
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false)
+  const supabase = createClient()
   const [widgetData, setWidgetData] = useState<{
     platform?: string
     username?: string
@@ -89,6 +93,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
     appStoreUrl?: string
     playStoreUrl?: string
     customLogoUrl?: string
+    logoFile?: string // Base64 encoded logo for API
   }>({})
 
   // Handle defaultType from dashboard
@@ -119,13 +124,33 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
   // Reset state when modal closes
   React.useEffect(() => {
     if (!isOpen) {
+      // Clean up any preview URLs to avoid memory leaks
+      if (widgetData.customLogoUrl && widgetData.customLogoUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(widgetData.customLogoUrl)
+      }
       setSelectedWidget(null)
       setWidgetData({})
       setShowDetailsPage(false)
       setSearchTerm('')
       setIsConverting(false)
     }
-  }, [isOpen])
+  }, [isOpen, widgetData.customLogoUrl])
+
+  // Convert file to base64 for QR code API
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result && typeof reader.result === 'string') {
+          resolve(reader.result);
+        } else {
+          reject(new Error('Failed to convert file to base64'));
+        }
+      };
+      reader.onerror = () => reject(new Error('File reading failed'));
+      reader.readAsDataURL(file);
+    });
+  };
 
   if (!isOpen) return null
 
@@ -238,6 +263,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
             foregroundColor: '#000000',
             backgroundColor: '#FFFFFF',
             platform: widgetData.platform,
+            logoFile: widgetData.logoFile, // Include base64 logo for custom uploads
           }),
         })
 
@@ -526,35 +552,92 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                       />
                     </div>
 
-                    {/* Custom Logo Upload for QR Codes on Pro Plan */}
-                    {userTier === 'pro' && (
+                    {/* Custom Logo Upload for Website QR Codes on Pro Plan Only */}
+                    {userTier === 'pro' && widgetData.platform === 'website' && (
                       <div>
                         <Label htmlFor="custom-logo" className="text-gray-900">Custom Logo (Pro)</Label>
                         <Input
                           id="custom-logo"
                           type="file"
                           accept="image/*"
-                          onChange={(e) => {
+                          onChange={async (e) => {
                             const file = e.target.files?.[0]
                             if (file) {
-                              // TODO: Upload file and set URL
-                              console.log('Custom logo file:', file)
+                              setIsUploadingLogo(true)
+                              try {
+                                // Convert file to base64 for QR code API
+                                const logoFile = await convertFileToBase64(file)
+                                
+                                // Also create a preview URL for display
+                                const previewUrl = URL.createObjectURL(file)
+                                
+                                setWidgetData({
+                                  ...widgetData, 
+                                  logoFile: logoFile, // Base64 for API
+                                  customLogoUrl: previewUrl // Preview URL for display
+                                })
+                                toast.success('Custom logo uploaded successfully!')
+                              } catch (error) {
+                                console.error('Error uploading logo:', error)
+                                toast.error('Failed to upload logo. Please try again.')
+                              } finally {
+                                setIsUploadingLogo(false)
+                              }
                             }
                           }}
                           className="text-gray-900 bg-white"
                         />
-                        <p className="text-xs text-blue-600 mt-1">
-                          Upload a custom logo for your QR code (recommended: 200x200px, replaces platform logo)
-                        </p>
+                        {isUploadingLogo ? (
+                          <p className="text-xs text-blue-600 mt-1">
+                            Uploading logo...
+                          </p>
+                        ) : widgetData.customLogoUrl ? (
+                          <div className="mt-2">
+                            <p className="text-xs text-green-600 mb-2">
+                              ✓ Custom logo uploaded successfully!
+                            </p>
+                            <div className="flex items-center space-x-2">
+                              <img 
+                                src={widgetData.customLogoUrl} 
+                                alt="Custom logo preview" 
+                                className="w-8 h-8 object-cover rounded border"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  // Clean up the preview URL to avoid memory leaks
+                                  if (widgetData.customLogoUrl) {
+                                    URL.revokeObjectURL(widgetData.customLogoUrl)
+                                  }
+                                  setWidgetData({...widgetData, logoFile: '', customLogoUrl: ''})
+                                }}
+                                className="text-xs text-red-600 hover:text-red-800"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-blue-600 mt-1">
+                            Upload a custom logo for your QR code (recommended: 200x200px)
+                          </p>
+                        )}
                       </div>
                     )}
 
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <h4 className="font-medium text-green-900 mb-2">Platform Logo Included</h4>
+                      <h4 className="font-medium text-green-900 mb-2">
+                        {widgetData.platform === 'website' ? 'QR Code Branding' : 'Platform Logo Included'}
+                      </h4>
                       <p className="text-sm text-green-800">
-                        Your QR code will automatically include the {widgetData.platform === 'x' ? 'X (Twitter)' : 
-                        widgetData.platform?.charAt(0).toUpperCase() + widgetData.platform?.slice(1)} logo 
-                        {userTier === 'pro' ? ', or upload a custom logo above to replace it.' : '.'}
+                        {widgetData.platform === 'website' ? (
+                          userTier === 'pro' ? 
+                            'Upload a custom logo above, or your QR code will use a default website icon.' :
+                            'Your QR code will include a default website icon. Upgrade to Pro to upload a custom logo.'
+                        ) : (
+                          `Your QR code will automatically include the ${widgetData.platform === 'x' ? 'X (Twitter)' : 
+                          widgetData.platform?.charAt(0).toUpperCase() + widgetData.platform?.slice(1)} logo. Platform logos cannot be changed.`
+                        )}
                       </p>
                     </div>
                   </>

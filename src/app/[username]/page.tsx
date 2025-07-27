@@ -39,6 +39,7 @@ interface QRCodeRecord {
   web_position?: string
   mobile_position?: string
   format?: string
+  logo_url?: string
 }
 
 export default async function UserProfilePage({ params }: PageProps) {
@@ -104,7 +105,10 @@ export default async function UserProfilePage({ params }: PageProps) {
           size: matchingQRCode.size,
           foreground_color: matchingQRCode.foreground_color,
           background_color: matchingQRCode.background_color
-        }
+        },
+        // Include logo_url and platform for QR code branding
+        logo_url: matchingQRCode.logo_url,
+        platform: matchingQRCode.platform
       }
     }
     return link
@@ -148,7 +152,10 @@ export default async function UserProfilePage({ params }: PageProps) {
       size: qr.size,
       foreground_color: qr.foreground_color,
       background_color: qr.background_color
-    }
+    },
+    // Include logo_url and platform for QR code branding
+    logo_url: qr.logo_url,
+    platform: qr.platform
   }))
 
   // Combine all items and sort by order

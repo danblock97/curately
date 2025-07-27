@@ -79,6 +79,7 @@ export interface Widget {
 		playStoreUrl?: string;
 		fileUrl?: string;
 		customLogoUrl?: string;
+		logo_url?: string;
 	};
 	position: { x: number; y: number };
 	webPosition: { x: number; y: number };
@@ -365,6 +366,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									playStoreUrl: link.play_store_url || "",
 									fileUrl: link.file_url || "",
 									customLogoUrl: link.custom_logo_url || "",
+									logo_url: link.logo_url || "",
 									link_type: link.link_type || undefined,
 									qr_codes: link.qr_codes || undefined,
 								},
@@ -601,8 +603,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 					}
 					
 					// For custom branding, check if user has uploaded a custom logo
-					// This would be stored in the widget data or profile
-					const customLogoUrl = widget.data.customLogoUrl || ''
+					// This is stored in the logo_url field from the database
+					const customLogoUrl = widget.data.logo_url || widget.data.customLogoUrl || ''
 					
 					// Use custom logo if available, otherwise platform logo
 					const finalLogoUrl = customLogoUrl || logoUrl

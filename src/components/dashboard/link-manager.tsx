@@ -750,6 +750,7 @@ export function LinkManager({ links: initialLinks, qrCodes: initialQrCodes, user
           links={links}
           userTier={profile.tier}
           defaultType={widgetModalDefaultType}
+          profile={profile}
         />
       )}
     </div>

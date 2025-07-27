@@ -566,6 +566,10 @@ export function AppearanceCustomizer({
 										item.type === "qr_code" ? item.foreground_color : undefined,
 									background_color:
 										item.type === "qr_code" ? item.background_color : undefined,
+									logo_url:
+										item.type === "qr_code" ? item.logo_url : undefined,
+									platform:
+										item.type === "qr_code" ? item.platform : undefined,
 								},
 								position: widgetPosition,
 								webPosition: webPosition,
@@ -2606,7 +2610,8 @@ export function AppearanceCustomizer({
 				const qrCodeData = widget.data.qr_code_data;
 				const qrFormat = widget.data.format;
 				const platform = widget.data.platform;
-				const logoUrl = platform ? getPlatformLogoUrl(platform) : null;
+				// Prioritize custom logo over platform logo
+				const logoUrl = widget.data.logo_url || (platform ? getPlatformLogoUrl(platform) : null);
 
 				if (!qrCodeData) {
 					return (
