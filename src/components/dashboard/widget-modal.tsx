@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,7 +24,13 @@ import {
   Music,
   Mic,
   Globe,
-  ArrowRight
+  ArrowRight,
+  Plus,
+  Grid3X3,
+  Star,
+  Zap,
+  Sparkles,
+  ArrowLeft
 } from 'lucide-react'
 import { Database } from '@/lib/supabase/types'
 import { Widget } from './appearance-customizer'
@@ -42,15 +49,16 @@ interface WidgetModalProps {
   profile?: Database['public']['Tables']['profiles']['Row']
 }
 
-const socialPlatforms = [
-  { name: 'Instagram', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg', value: 'instagram', color: 'bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500', baseUrl: 'https://instagram.com/' },
-  { name: 'Facebook', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg', value: 'facebook', color: 'bg-blue-600', baseUrl: 'https://facebook.com/' },
-  { name: 'TikTok', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/tiktok.svg', value: 'tiktok', color: 'bg-black', baseUrl: 'https://tiktok.com/@' },
-  { name: 'LinkedIn', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg', value: 'linkedin', color: 'bg-blue-700', baseUrl: 'https://linkedin.com/in/' },
-  { name: 'YouTube', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg', value: 'youtube', color: 'bg-red-500', baseUrl: 'https://youtube.com/@' },
-  { name: 'X (Twitter)', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg', value: 'twitter', color: 'bg-black', baseUrl: 'https://x.com/' },
-  { name: 'GitHub', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', value: 'github', color: 'bg-gray-800', baseUrl: 'https://github.com/' },
-  { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', value: 'website', color: 'bg-blue-500', baseUrl: '' },
+const platforms = [
+  { name: 'Instagram', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg', icon: Instagram, value: 'instagram', color: 'bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500', baseUrl: 'https://instagram.com/' },
+  { name: 'Facebook', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg', icon: Facebook, value: 'facebook', color: 'bg-blue-600', baseUrl: 'https://facebook.com/' },
+  { name: 'TikTok', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/tiktok.svg', icon: Package, value: 'tiktok', color: 'bg-black', baseUrl: 'https://tiktok.com/@' },
+  { name: 'LinkedIn', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg', icon: Linkedin, value: 'linkedin', color: 'bg-blue-700', baseUrl: 'https://linkedin.com/in/' },
+  { name: 'YouTube', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg', icon: Youtube, value: 'youtube', color: 'bg-red-500', baseUrl: 'https://youtube.com/@' },
+  { name: 'X (Twitter)', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg', icon: Twitter, value: 'twitter', color: 'bg-black', baseUrl: 'https://x.com/' },
+  { name: 'GitHub', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', icon: Github, value: 'github', color: 'bg-gray-800', baseUrl: 'https://github.com/' },
+  { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', icon: Music, value: 'spotify', color: 'bg-green-500', baseUrl: 'https://open.spotify.com/' },
+  { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', icon: Globe, value: 'website', color: 'bg-blue-500', baseUrl: '' },
 ]
 
 const essentialWidgets = [
@@ -59,17 +67,6 @@ const essentialWidgets = [
   { name: 'Photo / Video', icon: ImageIcon, value: 'media', description: 'Show an image or video on your page', color: 'bg-green-500' },
   { name: 'Voice', icon: Mic, value: 'voice', description: 'Add a voice message', color: 'bg-purple-500' },
   { name: 'Product', icon: Package, value: 'product', description: 'Highlight a product', color: 'bg-orange-500' },
-]
-
-const qrCodePlatforms = [
-  { name: 'Instagram', icon: Instagram, value: 'instagram', color: 'bg-gradient-to-r from-purple-600 to-pink-600', baseUrl: 'https://instagram.com/' },
-  { name: 'TikTok', icon: Package, value: 'tiktok', color: 'bg-black', baseUrl: 'https://tiktok.com/@' },
-  { name: 'YouTube', icon: Youtube, value: 'youtube', color: 'bg-red-600', baseUrl: 'https://youtube.com/' },
-  { name: 'Twitter/X', icon: Twitter, value: 'x', color: 'bg-black', baseUrl: 'https://x.com/' },
-  { name: 'LinkedIn', icon: Linkedin, value: 'linkedin', color: 'bg-blue-600', baseUrl: 'https://linkedin.com/in/' },
-  { name: 'Spotify', icon: Music, value: 'spotify', color: 'bg-green-500', baseUrl: 'https://open.spotify.com/' },
-  { name: 'GitHub', icon: Github, value: 'github', color: 'bg-gray-800', baseUrl: 'https://github.com/' },
-  { name: 'Website', icon: Globe, value: 'website', color: 'bg-blue-500', baseUrl: 'https://' },
 ]
 
 export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, userTier = 'free', defaultType = null, profile }: WidgetModalProps) {
@@ -94,6 +91,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
     playStoreUrl?: string
     customLogoUrl?: string
     logoFile?: string // Base64 encoded logo for API
+    outputType?: 'link' | 'qr_code' // New field for output type selection
   }>({})
 
   // Handle defaultType from dashboard
@@ -240,7 +238,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
       } finally {
         setIsConverting(false)
       }
-    } else if (selectedWidget.startsWith('qr_')) {
+    } else if (selectedWidget.startsWith('platform_') && widgetData.outputType === 'qr_code') {
       // Handle QR code widget creation
       if (!widgetData.url) {
         toast.error('Please enter a URL for the QR code')
@@ -305,10 +303,10 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
         toast.error(`Failed to create QR code: ${error instanceof Error ? error.message : 'Unknown error'}`)
       }
     } else {
-      // Handle normal widget creation
+      // Handle normal widget creation (social links and essential widgets)
       const widget: Widget = {
         id: Date.now().toString(),
-        type: (selectedWidget.startsWith('social') || selectedWidget.startsWith('music') ? 'social' : 
+        type: (selectedWidget.startsWith('platform_') ? 'social' : 
               selectedWidget.startsWith('essential') ? widgetData.type || 'link' : 'link') as Widget['type'],
         size: 'small-square',
         data: {
@@ -333,61 +331,24 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
     setIsConverting(false)
   }
 
-  const handleSocialSelect = (platform: string) => {
-    const selectedPlatform = socialPlatforms.find(p => p.value === platform)
-    setSelectedWidget(`social_${platform}`)
+  const handlePlatformSelect = (platform: string) => {
+    const selectedPlatform = platforms.find(p => p.value === platform)
+    setSelectedWidget(`platform_${platform}`)
     setWidgetData({ 
       platform, 
       username: '', 
       url: selectedPlatform?.baseUrl || 'https://',
-      baseUrl: selectedPlatform?.baseUrl || 'https://' 
+      baseUrl: selectedPlatform?.baseUrl || 'https://',
+      outputType: 'link' // Default to link
     })
-    setShowDetailsPage(true)
   }
 
   const handleEssentialSelect = (type: string) => {
     setSelectedWidget(`essential_${type}`)
     setWidgetData({ type, title: '', url: '' })
-    setShowDetailsPage(true)
   }
 
-  const handleQRSelect = (platform: string) => {
-    const selectedPlatform = qrCodePlatforms.find(p => p.value === platform)
-    setSelectedWidget(`qr_${platform}`)
-    setWidgetData({ 
-      platform: platform,
-      title: selectedPlatform?.name || platform,
-      url: selectedPlatform?.baseUrl || 'https://',
-      baseUrl: selectedPlatform?.baseUrl || 'https://'
-    })
-    setShowDetailsPage(true)
-  }
-
-  const handleMusicSelect = (platform: string) => {
-    const musicPlatforms = [
-      { name: 'Spotify', value: 'spotify', baseUrl: 'https://open.spotify.com/user/' },
-      { name: 'Apple Music', value: 'apple_music', baseUrl: 'https://music.apple.com/profile/' },
-      { name: 'SoundCloud', value: 'soundcloud', baseUrl: 'https://soundcloud.com/' },
-      { name: 'Podcast', value: 'podcast', baseUrl: '' },
-    ]
-    const selectedPlatform = musicPlatforms.find(p => p.value === platform)
-    setSelectedWidget(`music_${platform}`)
-    setWidgetData({ 
-      platform: platform, 
-      username: '', 
-      url: selectedPlatform?.baseUrl || 'https://',
-      baseUrl: selectedPlatform?.baseUrl || 'https://' 
-    })
-    setShowDetailsPage(true)
-  }
-
-  const handleBackToSelection = () => {
-    setShowDetailsPage(false)
-    setSelectedWidget(null)
-    setWidgetData({})
-  }
-
-  const filteredSocial = socialPlatforms.filter(platform =>
+  const filteredPlatforms = platforms.filter(platform =>
     platform.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -396,649 +357,691 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
   )
 
   return (
-    <div className="fixed inset-0 bg-transparent backdrop-blur-md flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-4">
-            {showDetailsPage && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleBackToSelection}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
-                Back
-              </Button>
-            )}
-            <h2 className="text-xl font-semibold text-gray-900">
-              {showDetailsPage ? 'Configure Widget' : 'Add a widget'}
-            </h2>
-          </div>
-          <Button variant="ghost" size="sm" onClick={onClose} className="text-black hover:text-black">
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {showDetailsPage ? (
-          /* Details Page */
-          <div className="p-6 overflow-y-auto h-[calc(90vh-200px)]">
-            <div className="max-w-2xl mx-auto space-y-6">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {selectedWidget?.startsWith('qr_') ? 'Create QR Code' :
-                   selectedWidget?.startsWith('social_') ? 'Add Social Link' :
-                   selectedWidget?.startsWith('music_') ? 'Add Music Link' :
-                   selectedWidget?.includes('deeplink') ? 'Create Deep Link' :
-                   'Add Link'}
-                </h3>
-                <p className="text-gray-600">
-                  {selectedWidget?.startsWith('qr_') ? 'Create a QR code with platform branding' :
-                   selectedWidget?.startsWith('social_') ? 'Connect your social media profile' :
-                   selectedWidget?.startsWith('music_') ? 'Share your music profile' :
-                   selectedWidget?.includes('deeplink') ? 'Create a link that redirects to your app' :
-                   'Add a custom link to your profile'}
-                </p>
-              </div>
-
-              {/* Details Form */}
-              <div className="space-y-4">
-                {selectedWidget?.includes('deeplink') ? (
-                  /* Deeplink Configuration */
-                  <>
-                    <div>
-                      <Label htmlFor="app-name" className="text-gray-900">App Name</Label>
-                      <Input
-                        id="app-name"
-                        placeholder="My App"
-                        value={widgetData.title || ''}
-                        onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
-                        className="text-gray-900 bg-white"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="ios-url" className="text-gray-900">iOS App URL</Label>
-                      <Input
-                        id="ios-url"
-                        placeholder="https://apps.apple.com/app/your-app"
-                        value={widgetData.appStoreUrl || ''}
-                        onChange={(e) => setWidgetData({...widgetData, appStoreUrl: e.target.value})}
-                        className="text-gray-900 bg-white"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        App Store URL for iOS users
-                      </p>
-                    </div>
-                    <div>
-                      <Label htmlFor="android-url" className="text-gray-900">Android App URL</Label>
-                      <Input
-                        id="android-url"
-                        placeholder="https://play.google.com/store/apps/details?id=your.app"
-                        value={widgetData.playStoreUrl || ''}
-                        onChange={(e) => setWidgetData({...widgetData, playStoreUrl: e.target.value})}
-                        className="text-gray-900 bg-white"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Play Store URL for Android users
-                      </p>
-                    </div>
-                    <div>
-                      <Label htmlFor="fallback-url" className="text-gray-900">Fallback URL</Label>
-                      <Input
-                        id="fallback-url"
-                        placeholder="https://yourwebsite.com"
-                        value={widgetData.url || ''}
-                        onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
-                        className="text-gray-900 bg-white"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        URL for users who don't have the app installed
-                      </p>
-                    </div>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <h4 className="font-medium text-blue-900 mb-2">How Deeplinks Work</h4>
-                      <p className="text-sm text-blue-800">
-                        Deeplinks automatically detect the user's device and redirect them to:
-                      </p>
-                      <ul className="text-sm text-blue-800 mt-2 space-y-1">
-                        <li>• iOS App Store if on iPhone/iPad</li>
-                        <li>• Google Play Store if on Android</li>
-                        <li>• Fallback URL for other devices</li>
-                      </ul>
-                    </div>
-                  </>
-                ) : selectedWidget?.startsWith('qr_') ? (
-                  /* QR Code Configuration */
-                  <>
-                    <div>
-                      <Label htmlFor="qr-title" className="text-gray-900">QR Code Title</Label>
-                      <Input
-                        id="qr-title"
-                        placeholder="My QR Code"
-                        value={widgetData.title || ''}
-                        onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
-                        className="text-gray-900 bg-white"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="qr-url" className="text-gray-900">
-                        {widgetData.platform === 'website' ? 'Website URL' : 
-                         widgetData.platform === 'instagram' ? 'Instagram Profile URL' :
-                         widgetData.platform === 'tiktok' ? 'TikTok Profile URL' :
-                         widgetData.platform === 'youtube' ? 'YouTube Channel URL' :
-                         widgetData.platform === 'x' ? 'X (Twitter) Profile URL' :
-                         widgetData.platform === 'linkedin' ? 'LinkedIn Profile URL' :
-                         widgetData.platform === 'spotify' ? 'Spotify Profile URL' :
-                         widgetData.platform === 'github' ? 'GitHub Profile URL' :
-                         'URL'}
-                      </Label>
-                      <Input
-                        id="qr-url"
-                        placeholder={
-                          widgetData.platform === 'website' ? 'https://yourwebsite.com' :
-                          widgetData.platform === 'instagram' ? 'https://instagram.com/yourusername' :
-                          widgetData.platform === 'tiktok' ? 'https://tiktok.com/@yourusername' :
-                          widgetData.platform === 'youtube' ? 'https://youtube.com/@yourchannel' :
-                          widgetData.platform === 'x' ? 'https://x.com/yourusername' :
-                          widgetData.platform === 'linkedin' ? 'https://linkedin.com/in/yourprofile' :
-                          widgetData.platform === 'spotify' ? 'https://open.spotify.com/user/yourusername' :
-                          widgetData.platform === 'github' ? 'https://github.com/yourusername' :
-                          'https://...'
-                        }
-                        value={widgetData.url || ''}
-                        onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
-                        className="text-gray-900 bg-white"
-                      />
-                    </div>
-
-                    {/* Custom Logo Upload for Website QR Codes on Pro Plan Only */}
-                    {userTier === 'pro' && widgetData.platform === 'website' && (
-                      <div>
-                        <Label htmlFor="custom-logo" className="text-gray-900">Custom Logo (Pro)</Label>
-                        <Input
-                          id="custom-logo"
-                          type="file"
-                          accept="image/*"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0]
-                            if (file) {
-                              setIsUploadingLogo(true)
-                              try {
-                                // Convert file to base64 for QR code API
-                                const logoFile = await convertFileToBase64(file)
-                                
-                                // Also create a preview URL for display
-                                const previewUrl = URL.createObjectURL(file)
-                                
-                                setWidgetData({
-                                  ...widgetData, 
-                                  logoFile: logoFile, // Base64 for API
-                                  customLogoUrl: previewUrl // Preview URL for display
-                                })
-                                toast.success('Custom logo uploaded successfully!')
-                              } catch (error) {
-                                console.error('Error uploading logo:', error)
-                                toast.error('Failed to upload logo. Please try again.')
-                              } finally {
-                                setIsUploadingLogo(false)
-                              }
-                            }
-                          }}
-                          className="text-gray-900 bg-white"
-                        />
-                        {isUploadingLogo ? (
-                          <p className="text-xs text-blue-600 mt-1">
-                            Uploading logo...
-                          </p>
-                        ) : widgetData.customLogoUrl ? (
-                          <div className="mt-2">
-                            <p className="text-xs text-green-600 mb-2">
-                              ✓ Custom logo uploaded successfully!
-                            </p>
-                            <div className="flex items-center space-x-2">
-                              <img 
-                                src={widgetData.customLogoUrl} 
-                                alt="Custom logo preview" 
-                                className="w-8 h-8 object-cover rounded border"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  // Clean up the preview URL to avoid memory leaks
-                                  if (widgetData.customLogoUrl) {
-                                    URL.revokeObjectURL(widgetData.customLogoUrl)
-                                  }
-                                  setWidgetData({...widgetData, logoFile: '', customLogoUrl: ''})
-                                }}
-                                className="text-xs text-red-600 hover:text-red-800"
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-xs text-blue-600 mt-1">
-                            Upload a custom logo for your QR code (recommended: 200x200px)
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <h4 className="font-medium text-green-900 mb-2">
-                        {widgetData.platform === 'website' ? 'QR Code Branding' : 'Platform Logo Included'}
-                      </h4>
-                      <p className="text-sm text-green-800">
-                        {widgetData.platform === 'website' ? (
-                          userTier === 'pro' ? 
-                            'Upload a custom logo above, or your QR code will use a default website icon.' :
-                            'Your QR code will include a default website icon. Upgrade to Pro to upload a custom logo.'
-                        ) : (
-                          `Your QR code will automatically include the ${widgetData.platform === 'x' ? 'X (Twitter)' : 
-                          widgetData.platform?.charAt(0).toUpperCase() + widgetData.platform?.slice(1)} logo. Platform logos cannot be changed.`
-                        )}
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  /* Standard Link Configuration */
-                  <>
-                    <div>
-                      <Label htmlFor="title" className="text-gray-900">Title</Label>
-                      <Input
-                        id="title"
-                        placeholder="Link title"
-                        value={widgetData.title || ''}
-                        onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
-                        className="text-gray-900 bg-white"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="url" className="text-gray-900">URL</Label>
-                      <Input
-                        id="url"
-                        placeholder="https://..."
-                        value={widgetData.url || ''}
-                        onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
-                        className="text-gray-900 bg-white"
-                      />
-                    </div>
-                    {selectedWidget?.startsWith('social_') && (
-                      <div>
-                        <Label htmlFor="username" className="text-gray-900">Username</Label>
-                        <Input
-                          id="username"
-                          placeholder="yourusername"
-                          value={widgetData.username || ''}
-                          onChange={(e) => {
-                            const username = e.target.value
-                            const baseUrl = widgetData.baseUrl || ''
-                            const constructedUrl = username ? baseUrl + username : baseUrl
-                            setWidgetData({...widgetData, username, url: constructedUrl})
-                          }}
-                          className="text-gray-900 bg-white"
-                        />
-                      </div>
-                    )}
-                  </>
+    <AnimatePresence>
+      <motion.div 
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+      >
+        <motion.div 
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[600px] max-h-[80vh] overflow-hidden relative border border-gray-200 flex flex-col"
+          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+        >
+          {/* Modal Header */}
+          <div className="border-b border-gray-100 bg-white">
+            <div className="px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                {showDetailsPage && (
+                  <motion.button
+                    onClick={() => setShowDetailsPage(false)}
+                    className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                  >
+                    <ArrowLeft className="w-4 h-4 text-gray-600" />
+                  </motion.button>
                 )}
+                <motion.div
+                  className="w-9 h-9 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-sm"
+                  whileHover={{ rotate: 5, scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Sparkles className="w-4 h-4 text-white" />
+                </motion.div>
+                <div>
+                  <h1 className="text-lg font-bold text-gray-900">
+                    {showDetailsPage ? 'Configure Widget' : 'Add Widget'}
+                  </h1>
+                </div>
               </div>
-
-              <Button 
-                onClick={handleAddWidget} 
-                className="w-full"
-                disabled={isConverting}
+              <motion.button
+                onClick={onClose}
+                className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                whileHover={{ scale: 1.05, rotate: 90 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <ArrowRight className="w-4 h-4 mr-2" />
-                {isConverting ? 'Creating...' : 'Add Widget'}
-              </Button>
+                <X className="w-4 h-4 text-gray-600" />
+              </motion.button>
             </div>
           </div>
-        ) : (
-          <div className="flex h-[calc(90vh-200px)]">
-            {/* Left Side - Widget Selection */}
-            <div className="flex-1 overflow-y-auto">
-            <div className="p-6 space-y-6">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
 
-              {/* Convert from another tool */}
-              <div>
-                <h3 className="font-medium text-gray-900 mb-3">Convert from another tool</h3>
-                <Card className="cursor-pointer bg-white hover:bg-gray-50 transition-colors border border-gray-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-green-500 rounded flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">LT</span>
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">Linktree</div>
-                        <div className="text-sm text-gray-500">Linktree, Beacons & other</div>
-                        <div className="text-sm text-gray-500">Transform your existing bio link into tapLink and offer an immersive experience to your visitors with our widgets</div>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                        onClick={() => {
-                          setSelectedWidget('convert_linktree')
-                          setWidgetData({ 
-                            type: 'convert',
-                            title: 'Import from Linktree',
-                            url: ''
-                          })
-                        }}
-                      >
-                        Convert
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Existing Links & QR Codes */}
-              {(links && links.length > 0) && (
-                <div>
-                  <h3 className="font-medium text-gray-900 mb-3">Your Existing Links</h3>
-                  <div className="grid grid-cols-1 gap-3">
-                    {/* Active Links */}
-                    {links.filter(link => link && link.is_active).map((link) => (
-                      <Card
-                        key={link.id}
-                        className="cursor-pointer bg-white hover:bg-gray-50 transition-colors border border-gray-200"
-                        onClick={() => {
-                          // Check plan limits before creating widget
-                          const canCreate = checkCanCreateLink(links.filter(link => link), 'link_in_bio', userTier)
-                          
-                          if (!canCreate.canCreate) {
-                            toast.error(canCreate.reason || 'Cannot create widget')
-                            return
-                          }
-
-                          const widget: Widget = {
-                            id: `existing-${link.id}`,
-                            type: 'link',
-                            size: 'small-square',
-                            data: {
-                              title: link.title || link.url,
-                              url: link.url,
-                              description: link.link_type === 'qr_code' ? 'QR Code Link' : link.link_type === 'deeplink' ? 'Deep Link' : 'Link'
-                            },
-                            position: { x: 0, y: 0 },
-                            webPosition: { x: 0, y: 0 },
-                            mobilePosition: { x: 0, y: 0 }
-                          }
-                          onAddWidget(widget)
-                          onClose()
-                        }}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <div className={`w-8 h-8 rounded flex items-center justify-center ${
-                                link.link_type === 'qr_code' ? 'bg-green-500' : 
-                                link.link_type === 'deeplink' ? 'bg-blue-500' : 'bg-gray-500'
-                              }`}>
-                                {link.link_type === 'qr_code' ? (
-                                  <Package className="w-4 h-4 text-white" />
-                                ) : (
-                                  <Link className="w-4 h-4 text-white" />
-                                )}
-                              </div>
-                              <div>
-                                <div className="font-medium text-gray-900">{link.title || 'Untitled Link'}</div>
-                                <div className="text-sm text-gray-500">
-                                  {link.link_type === 'qr_code' ? 'QR Code' : 
-                                   link.link_type === 'deeplink' ? 'Deep Link' : 'Link'}
-                                </div>
-                              </div>
-                            </div>
-                            <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50">
-                              Add
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+          <AnimatePresence mode="wait">
+            {showDetailsPage ? (
+              /* Configuration Form */
+              <motion.div 
+                key="configure"
+                className="flex-1 overflow-y-auto"
+                initial={{ opacity: 0, x: 50, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: -50, scale: 0.95 }}
+                transition={{ duration: 0.25 }}
+              >
+                <div className="px-6 py-4">
+                  <div className="max-w-lg mx-auto">
                     
-                    {/* Inactive Links */}
-                    {links.filter(link => link && !link.is_active).length > 0 && (
-                      <>
-                        <div className="mt-4">
-                          <h4 className="text-sm font-medium text-gray-600 mb-2">Inactive Links</h4>
-                          <p className="text-xs text-gray-500 mb-3">These links are currently inactive and cannot be added to your page.</p>
-                        </div>
-                        {links.filter(link => link && !link.is_active).map((link) => (
-                          <Card
-                            key={link.id}
-                            className="cursor-not-allowed bg-gray-50 border border-gray-200 opacity-60"
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-3">
-                                  <div className={`w-8 h-8 rounded flex items-center justify-center ${
-                                    link.link_type === 'qr_code' ? 'bg-gray-400' : 
-                                    link.link_type === 'deeplink' ? 'bg-gray-400' : 'bg-gray-400'
-                                  }`}>
-                                    {link.link_type === 'qr_code' ? (
-                                      <Package className="w-4 h-4 text-white" />
-                                    ) : (
-                                      <Link className="w-4 h-4 text-white" />
-                                    )}
-                                  </div>
-                                  <div>
-                                    <div className="font-medium text-gray-600">{link.title || 'Untitled Link'}</div>
-                                    <div className="text-sm text-gray-400">
-                                      {link.link_type === 'qr_code' ? 'QR Code' : 
-                                       link.link_type === 'deeplink' ? 'Deep Link' : 'Link'} - Inactive
-                                    </div>
-                                  </div>
+                    {/* Form Header */}
+                    <motion.div 
+                      className="text-center mb-3"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                    >
+                      <motion.div
+                        className="w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-sm"
+                        whileHover={{ scale: 1.05, rotate: 5 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {selectedWidget?.startsWith('qr_') ? (
+                          <Package className="w-5 h-5 text-purple-600" />
+                        ) : selectedWidget?.startsWith('social_') ? (
+                          <Instagram className="w-5 h-5 text-purple-600" />
+                        ) : selectedWidget?.startsWith('music_') ? (
+                          <Music className="w-5 h-5 text-purple-600" />
+                        ) : selectedWidget?.includes('deeplink') ? (
+                          <Smartphone className="w-5 h-5 text-purple-600" />
+                        ) : (
+                          <Link className="w-5 h-5 text-purple-600" />
+                        )}
+                      </motion.div>
+                      <h2 className="text-base font-bold text-gray-900 mb-1">
+                        {selectedWidget?.startsWith('platform_') ? 
+                          (widgetData.outputType === 'qr_code' ? 'Create QR Code' : 'Add Social Link') :
+                         selectedWidget?.includes('deeplink') ? 'Create Deep Link' :
+                         'Add Link'}
+                      </h2>
+                      <p className="text-xs text-gray-600">
+                        {selectedWidget?.startsWith('platform_') ? 
+                          (widgetData.outputType === 'qr_code' ? 'Generate a branded QR code' : 'Connect your social profile') :
+                         selectedWidget?.includes('deeplink') ? 'Smart app redirects' :
+                         'Create a custom link'}
+                      </p>
+                    </motion.div>
+
+                    {/* Form Fields */}
+                    <motion.div 
+                      className="space-y-3"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      {selectedWidget?.startsWith('platform_') ? (
+                        /* Platform Configuration */
+                        <>
+                          {/* Output Type Selection */}
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium text-gray-700">Output Type</Label>
+                            <div className="flex space-x-3">
+                              <motion.button
+                                type="button"
+                                onClick={() => setWidgetData({...widgetData, outputType: 'link'})}
+                                className={`flex-1 p-3 rounded-xl border-2 transition-all duration-200 ${
+                                  widgetData.outputType === 'link' 
+                                    ? 'border-purple-400 bg-purple-50 text-purple-700' 
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <Link className="w-4 h-4" />
+                                  <span className="text-sm font-medium">Social Link</span>
                                 </div>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  disabled
-                                  className="bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                                >
-                                  Inactive
-                                </Button>
+                              </motion.button>
+                              <motion.button
+                                type="button"
+                                onClick={() => setWidgetData({...widgetData, outputType: 'qr_code'})}
+                                className={`flex-1 p-3 rounded-xl border-2 transition-all duration-200 ${
+                                  widgetData.outputType === 'qr_code' 
+                                    ? 'border-purple-400 bg-purple-50 text-purple-700' 
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <Package className="w-4 h-4" />
+                                  <span className="text-sm font-medium">QR Code</span>
+                                </div>
+                              </motion.button>
+                            </div>
+                          </div>
+
+                          {/* Platform Fields */}
+                          {widgetData.outputType === 'qr_code' ? (
+                            /* QR Code Fields */
+                            <>
+                              <div className="space-y-2">
+                                <Label htmlFor="qr-title" className="text-sm font-medium text-gray-700">QR Code Title</Label>
+                                <Input
+                                  id="qr-title"
+                                  placeholder="My QR Code"
+                                  value={widgetData.title || ''}
+                                  onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                                  className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                                />
                               </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </>
-                    )}
+                              <div className="space-y-2">
+                                <Label htmlFor="qr-url" className="text-sm font-medium text-gray-700">
+                                  {widgetData.platform === 'website' ? 'Website URL' : 
+                                   widgetData.platform === 'instagram' ? 'Instagram URL' :
+                                   widgetData.platform === 'tiktok' ? 'TikTok URL' :
+                                   widgetData.platform === 'youtube' ? 'YouTube URL' :
+                                   widgetData.platform === 'twitter' ? 'X (Twitter) URL' :
+                                   widgetData.platform === 'linkedin' ? 'LinkedIn URL' :
+                                   widgetData.platform === 'spotify' ? 'Spotify URL' :
+                                   widgetData.platform === 'github' ? 'GitHub URL' :
+                                   'URL'}
+                                </Label>
+                                <Input
+                                  id="qr-url"
+                                  placeholder={`https://${widgetData.platform || 'website'}.com/username`}
+                                  value={widgetData.url || ''}
+                                  onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
+                                  className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                                />
+                              </div>
+
+                              {/* Custom Logo Upload for Website QR Codes on Pro Plan Only */}
+                              {userTier === 'pro' && widgetData.platform === 'website' && (
+                                <div className="space-y-2">
+                                  <Label htmlFor="custom-logo" className="text-sm font-medium text-gray-700">Custom Logo (Pro)</Label>
+                                  <Input
+                                    id="custom-logo"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0]
+                                      if (file) {
+                                        setIsUploadingLogo(true)
+                                        try {
+                                          const logoFile = await convertFileToBase64(file)
+                                          const previewUrl = URL.createObjectURL(file)
+                                          
+                                          setWidgetData({
+                                            ...widgetData, 
+                                            logoFile: logoFile,
+                                            customLogoUrl: previewUrl
+                                          })
+                                          toast.success('Logo uploaded!')
+                                        } catch (error) {
+                                          console.error('Error uploading logo:', error)
+                                          toast.error('Failed to upload logo')
+                                        } finally {
+                                          setIsUploadingLogo(false)
+                                        }
+                                      }
+                                    }}
+                                    className="h-10 rounded-xl border-gray-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-purple-50 file:text-purple-700"
+                                  />
+                                  {widgetData.customLogoUrl && (
+                                    <div className="flex items-center space-x-2 mt-2">
+                                      <img 
+                                        src={widgetData.customLogoUrl} 
+                                        alt="Logo preview" 
+                                        className="w-8 h-8 object-cover rounded border"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (widgetData.customLogoUrl) {
+                                            URL.revokeObjectURL(widgetData.customLogoUrl)
+                                          }
+                                          setWidgetData({...widgetData, logoFile: '', customLogoUrl: ''})
+                                        }}
+                                        className="text-xs text-red-600 hover:text-red-800"
+                                      >
+                                        Remove
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            /* Social Link Fields */
+                            <>
+                              <div className="space-y-2">
+                                <Label htmlFor="title" className="text-sm font-medium text-gray-700">Title</Label>
+                                <Input
+                                  id="title"
+                                  placeholder="Link title"
+                                  value={widgetData.title || ''}
+                                  onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                                  className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="url" className="text-sm font-medium text-gray-700">URL</Label>
+                                <Input
+                                  id="url"
+                                  placeholder="https://..."
+                                  value={widgetData.url || ''}
+                                  onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
+                                  className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="username" className="text-sm font-medium text-gray-700">Username</Label>
+                                <Input
+                                  id="username"
+                                  placeholder="yourusername"
+                                  value={widgetData.username || ''}
+                                  onChange={(e) => {
+                                    const username = e.target.value
+                                    const baseUrl = widgetData.baseUrl || ''
+                                    const constructedUrl = username ? baseUrl + username : baseUrl
+                                    setWidgetData({...widgetData, username, url: constructedUrl})
+                                  }}
+                                  className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                                />
+                              </div>
+                            </>
+                          )}
+                        </>
+                      ) : selectedWidget?.includes('deeplink') ? (
+                        /* Deeplink Configuration */
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="app-name" className="text-sm font-medium text-gray-700">App Name</Label>
+                            <Input
+                              id="app-name"
+                              placeholder="My App"
+                              value={widgetData.title || ''}
+                              onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="ios-url" className="text-sm font-medium text-gray-700">iOS App URL</Label>
+                            <Input
+                              id="ios-url"
+                              placeholder="https://apps.apple.com/app/your-app"
+                              value={widgetData.appStoreUrl || ''}
+                              onChange={(e) => setWidgetData({...widgetData, appStoreUrl: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="android-url" className="text-sm font-medium text-gray-700">Android App URL</Label>
+                            <Input
+                              id="android-url"
+                              placeholder="https://play.google.com/store/apps/details?id=your.app"
+                              value={widgetData.playStoreUrl || ''}
+                              onChange={(e) => setWidgetData({...widgetData, playStoreUrl: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="fallback-url" className="text-sm font-medium text-gray-700">Fallback URL</Label>
+                            <Input
+                              id="fallback-url"
+                              placeholder="https://yourwebsite.com"
+                              value={widgetData.url || ''}
+                              onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+                        </>
+                      ) : selectedWidget?.startsWith('qr_') ? (
+                        /* QR Code Configuration */
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="qr-title" className="text-sm font-medium text-gray-700">QR Code Title</Label>
+                            <Input
+                              id="qr-title"
+                              placeholder="My QR Code"
+                              value={widgetData.title || ''}
+                              onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="qr-url" className="text-sm font-medium text-gray-700">
+                              {widgetData.platform === 'website' ? 'Website URL' : 
+                               widgetData.platform === 'instagram' ? 'Instagram URL' :
+                               widgetData.platform === 'tiktok' ? 'TikTok URL' :
+                               widgetData.platform === 'youtube' ? 'YouTube URL' :
+                               widgetData.platform === 'x' ? 'X (Twitter) URL' :
+                               widgetData.platform === 'linkedin' ? 'LinkedIn URL' :
+                               widgetData.platform === 'spotify' ? 'Spotify URL' :
+                               widgetData.platform === 'github' ? 'GitHub URL' :
+                               'URL'}
+                            </Label>
+                            <Input
+                              id="qr-url"
+                              placeholder={`https://${widgetData.platform || 'website'}.com/username`}
+                              value={widgetData.url || ''}
+                              onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+
+                          {/* Custom Logo Upload for Website QR Codes on Pro Plan Only */}
+                          {userTier === 'pro' && widgetData.platform === 'website' && (
+                            <div className="space-y-2">
+                              <Label htmlFor="custom-logo" className="text-sm font-medium text-gray-700">Custom Logo (Pro)</Label>
+                              <Input
+                                id="custom-logo"
+                                type="file"
+                                accept="image/*"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0]
+                                  if (file) {
+                                    setIsUploadingLogo(true)
+                                    try {
+                                      const logoFile = await convertFileToBase64(file)
+                                      const previewUrl = URL.createObjectURL(file)
+                                      
+                                      setWidgetData({
+                                        ...widgetData, 
+                                        logoFile: logoFile,
+                                        customLogoUrl: previewUrl
+                                      })
+                                      toast.success('Logo uploaded!')
+                                    } catch (error) {
+                                      console.error('Error uploading logo:', error)
+                                      toast.error('Failed to upload logo')
+                                    } finally {
+                                      setIsUploadingLogo(false)
+                                    }
+                                  }
+                                }}
+                                className="h-11 rounded-xl border-gray-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-purple-50 file:text-purple-700"
+                              />
+                              {widgetData.customLogoUrl && (
+                                <div className="flex items-center space-x-2 mt-2">
+                                  <img 
+                                    src={widgetData.customLogoUrl} 
+                                    alt="Logo preview" 
+                                    className="w-8 h-8 object-cover rounded border"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (widgetData.customLogoUrl) {
+                                        URL.revokeObjectURL(widgetData.customLogoUrl)
+                                      }
+                                      setWidgetData({...widgetData, logoFile: '', customLogoUrl: ''})
+                                    }}
+                                    className="text-xs text-red-600 hover:text-red-800"
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      ) : selectedWidget === 'convert_linktree' ? (
+                        /* Linktree Conversion */
+                        <div className="space-y-2">
+                          <Label htmlFor="linktree-url" className="text-sm font-medium text-gray-700">Linktree URL</Label>
+                          <Input
+                            id="linktree-url"
+                            placeholder="https://linktr.ee/yourusername"
+                            value={widgetData.url || ''}
+                            onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
+                            className="h-11 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                          />
+                          <p className="text-xs text-gray-500">
+                            We'll import all your links from your Linktree page
+                          </p>
+                        </div>
+                      ) : (
+                        /* Standard Link Configuration */
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="title" className="text-sm font-medium text-gray-700">Title</Label>
+                            <Input
+                              id="title"
+                              placeholder="Link title"
+                              value={widgetData.title || ''}
+                              onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="url" className="text-sm font-medium text-gray-700">URL</Label>
+                            <Input
+                              id="url"
+                              placeholder="https://..."
+                              value={widgetData.url || ''}
+                              onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+                          {selectedWidget?.startsWith('social_') && (
+                            <div className="space-y-2">
+                              <Label htmlFor="username" className="text-sm font-medium text-gray-700">Username</Label>
+                              <Input
+                                id="username"
+                                placeholder="yourusername"
+                                value={widgetData.username || ''}
+                                onChange={(e) => {
+                                  const username = e.target.value
+                                  const baseUrl = widgetData.baseUrl || ''
+                                  const constructedUrl = username ? baseUrl + username : baseUrl
+                                  setWidgetData({...widgetData, username, url: constructedUrl})
+                                }}
+                                className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                              />
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </motion.div>
+
+                    {/* Submit Button */}
+                    <motion.div 
+                      className="mt-4"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <Button 
+                        onClick={handleAddWidget} 
+                        className="w-full bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white rounded-xl h-10 text-sm font-medium shadow-lg shadow-purple-500/25"
+                        disabled={isConverting}
+                      >
+                        {isConverting ? (
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"
+                          />
+                        ) : (
+                          <Plus className="w-4 h-4 mr-2" />
+                        )}
+                        {isConverting ? 'Creating...' : 'Add Widget'}
+                      </Button>
+                    </motion.div>
                   </div>
                 </div>
-              )}
+              </motion.div>
+            ) : (
+              /* Widget Selection Grid */
+              <motion.div 
+                key="browse"
+                className="flex-1 overflow-y-auto"
+                initial={{ opacity: 0, x: -50, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 50, scale: 0.95 }}
+                transition={{ duration: 0.25 }}
+              >
+                <div className="px-6 py-6">
+                  
+                  {/* Search Bar */}
+                  <motion.div 
+                    className="mb-5"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <div className="relative max-w-md mx-auto">
+                      <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        placeholder="Search widgets..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-12 h-10 rounded-full border-gray-200 bg-gray-50 focus:bg-white focus:border-purple-400 focus:ring-purple-400/20 transition-all text-sm"
+                      />
+                    </div>
+                  </motion.div>
 
-              {/* Essentials */}
-              <div>
-                <h3 className="font-medium text-gray-900 mb-3">Essentials</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {filteredEssentials.map((widget) => (
-                    <Card
-                      key={widget.value}
-                      className={`cursor-pointer bg-white hover:bg-gray-50 transition-colors border ${
-                        selectedWidget === `essential_${widget.value}` ? 'ring-2 ring-blue-500' : 'border-gray-200'
-                      }`}
-                      onClick={() => handleEssentialSelect(widget.value)}
+                  <div className="space-y-8">
+                    
+                    {/* Convert Section */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
                     >
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 ${widget.color} rounded flex items-center justify-center`}>
-                              <widget.icon className="w-4 h-4 text-white" />
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900">{widget.name}</div>
-                              <div className="text-sm text-gray-500">{widget.description}</div>
-                            </div>
-                          </div>
-                          <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50">
-                            Add
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-
-              {/* Social Networks */}
-              <div>
-                <h3 className="font-medium text-gray-900 mb-3">Social Networks</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {filteredSocial.map((platform) => (
-                    <Card
-                      key={platform.value}
-                      className={`cursor-pointer bg-white hover:bg-gray-50 transition-colors border ${
-                        selectedWidget === `social_${platform.value}` ? 'ring-2 ring-blue-500' : 'border-gray-200'
-                      }`}
-                      onClick={() => handleSocialSelect(platform.value)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 ${platform.color} rounded flex items-center justify-center p-1.5`}>
-                              <img 
-                                src={platform.logoUrl} 
-                                alt={`${platform.name} logo`}
-                                className="w-full h-full object-contain filter invert brightness-0 contrast-100"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                  const fallback = target.nextElementSibling as HTMLElement;
-                                  if (fallback) fallback.style.display = 'block';
-                                }}
-                              />
-                              <div className="w-full h-full items-center justify-center text-white text-xs font-bold hidden">
-                                {platform.name.charAt(0)}
+                      <div className="flex items-center space-x-2 mb-4">
+                        <Zap className="w-5 h-5 text-orange-500" />
+                        <h3 className="text-lg font-semibold text-gray-900">Convert</h3>
+                      </div>
+                      <motion.div
+                        whileHover={{ y: -2 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <Card 
+                          className="cursor-pointer border-2 border-orange-200 hover:border-orange-300 hover:shadow-lg transition-all duration-200 rounded-xl bg-gradient-to-br from-orange-50 to-yellow-50"
+                          onClick={() => {
+                            setSelectedWidget('convert_linktree')
+                            setWidgetData({ type: 'convert', title: 'Import from Linktree', url: '' })
+                            setShowDetailsPage(true)
+                          }}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-sm">
+                                <span className="text-white text-xs font-bold">LT</span>
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-gray-900">Import from Linktree</h4>
+                                <p className="text-sm text-gray-600">Convert your existing bio links</p>
                               </div>
                             </div>
-                            <div>
-                              <div className="font-medium text-gray-900">{platform.name}</div>
-                              <div className="text-sm text-gray-500">
-                                {platform.value === 'instagram' && 'Invite to follow you on Instagram'}
-                                {platform.value === 'facebook' && 'Add your Facebook profile or page'}
-                                {platform.value === 'tiktok' && 'Share your TikTok profile'}
-                                {platform.value === 'linkedin' && 'Share your LinkedIn profile'}
-                                {platform.value === 'youtube' && 'Redirect to your YouTube channel'}
-                                {platform.value === 'twitter' && 'Let people discover your X account'}
-                                {platform.value === 'github' && 'Share your GitHub profile'}
-                                {platform.value === 'website' && 'Link to your website'}
-                              </div>
-                            </div>
-                          </div>
-                          <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50">
-                            Add
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    </motion.div>
 
-              {/* QR Codes with Platform Logos */}
-              <div data-section="qr-codes">
-                <h3 className="font-medium text-gray-900 mb-3">QR Codes with Platform Logos</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {qrCodePlatforms.map((platform) => (
-                    <Card
-                      key={platform.value}
-                      className={`cursor-pointer bg-white hover:bg-gray-50 transition-colors border ${
-                        selectedWidget === `qr_${platform.value}` ? 'ring-2 ring-blue-500' : 'border-gray-200'
-                      }`}
-                      onClick={() => handleQRSelect(platform.value)}
+                    {/* Essential Widgets */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
                     >
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 ${platform.color} rounded flex items-center justify-center`}>
-                              <platform.icon className="w-4 h-4 text-white" />
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900">{platform.name} QR</div>
-                              <div className="text-sm text-gray-500">QR code with {platform.name} logo</div>
-                            </div>
-                          </div>
-                          <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50">
-                            Add
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
+                      <div className="flex items-center space-x-2 mb-4">
+                        <Star className="w-5 h-5 text-blue-500" />
+                        <h3 className="text-lg font-semibold text-gray-900">Essential</h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {filteredEssentials.map((widget, index) => (
+                          <motion.div
+                            key={widget.value}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.3 + index * 0.05 }}
+                            whileHover={ { y: -2, scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Card
+                              className="cursor-pointer border-2 border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-200 rounded-xl"
+                              onClick={() => {
+                                handleEssentialSelect(widget.value)
+                                setShowDetailsPage(true)
+                              }}
+                            >
+                              <CardContent className="p-3">
+                                <div className="flex items-center space-x-3">
+                                  <div className={`w-9 h-9 ${widget.color} rounded-xl flex items-center justify-center shadow-sm`}>
+                                    <widget.icon className="w-4 h-4 text-white" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium text-gray-900 text-sm">{widget.name}</h4>
+                                    <p className="text-xs text-gray-600 truncate">{widget.description}</p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
 
-              {/* Music & Podcasts */}
-              <div>
-                <h3 className="font-medium text-gray-900 mb-3">Music & Podcasts</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', value: 'spotify', color: 'bg-green-500', baseUrl: 'https://open.spotify.com/user/' },
-                    { name: 'Apple Music', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/applemusic.svg', value: 'apple_music', color: 'bg-red-500', baseUrl: 'https://music.apple.com/profile/' },
-                    { name: 'SoundCloud', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/soundcloud.svg', value: 'soundcloud', color: 'bg-orange-500', baseUrl: 'https://soundcloud.com/' },
-                    { name: 'Podcast', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/podcast.svg', value: 'podcast', color: 'bg-purple-500', baseUrl: '' },
-                  ].map((platform) => (
-                    <Card
-                      key={platform.value}
-                      className={`cursor-pointer bg-white hover:bg-gray-50 transition-colors border ${
-                        selectedWidget === `music_${platform.value}` ? 'ring-2 ring-blue-500' : 'border-gray-200'
-                      }`}
-                      onClick={() => handleMusicSelect(platform.value)}
+                    {/* Platforms */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                      data-section="platforms"
                     >
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 ${platform.color} rounded flex items-center justify-center p-1.5`}>
-                              <img 
-                                src={platform.logoUrl} 
-                                alt={`${platform.name} logo`}
-                                className="w-full h-full object-contain filter invert brightness-0 contrast-100"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                  const fallback = target.nextElementSibling as HTMLElement;
-                                  if (fallback) fallback.style.display = 'block';
-                                }}
-                              />
-                              <div className="w-full h-full items-center justify-center text-white text-xs font-bold hidden">
-                                {platform.name.charAt(0)}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900">{platform.name}</div>
-                              <div className="text-sm text-gray-500">Connect your music</div>
-                            </div>
-                          </div>
-                          <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50">
-                            Add
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
+                      <div className="flex items-center space-x-2 mb-4">
+                        <Globe className="w-5 h-5 text-purple-500" />
+                        <h3 className="text-lg font-semibold text-gray-900">Platforms</h3>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        {filteredPlatforms.map((platform, index) => (
+                          <motion.div
+                            key={platform.value}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.5 + index * 0.03 }}
+                            whileHover={{ y: -2, scale: 1.02 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <Card
+                              className="cursor-pointer border-2 border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-200 rounded-xl"
+                              onClick={() => {
+                                handlePlatformSelect(platform.value)
+                                setShowDetailsPage(true)
+                              }}
+                            >
+                              <CardContent className="p-3">
+                                <div className="flex items-center space-x-3">
+                                  <div className={`w-10 h-10 ${platform.color} rounded-xl flex items-center justify-center shadow-sm`}>
+                                    <img 
+                                      src={platform.logoUrl} 
+                                      alt={platform.name}
+                                      className="w-5 h-5 object-contain filter invert brightness-0"
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        const fallback = target.nextElementSibling as HTMLElement;
+                                        if (fallback) fallback.style.display = 'block';
+                                      }}
+                                    />
+                                    <div className="w-5 h-5 items-center justify-center text-white text-sm font-bold hidden">
+                                      {platform.name.charAt(0)}
+                                    </div>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium text-gray-900 text-sm">{platform.name}</h4>
+                                    <p className="text-xs text-gray-500">Link or QR Code</p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
 
-            </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   )
 }
-
