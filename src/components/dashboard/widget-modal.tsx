@@ -438,29 +438,69 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                         whileHover={{ scale: 1.05, rotate: 5 }}
                         transition={{ duration: 0.2 }}
                       >
-                        {selectedWidget?.startsWith('qr_') ? (
-                          <Package className="w-5 h-5 text-purple-600" />
-                        ) : selectedWidget?.startsWith('social_') ? (
-                          <Instagram className="w-5 h-5 text-purple-600" />
-                        ) : selectedWidget?.startsWith('music_') ? (
-                          <Music className="w-5 h-5 text-purple-600" />
-                        ) : selectedWidget?.includes('deeplink') ? (
-                          <Smartphone className="w-5 h-5 text-purple-600" />
-                        ) : (
-                          <Link className="w-5 h-5 text-purple-600" />
-                        )}
+                        {(() => {
+                          if (selectedWidget?.startsWith('platform_')) {
+                            const platform = platforms.find(p => p.value === widgetData.platform);
+                            const IconComponent = platform?.icon || Globe;
+                            return <IconComponent className="w-5 h-5 text-purple-600" />;
+                          }
+                          if (selectedWidget?.startsWith('essential_')) {
+                            const widget = essentialWidgets.find(w => w.value === widgetData.type);
+                            const IconComponent = widget?.icon || Link;
+                            return <IconComponent className="w-5 h-5 text-purple-600" />;
+                          }
+                          if (selectedWidget?.includes('deeplink')) {
+                            return <Smartphone className="w-5 h-5 text-purple-600" />;
+                          }
+                          if (selectedWidget === 'convert_linktree') {
+                            return <Zap className="w-5 h-5 text-purple-600" />;
+                          }
+                          return <Link className="w-5 h-5 text-purple-600" />;
+                        })()}
                       </motion.div>
                       <h2 className="text-base font-bold text-gray-900 mb-1">
-                        {selectedWidget?.startsWith('platform_') ? 
-                          (widgetData.outputType === 'qr_code' ? 'Create QR Code' : 'Add Social Link') :
-                         selectedWidget?.includes('deeplink') ? 'Create Deep Link' :
-                         'Add Link'}
+                        {(() => {
+                          if (selectedWidget?.startsWith('platform_')) {
+                            const platform = platforms.find(p => p.value === widgetData.platform);
+                            if (widgetData.outputType === 'qr_code') {
+                              return `${platform?.name || 'Platform'} QR Code`;
+                            }
+                            return `Add ${platform?.name || 'Platform'} Link`;
+                          }
+                          if (selectedWidget?.startsWith('essential_')) {
+                            const widget = essentialWidgets.find(w => w.value === widgetData.type);
+                            return `Add ${widget?.name || 'Widget'}`;
+                          }
+                          if (selectedWidget?.includes('deeplink')) {
+                            return 'Create Deep Link';
+                          }
+                          if (selectedWidget === 'convert_linktree') {
+                            return 'Import from Linktree';
+                          }
+                          return 'Add Widget';
+                        })()}
                       </h2>
                       <p className="text-xs text-gray-600">
-                        {selectedWidget?.startsWith('platform_') ? 
-                          (widgetData.outputType === 'qr_code' ? 'Generate a branded QR code' : 'Connect your social profile') :
-                         selectedWidget?.includes('deeplink') ? 'Smart app redirects' :
-                         'Create a custom link'}
+                        {(() => {
+                          if (selectedWidget?.startsWith('platform_')) {
+                            const platform = platforms.find(p => p.value === widgetData.platform);
+                            if (widgetData.outputType === 'qr_code') {
+                              return `Generate a branded QR code for ${platform?.name || 'this platform'}`;
+                            }
+                            return `Connect your ${platform?.name || 'social'} profile`;
+                          }
+                          if (selectedWidget?.startsWith('essential_')) {
+                            const widget = essentialWidgets.find(w => w.value === widgetData.type);
+                            return widget?.description || 'Configure your widget';
+                          }
+                          if (selectedWidget?.includes('deeplink')) {
+                            return 'Smart app redirects';
+                          }
+                          if (selectedWidget === 'convert_linktree') {
+                            return 'Import all your existing links';
+                          }
+                          return 'Configure your widget';
+                        })()}
                       </p>
                     </motion.div>
 
@@ -794,6 +834,157 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                             We'll import all your links from your Linktree page
                           </p>
                         </div>
+                      ) : widgetData.type === 'text' ? (
+                        /* Text Widget Configuration */
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="text-title" className="text-sm font-medium text-gray-700">Title</Label>
+                            <Input
+                              id="text-title"
+                              placeholder="Text block title"
+                              value={widgetData.title || ''}
+                              onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="text-content" className="text-sm font-medium text-gray-700">Content</Label>
+                            <Textarea
+                              id="text-content"
+                              placeholder="Enter your text content..."
+                              value={widgetData.content || ''}
+                              onChange={(e) => setWidgetData({...widgetData, content: e.target.value})}
+                              className="rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20 min-h-[80px] resize-none"
+                            />
+                          </div>
+                        </>
+                      ) : widgetData.type === 'media' ? (
+                        /* Media Widget Configuration */
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="media-title" className="text-sm font-medium text-gray-700">Title</Label>
+                            <Input
+                              id="media-title"
+                              placeholder="Photo/Video title"
+                              value={widgetData.title || ''}
+                              onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="media-file" className="text-sm font-medium text-gray-700">Upload File</Label>
+                            <Input
+                              id="media-file"
+                              type="file"
+                              accept="image/*,video/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  setWidgetData({...widgetData, file})
+                                }
+                              }}
+                              className="h-10 rounded-xl border-gray-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-purple-50 file:text-purple-700"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="media-caption" className="text-sm font-medium text-gray-700">Caption (Optional)</Label>
+                            <Textarea
+                              id="media-caption"
+                              placeholder="Add a caption..."
+                              value={widgetData.caption || ''}
+                              onChange={(e) => setWidgetData({...widgetData, caption: e.target.value})}
+                              className="rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20 min-h-[60px] resize-none"
+                            />
+                          </div>
+                        </>
+                      ) : widgetData.type === 'voice' ? (
+                        /* Voice Widget Configuration */
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="voice-title" className="text-sm font-medium text-gray-700">Title</Label>
+                            <Input
+                              id="voice-title"
+                              placeholder="Voice message title"
+                              value={widgetData.title || ''}
+                              onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="voice-file" className="text-sm font-medium text-gray-700">Upload Audio</Label>
+                            <Input
+                              id="voice-file"
+                              type="file"
+                              accept="audio/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  setWidgetData({...widgetData, file})
+                                }
+                              }}
+                              className="h-10 rounded-xl border-gray-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-purple-50 file:text-purple-700"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="voice-caption" className="text-sm font-medium text-gray-700">Description (Optional)</Label>
+                            <Textarea
+                              id="voice-caption"
+                              placeholder="Describe your voice message..."
+                              value={widgetData.caption || ''}
+                              onChange={(e) => setWidgetData({...widgetData, caption: e.target.value})}
+                              className="rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20 min-h-[60px] resize-none"
+                            />
+                          </div>
+                        </>
+                      ) : widgetData.type === 'product' ? (
+                        /* Product Widget Configuration */
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="product-title" className="text-sm font-medium text-gray-700">Product Name</Label>
+                            <Input
+                              id="product-title"
+                              placeholder="Product name"
+                              value={widgetData.title || ''}
+                              onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="product-price" className="text-sm font-medium text-gray-700">Price</Label>
+                            <Input
+                              id="product-price"
+                              placeholder="$29.99"
+                              value={widgetData.price || ''}
+                              onChange={(e) => setWidgetData({...widgetData, price: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="product-url" className="text-sm font-medium text-gray-700">Purchase URL</Label>
+                            <Input
+                              id="product-url"
+                              placeholder="https://..."
+                              value={widgetData.url || ''}
+                              onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="product-image" className="text-sm font-medium text-gray-700">Product Image</Label>
+                            <Input
+                              id="product-image"
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  setWidgetData({...widgetData, file})
+                                }
+                              }}
+                              className="h-10 rounded-xl border-gray-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-purple-50 file:text-purple-700"
+                            />
+                          </div>
+                        </>
                       ) : (
                         /* Standard Link Configuration */
                         <>
@@ -817,23 +1008,6 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                               className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
                             />
                           </div>
-                          {selectedWidget?.startsWith('social_') && (
-                            <div className="space-y-2">
-                              <Label htmlFor="username" className="text-sm font-medium text-gray-700">Username</Label>
-                              <Input
-                                id="username"
-                                placeholder="yourusername"
-                                value={widgetData.username || ''}
-                                onChange={(e) => {
-                                  const username = e.target.value
-                                  const baseUrl = widgetData.baseUrl || ''
-                                  const constructedUrl = username ? baseUrl + username : baseUrl
-                                  setWidgetData({...widgetData, username, url: constructedUrl})
-                                }}
-                                className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
-                              />
-                            </div>
-                          )}
                         </>
                       )}
                     </motion.div>
