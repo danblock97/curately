@@ -1,10 +1,11 @@
 'use client'
 
+import { motion } from 'framer-motion'
 import { User } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { LogOut, ExternalLink } from 'lucide-react'
+import { LogOut, ExternalLink, Sparkles } from 'lucide-react'
 import { Database } from '@/lib/supabase/types'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
@@ -27,38 +28,41 @@ export function DashboardHeader({ user, profile, primaryPage }: DashboardHeaderP
   }
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <motion.header 
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 px-6 py-4"
+    >
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-gray-900">Curately</h1>
-          {primaryPage && primaryPage.username && (
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Your page:</span>
-              <a
-                href={`/${primaryPage.username}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-700 flex items-center space-x-1"
-              >
-                <span>curately.co.uk/{primaryPage.username}</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-          )}
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex items-center space-x-3"
+        >
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+            Curately
+          </h1>
+        </motion.div>
         
-        <div className="flex items-center space-x-4">
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex items-center space-x-4"
+        >
           <Button
             variant="outline"
             size="sm"
             onClick={handleSignOut}
-            className="flex items-center space-x-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-400 transition-colors px-3 py-2 h-9"
+            className="flex items-center space-x-2 bg-white/80 border border-gray-300 text-gray-700 hover:bg-white hover:text-gray-900 hover:border-gray-400 transition-all duration-200 px-4 py-2 h-10 rounded-xl shadow-sm hover:shadow-md"
           >
             <LogOut className="w-4 h-4" />
             <span className="font-medium">Sign out</span>
           </Button>
-        </div>
+        </motion.div>
       </div>
-    </header>
+    </motion.header>
   )
 }
