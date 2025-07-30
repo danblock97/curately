@@ -64,6 +64,7 @@ export interface Widget {
 		| "media";
 	size:
 		| "thin"
+		| "small-circle"
 		| "small-square"
 		| "medium-square"
 		| "large-square"
@@ -107,6 +108,13 @@ const sizeOptions = [
 		label: "Thin Rectangle",
 		icon: (
 			<div className="w-3 h-0.5 bg-white border border-black rounded-full"></div>
+		),
+	},
+	{
+		value: "small-circle",
+		label: "Small Circle",
+		icon: (
+			<div className="w-2 h-2 bg-white border border-black rounded-full"></div>
 		),
 	},
 	{
@@ -1455,9 +1463,9 @@ export function AppearanceCustomizer({
 		newSize: Widget["size"]
 	) => {
 		try {
-			// In mobile view, only allow small squares
-			if (activeView === "mobile" && newSize !== "small-square") {
-				toast.error("Only small squares are allowed in mobile view");
+			// In mobile view, only allow small squares and small circles
+			if (activeView === "mobile" && newSize !== "small-square" && newSize !== "small-circle") {
+				toast.error("Only small squares and small circles are allowed in mobile view");
 				return;
 			}
 
@@ -1562,9 +1570,12 @@ export function AppearanceCustomizer({
 	};
 
 	const getWidgetDimensions = (size: Widget["size"]) => {
-		// Mobile view dimensions (smaller to fit phone screen) - only small squares allowed
+		// Mobile view dimensions (smaller to fit phone screen) - only small squares and small circles allowed
 		if (activeView === "mobile") {
-			// All mobile widgets are small squares (128px for 2 per row with margins)
+			// Small circles keep their size, everything else becomes small squares (128px for 2 per row with margins)
+			if (size === "small-circle") {
+				return { width: 64, height: 64 };
+			}
 			return { width: 128, height: 128 };
 		}
 
@@ -1572,6 +1583,8 @@ export function AppearanceCustomizer({
 		switch (size) {
 			case "thin":
 				return { width: 320, height: 64 }; // Increased height for text wrapping
+			case "small-circle":
+				return { width: 64, height: 64 }; // Small circle for just the icon
 			case "small-square":
 				return { width: 192, height: 192 };
 			case "medium-square":
@@ -1868,6 +1881,8 @@ export function AppearanceCustomizer({
 			switch (size) {
 				case "thin":
 					return "w-80 min-h-14 h-auto";
+				case "small-circle":
+					return "w-16 h-16";
 				case "small-square":
 					return "w-48 h-48";
 				case "medium-square":
@@ -1883,8 +1898,11 @@ export function AppearanceCustomizer({
 			}
 		}
 
-		// Mobile view classes - only small squares allowed (2 per row)
+		// Mobile view classes - only small squares and small circles allowed
 		if (activeView === "mobile") {
+			if (size === "small-circle") {
+				return "w-16 h-16"; // Small circle keeps its size
+			}
 			return "w-32 h-32"; // ~128px for 2 per row with margins
 		}
 
@@ -1892,6 +1910,8 @@ export function AppearanceCustomizer({
 		switch (size) {
 			case "thin":
 				return "w-80 min-h-12 h-auto";
+			case "small-circle":
+				return "w-16 h-16";
 			case "small-square":
 				return "w-48 h-48";
 			case "medium-square":
@@ -1908,9 +1928,9 @@ export function AppearanceCustomizer({
 	};
 
 	const renderWidget = (widget: Widget, inRightPanel = false) => {
-		// In mobile view, force all widgets to be treated as small-square for consistent behavior
+		// In mobile view, force all widgets except small-circle to be treated as small-square for consistent behavior
 		const effectiveSize =
-			activeView === "mobile" ? "small-square" : widget.size;
+			activeView === "mobile" && widget.size !== "small-circle" ? "small-square" : widget.size;
 		const sizeClass = getWidgetSizeClass(effectiveSize, inRightPanel);
 		const isHovered = hoveredWidget === widget.id;
 		const isDragged = draggedWidget === widget.id;
@@ -2152,6 +2172,41 @@ export function AppearanceCustomizer({
 												? `@${widget.data.username}`
 												: widget.data.title || capitalizedPlatform || "Link")}
 								</div>
+							</div>
+						</div>
+					);
+				}
+
+				if (effectiveSize === "small-circle") {
+					return (
+						<div className="relative h-full w-full overflow-hidden rounded-full">
+							{/* Background - Platform Logo Only */}
+							<div
+								className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}
+							>
+								{(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? (
+									<img
+										src={widget.data.favicon || widget.data.appLogo || socialInfo.logo}
+										alt={platform || widget.data.title || "External Link"}
+										className={`w-8 h-8 object-contain ${
+											socialInfo.logoStyle || ""
+										}`}
+										onError={(e) => {
+											const target = e.target as HTMLImageElement;
+											target.style.display = "none";
+											const fallback =
+												target.parentElement?.querySelector(".fallback-text");
+											if (fallback) fallback.classList.remove("hidden");
+										}}
+									/>
+								) : null}
+								<span
+									className={`fallback-text text-xs font-bold text-white ${
+										(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? "hidden" : ""
+									}`}
+								>
+									{socialInfo.fallback}
+								</span>
 							</div>
 						</div>
 					);
@@ -2994,13 +3049,17 @@ export function AppearanceCustomizer({
 			</div>
 
 			{/* Main Content */}
-			<div className="flex min-h-[calc(100vh-120px)]">
-				{/* Left Side - Profile Preview */}
+			<div className={`min-h-[calc(100vh-120px)] ${
+				activeView === "web" 
+					? "flex flex-col items-center justify-start max-w-7xl mx-auto px-4 py-8"
+					: "flex flex-col items-center"
+			}`}>
+				{/* Profile Preview */}
 				<div
 					className={`${
 						activeView === "web"
-							? "w-[340px] lg:w-[400px] xl:w-[480px] 2xl:w-[1000px]"
-							: "w-full"
+							? "w-full max-w-lg lg:max-w-xl mb-12"
+							: "w-full max-w-md"
 					} p-4 flex flex-col items-center`}
 				>
 					<div
@@ -3108,10 +3167,10 @@ export function AppearanceCustomizer({
 
 						{/* Widgets Area - Only for mobile view */}
 						{activeView === "mobile" && (
-							<div className="flex justify-center lg:justify-end">
+							<div className="w-full flex justify-center mt-8">
 								<div
 									ref={gridRef}
-									className={`relative min-h-[600px] w-[28rem] bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${
+									className={`relative min-h-[600px] w-80 bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${
 										draggedWidget
 											? "border-blue-300 bg-blue-50"
 											: "border-gray-200"
@@ -3192,9 +3251,9 @@ export function AppearanceCustomizer({
 					</div>
 				</div>
 
-				{/* Right Side - Widget Grid (Web View Only) */}
+				{/* Widget Grid - Below Profile (Web View Only) */}
 				{activeView === "web" && (
-					<div className="w-[740px] p-4">
+					<div className="w-full max-w-5xl lg:max-w-6xl p-4">
 						<div
 							ref={gridRef}
 							className={`relative min-h-[calc(100vh-250px)] w-full bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${

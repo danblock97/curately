@@ -53,6 +53,7 @@ export interface Widget {
 		| "media";
 	size:
 		| "thin"
+		| "small-circle"
 		| "small-square"
 		| "medium-square"
 		| "large-square"
@@ -537,6 +538,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 			switch (size) {
 				case "thin":
 					return "w-full min-h-12 h-auto"; // Full width with flexible height for text wrapping
+				case "small-circle":
+					return "w-16 h-16"; // Small circle keeps its size on mobile
 				case "small-square":
 					return "w-32 h-32"; // ~128px for 2 per row with margins
 				case "medium-square":
@@ -556,6 +559,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 		switch (size) {
 			case "thin":
 				return "w-80 min-h-12 h-auto";
+			case "small-circle":
+				return "w-16 h-16";
 			case "small-square":
 				return "w-48 h-48";
 			case "medium-square":
@@ -572,8 +577,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 	};
 
 	const renderWidget = (widget: Widget) => {
-		// In mobile view, force all widgets to be treated as small-square for consistent behavior
-		const effectiveSize = isMobile ? 'small-square' : widget.size;
+		// In mobile view, force all widgets except small-circle to be treated as small-square for consistent behavior
+		const effectiveSize = isMobile && widget.size !== 'small-circle' ? 'small-square' : widget.size;
 		const sizeClass = getWidgetSizeClass(effectiveSize);
 		const currentPosition = widget.webPosition;
 
@@ -842,6 +847,41 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 												: widget.data.title || capitalizedPlatform || "Link"))
 									}
 								</div>
+							</div>
+						</div>
+					);
+				}
+
+				if (effectiveSize === "small-circle") {
+					return (
+						<div className="relative h-full w-full overflow-hidden rounded-full">
+							{/* Background - Platform Logo Only */}
+							<div
+								className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}
+							>
+								{(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? (
+									<img
+										src={widget.data.favicon || widget.data.appLogo || socialInfo.logo}
+										alt={platform || widget.data.title || "External Link"}
+										className={`w-3 h-3 object-contain ${
+											socialInfo.logoStyle || ""
+										}`}
+										onError={(e) => {
+											const target = e.target as HTMLImageElement;
+											target.style.display = "none";
+											const fallback =
+												target.parentElement?.querySelector(".fallback-text");
+											if (fallback) fallback.classList.remove("hidden");
+										}}
+									/>
+								) : null}
+								<span
+									className={`fallback-text text-xs font-bold text-white ${
+										(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? "hidden" : ""
+									}`}
+								>
+									{socialInfo.fallback}
+								</span>
 							</div>
 						</div>
 					);
@@ -1261,7 +1301,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				className={`${
 					isMobile 
 						? `${sizeClass} transition-all duration-150 ease-out ${widget.data.link_type !== 'qr_code' ? 'cursor-pointer' : ''} mb-2 ${
-							effectiveSize === 'small-square' || effectiveSize === 'medium-square' || effectiveSize === 'large-square' 
+							effectiveSize === 'small-circle' || effectiveSize === 'small-square' || effectiveSize === 'medium-square' || effectiveSize === 'large-square' 
 								? 'mr-2' : ''
 						}` 
 						: `absolute ${sizeClass} transition-all duration-150 ease-out ${widget.data.link_type !== 'qr_code' ? 'cursor-pointer' : ''}`
@@ -1299,12 +1339,16 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 	return (
 		<div className="min-h-screen" style={{ backgroundColor: page.background_color || '#ffffff' }}>
 			{/* Main Content */}
-			<div className={`${isMobile ? 'flex flex-col' : 'flex justify-center'} min-h-screen`}>
+			<div className={`${
+				isMobile 
+					? 'flex flex-col' 
+					: 'flex flex-col items-center justify-start max-w-7xl mx-auto px-4 py-8 lg:py-12'
+			} min-h-screen`}>
 				{/* Profile Section */}
 				<div className={`${
 					isMobile 
 						? 'w-full p-4' 
-						: 'w-[340px] lg:w-[400px] xl:w-[480px] 2xl:w-[520px] p-8 mx-4'
+						: 'w-full max-w-lg lg:max-w-xl mb-12'
 				} flex flex-col items-center`}>
 					<div className={`w-full ${
 						isMobile 
@@ -1315,8 +1359,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 						<div className="text-center mb-6">
 							<div className="mb-6">
 								<Avatar className={`${
-									isMobile ? 'w-24 h-24' : 'w-36 h-36'
-								} mx-auto mb-4 ring-4 ring-white shadow-2xl`}>
+									isMobile ? 'w-24 h-24' : 'w-32 h-32 lg:w-36 lg:h-36'
+								} mx-auto mb-6 ring-4 ring-white shadow-2xl`}>
 									<AvatarImage
 										src={profile?.avatar_url || ""}
 										alt={profile?.display_name || page.page_title}
@@ -1332,15 +1376,15 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 							</div>
 
 							<h1 className={`${
-								isMobile ? 'text-2xl' : 'text-4xl'
-							} font-black mb-3 !text-gray-900`}>
+								isMobile ? 'text-2xl' : 'text-3xl lg:text-4xl'
+							} font-black mb-4 !text-gray-900`}>
 								{profile?.display_name || page.page_title || page.username}
 							</h1>
 
 							{profile?.bio && (
 								<p className={`${
-									isMobile ? 'text-base' : 'text-lg'
-								} !text-gray-700 font-medium mb-6 leading-relaxed max-w-md mx-auto`}>
+									isMobile ? 'text-base' : 'text-lg lg:text-xl'
+								} !text-gray-700 font-medium mb-8 leading-relaxed max-w-lg mx-auto`}>
 									{profile.bio}
 								</p>
 							)}
@@ -1394,9 +1438,9 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				</div>
 
 				{/* Widgets Section */}
-				<div className={`${isMobile ? 'w-full p-4' : 'w-[740px] p-4 relative'}`}>
+				<div className={`${isMobile ? 'w-full p-4' : 'w-full max-w-5xl lg:max-w-6xl p-4 relative'}`}>
 					{isMobile ? (
-						<div className="flex justify-center lg:justify-end">
+						<div className="flex justify-center">
 							<div
 								className="relative w-80 rounded-lg p-6"
 								style={{
@@ -1469,7 +1513,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 						</div>
 					) : (
 						<div
-							className="relative w-full rounded-lg p-6"
+							className="relative w-full rounded-lg p-6 mx-auto"
 							style={{
 								maxWidth: "100%",
 								overflow: "visible",
@@ -1505,9 +1549,9 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				</div>
 			</div>
 			
-			{/* CTA Button - Web (bottom-left of entire page) */}
+			{/* CTA Button - Web (bottom-center or bottom-right of page) */}
 			{!isMobile && (
-				<div className="fixed bottom-6 left-6 z-10 group">
+				<div className="fixed bottom-6 right-6 z-10 group">
 					<div className="relative">
 						{/* Pulse animation background */}
 						<div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full animate-pulse opacity-75 group-hover:opacity-100 transition-opacity"></div>
