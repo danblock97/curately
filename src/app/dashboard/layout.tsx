@@ -137,11 +137,18 @@ export default function DashboardLayout({
 
   // Render full dashboard layout
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex flex-col">
+      {/* Background decoration */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 right-1/4 w-64 h-64 bg-green-500/5 rounded-full blur-3xl"></div>
+      </div>
+      
       <DashboardHeader user={user} profile={profile} primaryPage={primaryPage} />
-      <div className="flex flex-1">
+      <div className="flex flex-1 relative z-10">
         <DashboardSidebar profile={profile} primaryPage={primaryPage} />
-        <main className="flex-1 p-6">
+        <main className="flex-1 min-h-0 overflow-auto">
           {children}
         </main>
       </div>
