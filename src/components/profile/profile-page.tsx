@@ -611,8 +611,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				if (extendedData.link_type === 'qr_code' && extendedData.qr_codes) {
 					const qrData = extendedData.qr_codes
 					
-					// Use the actual QR code size from database, same as appearance customizer
-					const qrSize = widget.data.size || 200 // Use database size or default to 200px for scannability
+					// Ensure minimum QR code size for scannability - never go below 200px
+					const qrSize = Math.max(widget.data.size || 200, 200) // Minimum 200px for good scannability
 					
 					// Get platform logo if it's a social media link
 					let logoUrl = ''
@@ -627,6 +627,23 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 					// Use custom logo if available, otherwise platform logo
 					const finalLogoUrl = customLogoUrl || logoUrl
 					
+					// Ensure good color contrast for scannability
+					const foregroundColor = qrData.foreground_color || '#000000'
+					const backgroundColor = qrData.background_color || '#FFFFFF'
+					
+					// Validate color contrast - ensure sufficient difference
+					const isValidContrast = (fg: string, bg: string) => {
+						// Simple contrast check - ensure colors are different enough
+						const fgLuminance = parseInt(fg.replace('#', ''), 16)
+						const bgLuminance = parseInt(bg.replace('#', ''), 16)
+						const contrast = Math.abs(fgLuminance - bgLuminance)
+						return contrast > 0x888888 // Require significant contrast
+					}
+					
+					// Use default colors if contrast is too low
+					const finalForegroundColor = isValidContrast(foregroundColor, backgroundColor) ? foregroundColor : '#000000'
+					const finalBackgroundColor = isValidContrast(foregroundColor, backgroundColor) ? backgroundColor : '#FFFFFF'
+					
 					// Square layouts only - match exact AppearanceCustomizer styling
 					return (
 						<div className={`relative h-full w-full overflow-hidden ${
@@ -638,14 +655,24 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									url={widget.data.url || ''}
 									size={qrSize}
 									logoUrl={finalLogoUrl}
-									logoSize={getOptimalLogoSize(qrSize)}
+									logoSize={Math.min(getOptimalLogoSize(qrSize) * 0.8, qrSize * 0.25)} // Reduce logo size by 20% and cap at 25% of QR size
 									errorCorrection="H"
-									foregroundColor={qrData.foreground_color || '#000000'}
-									backgroundColor={qrData.background_color || '#FFFFFF'}
+									foregroundColor={finalForegroundColor}
+									backgroundColor={finalBackgroundColor}
 									className={effectiveSize === 'large-square' ? 'w-56 h-56' : 'w-28 h-28'}
 								/>
 							</div>
 							
+							{/* QR Code Title */}
+							{widget.data.title && (
+								<div className={`absolute ${
+									isMobile ? 'bottom-1 left-1 right-1' : 'bottom-2 left-2 right-2'
+								} z-10`}>
+									<div className="text-xs text-gray-700 text-center break-words leading-tight">
+										{widget.data.title}
+									</div>
+								</div>
+							)}
 						</div>
 					)
 				}
@@ -735,7 +762,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 								<img
 									src={socialInfo.logoUrl}
 									alt={platform || widget.data.title || "External Link"}
-									className="w-5 h-5 object-contain filter invert brightness-0"
+									className="w-4 h-4 object-contain filter invert brightness-0"
 									onError={(e) => {
 										const target = e.target as HTMLImageElement;
 										target.style.display = 'none';
@@ -743,7 +770,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 										if (fallback) fallback.style.display = 'block';
 									}}
 								/>
-								<div className="w-5 h-5 flex items-center justify-center text-white text-sm font-bold hidden">
+								<div className="w-4 h-4 flex items-center justify-center text-white text-sm font-bold hidden">
 									{socialInfo.fallback}
 								</div>
 							</div>
@@ -772,7 +799,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 								<img
 									src={socialInfo.logoUrl}
 									alt={platform || widget.data.title || "External Link"}
-									className="w-8 h-8 object-contain filter invert brightness-0"
+									className="w-6 h-6 object-contain filter invert brightness-0"
 									onError={(e) => {
 										const target = e.target as HTMLImageElement;
 										target.style.display = 'none';
@@ -780,7 +807,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 										if (fallback) fallback.style.display = 'block';
 									}}
 								/>
-								<div className="w-8 h-8 flex items-center justify-center text-white text-xs font-bold hidden">
+								<div className="w-6 h-6 flex items-center justify-center text-white text-xs font-bold hidden">
 									{socialInfo.fallback}
 								</div>
 							</div>
@@ -817,7 +844,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 											src={socialInfo.logoUrl}
 											alt={platform || widget.data.title || "External Link"}
 											className={`${
-												isMobile ? 'w-32 h-32' : 'w-40 h-40'
+												isMobile ? 'w-24 h-24' : 'w-32 h-32'
 											} object-contain filter invert brightness-0 opacity-20`}
 											onError={(e) => {
 												const target = e.target as HTMLImageElement;
@@ -889,7 +916,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 										<img
 											src={socialInfo.logoUrl}
 											alt={platform || widget.data.title || "External Link"}
-											className="w-36 h-36 object-contain filter invert brightness-0 opacity-20"
+											className="w-28 h-28 object-contain filter invert brightness-0 opacity-20"
 											onError={(e) => {
 												const target = e.target as HTMLImageElement;
 												target.style.display = "none";
@@ -947,7 +974,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
                           <div class="absolute inset-0 ${socialInfo.color} flex items-center justify-center">
                             ${
 															socialInfo.logoUrl
-																? `<img src="${socialInfo.logoUrl}" alt="${platform}" class="w-48 h-48 object-contain filter invert brightness-0" />`
+																? `<img src="${socialInfo.logoUrl}" alt="${platform}" class="w-40 h-40 object-contain filter invert brightness-0" />`
 																: ""
 														}
                             <span class="text-3xl font-bold text-white ${
@@ -968,7 +995,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 										<img
 											src={socialInfo.logoUrl}
 											alt={platform || widget.data.title || "External Link"}
-											className="w-48 h-48 object-contain filter invert brightness-0 opacity-20"
+											className="w-40 h-40 object-contain filter invert brightness-0 opacity-20"
 											onError={(e) => {
 												const target = e.target as HTMLImageElement;
 												target.style.display = "none";
@@ -1031,7 +1058,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									<img
 										src={socialInfo.logoUrl}
 										alt={platform || widget.data.title || "External Link"}
-										className="w-32 h-32 object-contain filter invert brightness-0 opacity-20"
+										className="w-24 h-24 object-contain filter invert brightness-0 opacity-20"
 										onError={(e) => {
 											const target = e.target as HTMLImageElement;
 											target.style.display = "none";

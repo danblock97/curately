@@ -42,9 +42,10 @@ export function BrandedQRCode({
         canvas.height = size
 
         // Generate QR code with higher error correction to account for logo overlay
+        // Use margin of 4 for better scannability (standard recommendation)
         await QRCode.toCanvas(canvas, url, {
           width: size,
-          margin: 2,
+          margin: 4,
           errorCorrectionLevel: errorCorrection,
           color: {
             dark: foregroundColor,
@@ -65,22 +66,22 @@ export function BrandedQRCode({
           // Check if this is a custom logo (not a well-known platform URL)
           const isCustomLogo = logoUrl && !logoUrl.includes('platform-logos') && !logoUrl.includes('cdn.jsdelivr.net')
           
-          // Dynamic logo sizing based on QR code size for maximum visual impact
-          // Reduce size for custom logos to improve scannability
-          const sizeMultiplier = isCustomLogo ? 0.8 : 1.0 // 20% smaller for custom logos
+          // Conservative logo sizing for maximum scannability
+          // Significantly reduce size for custom logos and be more conservative overall
+          const sizeMultiplier = isCustomLogo ? 0.6 : 0.8 // 40% smaller for custom logos, 20% smaller for platform logos
           
           let maxLogoSize: number
           if (size <= 150) {
-            // Small QR codes: 40% of size, min 32px
-            maxLogoSize = Math.max(Math.min(logoSize, size * 0.40 * sizeMultiplier), 32)
+            // Small QR codes: 30% of size max for better scannability
+            maxLogoSize = Math.max(Math.min(logoSize, size * 0.30 * sizeMultiplier), 24)
           } else if (size <= 300) {
-            // Medium QR codes: 35% of size, min 60px, max 140px
-            maxLogoSize = Math.max(Math.min(logoSize, size * 0.35 * sizeMultiplier), 60)
-            maxLogoSize = Math.min(maxLogoSize, 140 * sizeMultiplier)
+            // Medium QR codes: 25% of size max for better scannability
+            maxLogoSize = Math.max(Math.min(logoSize, size * 0.25 * sizeMultiplier), 40)
+            maxLogoSize = Math.min(maxLogoSize, 100 * sizeMultiplier)
           } else {
-            // Large QR codes: 30% of size, min 90px, max 200px
-            maxLogoSize = Math.max(Math.min(logoSize, size * 0.30 * sizeMultiplier), 90)
-            maxLogoSize = Math.min(maxLogoSize, 200 * sizeMultiplier)
+            // Large QR codes: 20% of size max for better scannability
+            maxLogoSize = Math.max(Math.min(logoSize, size * 0.20 * sizeMultiplier), 60)
+            maxLogoSize = Math.min(maxLogoSize, 120 * sizeMultiplier)
           }
           
           // Calculate actual logo dimensions maintaining aspect ratio
