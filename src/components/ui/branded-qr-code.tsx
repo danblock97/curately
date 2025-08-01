@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import Image from 'next/image'
+import { QrCode } from 'lucide-react'
 
 interface BrandedQRCodeProps {
   url: string
@@ -27,15 +28,23 @@ export function BrandedQRCode({
 }: BrandedQRCodeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [qrDataUrl, setQrDataUrl] = useState<string>('')
+  const [isLoading, setIsLoading] = useState<boolean>(true)
 
   useEffect(() => {
+    setIsLoading(true) // Reset loading state when dependencies change
     const generateQRCode = async () => {
       try {
-        if (!canvasRef.current) return
+        if (!canvasRef.current) {
+          setIsLoading(false)
+          return
+        }
 
         const canvas = canvasRef.current
         const ctx = canvas.getContext('2d')
-        if (!ctx) return
+        if (!ctx) {
+          setIsLoading(false)
+          return
+        }
 
         // Set canvas size
         canvas.width = size
@@ -53,16 +62,28 @@ export function BrandedQRCode({
           }
         })
 
-        // If no logo provided, just use the QR code as is
+        // Always set the base QR code first for immediate display
+        const baseQrDataUrl = canvas.toDataURL()
+        setQrDataUrl(baseQrDataUrl)
+        setIsLoading(false) // QR code is ready to display
+
+        // If no logo provided, we're done
         if (!logoUrl) {
-          setQrDataUrl(canvas.toDataURL())
           return
         }
 
         // Load and draw logo - optimized sizing for better visual appearance
         const logo = document.createElement('img')
         logo.crossOrigin = 'anonymous'
+        
+        // Add timeout to prevent hanging on logo load
+        const logoTimeout = setTimeout(() => {
+          console.warn('Logo loading timeout for:', logoUrl)
+          // Keep the base QR code that was already set
+        }, 3000) // Reduced timeout to 3 seconds for faster fallback
+        
         logo.onload = () => {
+          clearTimeout(logoTimeout)
           // Check if this is a custom logo (not a well-known platform URL)
           const isCustomLogo = logoUrl && !logoUrl.includes('platform-logos') && !logoUrl.includes('cdn.jsdelivr.net')
           
@@ -123,14 +144,40 @@ export function BrandedQRCode({
           setQrDataUrl(canvas.toDataURL())
         }
         logo.onerror = () => {
-          console.error('Failed to load logo')
-          // Just use the QR code without logo if logo fails to load
-          setQrDataUrl(canvas.toDataURL())
+          clearTimeout(logoTimeout)
+          console.error('Failed to load logo:', logoUrl)
+          // Keep the base QR code that was already set - don't regenerate
         }
         logo.src = logoUrl
 
       } catch (error) {
         console.error('Error generating QR code:', error)
+        // Set a basic fallback QR code without logo
+        try {
+          if (canvasRef.current) {
+            const canvas = canvasRef.current
+            canvas.width = size
+            canvas.height = size
+            QRCode.toCanvas(canvas, url, {
+              width: size,
+              margin: 4,
+              errorCorrectionLevel: 'M', // Use lower error correction as fallback
+              color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+              }
+            }).then(() => {
+              setQrDataUrl(canvas.toDataURL())
+              setIsLoading(false)
+            }).catch(() => {
+              console.error('Failed to generate fallback QR code')
+              setIsLoading(false)
+            })
+          }
+        } catch (fallbackError) {
+          console.error('Fallback QR code generation failed:', fallbackError)
+          setIsLoading(false)
+        }
       }
     }
 
@@ -143,7 +190,14 @@ export function BrandedQRCode({
         ref={canvasRef} 
         style={{ display: 'none' }}
       />
-      {qrDataUrl && (
+      {isLoading ? (
+        <div 
+          className="w-full h-full bg-gray-100 flex items-center justify-center rounded"
+          style={{ width: size, height: size }}
+        >
+          <div className="text-gray-500 text-xs">Loading QR...</div>
+        </div>
+      ) : qrDataUrl ? (
         <Image
           src={qrDataUrl}
           alt={`QR Code for ${url}`}
@@ -153,6 +207,13 @@ export function BrandedQRCode({
           style={{ pointerEvents: 'auto', userSelect: 'none' }}
           unoptimized
         />
+      ) : (
+        <div 
+          className="w-full h-full bg-gray-200 flex items-center justify-center rounded"
+          style={{ width: size, height: size }}
+        >
+          <QrCode className="w-8 h-8 text-gray-400" />
+        </div>
       )}
     </div>
   )

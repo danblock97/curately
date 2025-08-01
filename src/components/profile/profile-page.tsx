@@ -359,7 +359,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 
 							return {
 								id: link.id,
-								type: (link.widget_type || "link") as Widget['type'],
+								type: (link.widget_type || link.link_type || "link") as Widget['type'],
 								size: (link.size || "thin") as Widget['size'],
 								data: {
 									title: link.title || "",
@@ -608,7 +608,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 					};
 				};
 				
-				if (extendedData.link_type === 'qr_code' && extendedData.qr_codes) {
+				if ((extendedData.link_type === 'qr_code' || widget.type === 'qr_code') && extendedData.qr_codes) {
 					const qrData = extendedData.qr_codes
 					
 					// Ensure minimum QR code size for scannability - never go below 200px
@@ -1212,17 +1212,17 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				key={widget.id}
 				className={`${
 					isMobile 
-						? `${sizeClass} transition-all duration-150 ease-out ${widget.data.link_type !== 'qr_code' ? 'cursor-pointer' : ''} mb-2 ${
+						? `${sizeClass} transition-all duration-150 ease-out ${widget.data.link_type !== 'qr_code' && widget.type !== 'qr_code' ? 'cursor-pointer' : ''} mb-2 ${
 							effectiveSize === 'small-circle' || effectiveSize === 'small-square' || effectiveSize === 'medium-square' || effectiveSize === 'large-square' 
 								? 'mr-2' : ''
 						}` 
-						: `absolute ${sizeClass} transition-all duration-150 ease-out ${widget.data.link_type !== 'qr_code' ? 'cursor-pointer' : ''}`
+						: `absolute ${sizeClass} transition-all duration-150 ease-out ${widget.data.link_type !== 'qr_code' && widget.type !== 'qr_code' ? 'cursor-pointer' : ''}`
 				}`}
 				style={isMobile ? {} : {
 					transform: `translate(${currentPosition.x}px, ${currentPosition.y}px)`,
 					zIndex: 1,
 				}}
-				{...(widget.data.link_type !== 'qr_code' && { onClick: () => handleLinkClick(widget.id, widget.data.url || "") })}
+				{...(widget.data.link_type !== 'qr_code' && widget.type !== 'qr_code' && { onClick: () => handleLinkClick(widget.id, widget.data.url || "") })}
 			>
 				<Card className={`h-full relative ${
 					isMobile 
