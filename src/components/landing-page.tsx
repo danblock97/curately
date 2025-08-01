@@ -85,8 +85,13 @@ export function LandingPage() {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="flex flex-col items-center justify-center min-h-[80vh] px-4">
+      <section className="flex flex-col items-center justify-center min-h-[80vh] px-4 pb-8">
         <div className="max-w-4xl mx-auto text-center space-y-8">
+          {/* Trusted By */}
+          <div className="text-sm text-gray-500 font-medium">
+            Trusted by 100+ creators
+          </div>
+          
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight">
             Create Your Perfect
             <br />
@@ -129,7 +134,7 @@ export function LandingPage() {
       </section>
 
       {/* Product Demo Area */}
-      <section className="px-4">
+      <section className="px-4 pt-4">
         <div className="max-w-5xl mx-auto">
           <div className="relative w-full flex justify-center">
             <div className="relative transition-transform duration-500 ease-out" style={{ transform: 'perspective(1000px) rotateX(15deg)', transformStyle: 'preserve-3d' }}>
