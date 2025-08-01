@@ -19,6 +19,19 @@ import { useState, useEffect, useMemo } from "react";
 import { getPlatformLogoUrl, getOptimalLogoSize } from "@/lib/qr-code";
 import { BrandedQRCode } from "@/components/ui/branded-qr-code";
 
+// Platform definitions matching widget-modal exactly
+const platforms = [
+  { name: 'Instagram', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg', value: 'instagram', color: 'bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500' },
+  { name: 'Facebook', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg', value: 'facebook', color: 'bg-blue-600' },
+  { name: 'TikTok', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/tiktok.svg', value: 'tiktok', color: 'bg-black' },
+  { name: 'LinkedIn', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg', value: 'linkedin', color: 'bg-blue-700' },
+  { name: 'YouTube', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg', value: 'youtube', color: 'bg-red-500' },
+  { name: 'X (Twitter)', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg', value: 'twitter', color: 'bg-black' },
+  { name: 'GitHub', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', value: 'github', color: 'bg-gray-800' },
+  { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', value: 'spotify', color: 'bg-green-500' },
+  { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', value: 'website', color: 'bg-blue-500' },
+];
+
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Page = Database["public"]["Tables"]["pages"]["Row"];
 type Link = Database["public"]["Tables"]["links"]["Row"] & {
@@ -53,6 +66,7 @@ export interface Widget {
 		| "media";
 	size:
 		| "thin"
+		| "small-circle"
 		| "small-square"
 		| "medium-square"
 		| "large-square"
@@ -537,6 +551,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 			switch (size) {
 				case "thin":
 					return "w-full min-h-12 h-auto"; // Full width with flexible height for text wrapping
+				case "small-circle":
+					return "w-16 h-16"; // Small circle keeps its size on mobile
 				case "small-square":
 					return "w-32 h-32"; // ~128px for 2 per row with margins
 				case "medium-square":
@@ -556,6 +572,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 		switch (size) {
 			case "thin":
 				return "w-80 min-h-12 h-auto";
+			case "small-circle":
+				return "w-16 h-16";
 			case "small-square":
 				return "w-48 h-48";
 			case "medium-square":
@@ -572,8 +590,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 	};
 
 	const renderWidget = (widget: Widget) => {
-		// In mobile view, force all widgets to be treated as small-square for consistent behavior
-		const effectiveSize = isMobile ? 'small-square' : widget.size;
+		// In mobile view, force all widgets except small-circle to be treated as small-square for consistent behavior
+		const effectiveSize = isMobile && widget.size !== 'small-circle' ? 'small-square' : widget.size;
 		const sizeClass = getWidgetSizeClass(effectiveSize);
 		const currentPosition = widget.webPosition;
 
@@ -633,108 +651,23 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				}
 				
 				const getSocialInfo = (platform: string) => {
-					const socialIcons: {
-						[key: string]: {
-							bg: string;
-							logo: string;
-							gradient: string;
-							logoStyle?: string;
-							fallback: string;
+					// Use the same platform data as widget-modal
+					const platformData = platforms.find(p => p.value === platform.toLowerCase());
+					if (platformData) {
+						return {
+							logoUrl: platformData.logoUrl,
+							color: platformData.color,
+							name: platformData.name,
+							fallback: platformData.name.charAt(0)
 						};
-					} = {
-						twitter: {
-							bg: "bg-black",
-							logo: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg",
-							gradient: "from-gray-700 to-gray-900",
-							logoStyle: "invert",
-							fallback: "𝕏",
-						},
-						instagram: {
-							bg: "bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500",
-							logo: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg",
-							gradient: "from-pink-400 via-red-500 to-yellow-500",
-							logoStyle: "invert",
-							fallback: "📷",
-						},
-						facebook: {
-							bg: "bg-blue-600",
-							logo: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg",
-							gradient: "from-blue-500 to-blue-700",
-							logoStyle: "invert",
-							fallback: "f",
-						},
-						linkedin: {
-							bg: "bg-blue-700",
-							logo: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg",
-							gradient: "from-blue-600 to-blue-800",
-							logoStyle: "invert",
-							fallback: "in",
-						},
-						youtube: {
-							bg: "bg-red-500",
-							logo: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg",
-							gradient: "from-red-500 to-red-700",
-							logoStyle: "invert",
-							fallback: "▶️",
-						},
-						tiktok: {
-							bg: "bg-black",
-							logo: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/tiktok.svg",
-							gradient: "from-gray-900 to-black",
-							logoStyle: "invert",
-							fallback: "🎵",
-						},
-						github: {
-							bg: "bg-gray-800",
-							logo: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg",
-							gradient: "from-gray-700 to-gray-900",
-							logoStyle: "invert",
-							fallback: "⚡",
-						},
-						spotify: {
-							bg: "bg-green-500",
-							logo: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg",
-							gradient: "from-green-400 to-green-600",
-							logoStyle: "invert",
-							fallback: "🎵",
-						},
-						apple_music: {
-							bg: "bg-red-500",
-							logo: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/applemusic.svg",
-							gradient: "from-red-400 to-red-600",
-							logoStyle: "invert",
-							fallback: "🎵",
-						},
-						soundcloud: {
-							bg: "bg-orange-500",
-							logo: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/soundcloud.svg",
-							gradient: "from-orange-400 to-orange-600",
-							logoStyle: "invert",
-							fallback: "☁️",
-						},
-						podcast: {
-							bg: "bg-purple-500",
-							logo: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/podcast.svg",
-							gradient: "from-purple-400 to-purple-600",
-							logoStyle: "invert",
-							fallback: "🎙️",
-						},
-						website: {
-							bg: "bg-blue-500",
-							logo: "https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg",
-							gradient: "from-blue-400 to-blue-600",
-							logoStyle: "invert",
-							fallback: "🌐",
-						},
+					}
+					// Fallback for unknown platforms
+					return {
+						logoUrl: "",
+						color: "bg-gray-500",
+						name: platform,
+						fallback: platform.charAt(0).toUpperCase()
 					};
-					return (
-						socialIcons[platform.toLowerCase()] || {
-							bg: "bg-gray-500",
-							logo: "",
-							gradient: "from-gray-400 to-gray-600",
-							fallback: "🔗",
-						}
-					);
 				};
 
 				// Extract platform from URL if not provided
@@ -795,40 +728,24 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 							<div
 								className={`${
 									isMobile ? 'w-6 h-6 rounded-lg' : 'w-8 h-8 rounded-xl'
-								} flex items-center justify-center overflow-hidden bg-gradient-to-br ${socialInfo.gradient} ${
+								} flex items-center justify-center ${socialInfo.color} ${
 									isMobile ? 'p-1' : 'p-1.5'
 								}`}
 							>
-								{(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? (
-									<img
-										src={widget.data.favicon || widget.data.appLogo || socialInfo.logo}
-										alt={platform || widget.data.title || "External Link"}
-										className={`w-full h-full object-contain ${
-											socialInfo.logoStyle || ""
-										}`}
-										onError={(e) => {
-											const target = e.target as HTMLImageElement;
-											target.style.display = "none";
-											const parent = target.parentElement;
-											if (parent) {
-												parent.innerHTML = `<span class="text-white text-xs font-bold">${
-													socialInfo.fallback ||
-													(platform || widget.data.title || "L")
-														.charAt(0)
-														.toUpperCase()
-												}</span>`;
-											}
-										}}
-									/>
-								) : (
-									<span className={`text-white ${
-										isMobile ? 'text-xs' : 'text-sm'
-									} font-bold`}>
-										{(platform || widget.data.title || "L")
-											.charAt(0)
-											.toUpperCase()}
-									</span>
-								)}
+								<img
+									src={socialInfo.logoUrl}
+									alt={platform || widget.data.title || "External Link"}
+									className="w-5 h-5 object-contain filter invert brightness-0"
+									onError={(e) => {
+										const target = e.target as HTMLImageElement;
+										target.style.display = 'none';
+										const fallback = target.nextElementSibling as HTMLElement;
+										if (fallback) fallback.style.display = 'block';
+									}}
+								/>
+								<div className="w-5 h-5 flex items-center justify-center text-white text-sm font-bold hidden">
+									{socialInfo.fallback}
+								</div>
 							</div>
 							<div className="flex-1 min-w-0">
 								<div className={`font-medium ${
@@ -841,6 +758,30 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 												? `@${widget.data.username}`
 												: widget.data.title || capitalizedPlatform || "Link"))
 									}
+								</div>
+							</div>
+						</div>
+					);
+				}
+
+				if (effectiveSize === "small-circle") {
+					return (
+						<div className="relative h-full w-full overflow-hidden rounded-full">
+							{/* Background - Platform Logo Only */}
+							<div className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}>
+								<img
+									src={socialInfo.logoUrl}
+									alt={platform || widget.data.title || "External Link"}
+									className="w-8 h-8 object-contain filter invert brightness-0"
+									onError={(e) => {
+										const target = e.target as HTMLImageElement;
+										target.style.display = 'none';
+										const fallback = target.nextElementSibling as HTMLElement;
+										if (fallback) fallback.style.display = 'block';
+									}}
+								/>
+								<div className="w-8 h-8 flex items-center justify-center text-white text-xs font-bold hidden">
+									{socialInfo.fallback}
 								</div>
 							</div>
 						</div>
@@ -870,18 +811,14 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									}`}></div>
 								</div>
 							) : (
-								<div
-									className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}
-								>
-									{(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? (
+								<div className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}>
+									{(widget.data.favicon || widget.data.appLogo || socialInfo.logoUrl) ? (
 										<img
-											src={widget.data.favicon || widget.data.appLogo || socialInfo.logo}
+											src={socialInfo.logoUrl}
 											alt={platform || widget.data.title || "External Link"}
 											className={`${
-												isMobile ? 'w-20 h-20' : 'w-28 h-28'
-											} object-contain ${
-												socialInfo.logoStyle || ""
-											}`}
+												isMobile ? 'w-32 h-32' : 'w-40 h-40'
+											} object-contain filter invert brightness-0 opacity-20`}
 											onError={(e) => {
 												const target = e.target as HTMLImageElement;
 												target.style.display = "none";
@@ -895,7 +832,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 										className={`fallback-text ${
 											isMobile ? 'text-sm' : 'text-lg'
 										} font-bold text-white ${
-											(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? "hidden" : ""
+											(widget.data.favicon || widget.data.appLogo || socialInfo.logoUrl) ? "hidden" : ""
 										}`}
 									>
 										{socialInfo.fallback}
@@ -906,7 +843,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 							{/* Content */}
 							<div className={`absolute ${
 								isMobile ? 'bottom-1 left-1 right-1' : 'bottom-2 left-2 right-2'
-							}`}>
+							} z-10`}>
 								<div className={`${
 									isMobile ? 'text-xs' : 'text-xs'
 								} font-medium text-white leading-tight`}>
@@ -946,15 +883,13 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 								</div>
 							) : (
 								<div
-									className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}
+									className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}
 								>
-									{(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? (
+									{(widget.data.favicon || widget.data.appLogo || socialInfo.logoUrl) ? (
 										<img
-											src={widget.data.favicon || widget.data.appLogo || socialInfo.logo}
+											src={socialInfo.logoUrl}
 											alt={platform || widget.data.title || "External Link"}
-											className={`w-36 h-36 object-contain ${
-												socialInfo.logoStyle || ""
-											}`}
+											className="w-36 h-36 object-contain filter invert brightness-0 opacity-20"
 											onError={(e) => {
 												const target = e.target as HTMLImageElement;
 												target.style.display = "none";
@@ -966,7 +901,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									) : null}
 									<span
 										className={`fallback-text text-2xl font-bold text-white ${
-											(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? "hidden" : ""
+											(widget.data.favicon || widget.data.appLogo || socialInfo.logoUrl) ? "hidden" : ""
 										}`}
 									>
 										{socialInfo.fallback}
@@ -1009,20 +944,14 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 											const parent = target.parentElement;
 											if (parent) {
 												parent.innerHTML = `
-                          <div class="absolute inset-0 bg-gradient-to-br ${
-														socialInfo.gradient
-													} flex items-center justify-center">
+                          <div class="absolute inset-0 ${socialInfo.color} flex items-center justify-center">
                             ${
-															socialInfo.logo
-																? `<img src="${
-																		socialInfo.logo
-																  }" alt="${platform}" class="w-48 h-48 object-contain ${
-																		socialInfo.logoStyle || ""
-																  }" />`
+															socialInfo.logoUrl
+																? `<img src="${socialInfo.logoUrl}" alt="${platform}" class="w-48 h-48 object-contain filter invert brightness-0" />`
 																: ""
 														}
                             <span class="text-3xl font-bold text-white ${
-															socialInfo.logo ? "hidden" : ""
+															socialInfo.logoUrl ? "hidden" : ""
 														}">${socialInfo.fallback}</span>
                           </div>
                         `;
@@ -1033,15 +962,13 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 								</div>
 							) : (
 								<div
-									className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}
+									className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}
 								>
-									{(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? (
+									{(widget.data.favicon || widget.data.appLogo || socialInfo.logoUrl) ? (
 										<img
-											src={widget.data.favicon || widget.data.appLogo || socialInfo.logo}
+											src={socialInfo.logoUrl}
 											alt={platform || widget.data.title || "External Link"}
-											className={`w-48 h-48 object-contain ${
-												socialInfo.logoStyle || ""
-											}`}
+											className="w-48 h-48 object-contain filter invert brightness-0 opacity-20"
 											onError={(e) => {
 												const target = e.target as HTMLImageElement;
 												target.style.display = "none";
@@ -1053,7 +980,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									) : null}
 									<span
 										className={`fallback-text text-3xl font-bold text-white ${
-											(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? "hidden" : ""
+											(widget.data.favicon || widget.data.appLogo || socialInfo.logoUrl) ? "hidden" : ""
 										}`}
 									>
 										{socialInfo.fallback}
@@ -1062,7 +989,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 							)}
 
 							{/* Content */}
-							<div className="absolute bottom-4 left-4 right-4">
+							<div className="absolute bottom-4 left-4 right-4 z-10">
 								<div className="text-base font-semibold text-white">
 									{widget.data.displayName ||
 										(widget.data.username
@@ -1098,27 +1025,25 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 							</div>
 						) : (
 							<div
-								className={`absolute inset-0 bg-gradient-to-br ${socialInfo.gradient} flex items-center justify-center`}
+								className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}
 							>
-								{(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? (
+								{(widget.data.favicon || widget.data.appLogo || socialInfo.logoUrl) ? (
 									<img
-										src={widget.data.favicon || widget.data.appLogo || socialInfo.logo}
+										src={socialInfo.logoUrl}
 										alt={platform || widget.data.title || "External Link"}
-										className={`w-32 h-32 object-contain ${
-											socialInfo.logoStyle || ""
-										}`}
+										className="w-32 h-32 object-contain filter invert brightness-0 opacity-20"
 										onError={(e) => {
 											const target = e.target as HTMLImageElement;
 											target.style.display = "none";
 											const fallback =
-												target.parentElement?.querySelector(".fallback-text");
-											if (fallback) fallback.classList.remove("hidden");
+												target.nextElementSibling as HTMLElement;
+											if (fallback) fallback.style.display = 'block';
 										}}
 									/>
 								) : null}
 								<span
 									className={`fallback-text text-2xl font-bold text-white ${
-										(widget.data.favicon || widget.data.appLogo || socialInfo.logo) ? "hidden" : ""
+										(widget.data.favicon || widget.data.appLogo || socialInfo.logoUrl) ? "hidden" : ""
 									}`}
 								>
 									{socialInfo.fallback}
@@ -1127,7 +1052,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 						)}
 
 						{/* Content */}
-						<div className="absolute bottom-3 left-3 right-3">
+						<div className="absolute bottom-3 left-3 right-3 z-10">
 							<div className="text-sm font-medium text-white">
 								{widget.data.displayName ||
 									(widget.data.username
@@ -1261,7 +1186,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				className={`${
 					isMobile 
 						? `${sizeClass} transition-all duration-150 ease-out ${widget.data.link_type !== 'qr_code' ? 'cursor-pointer' : ''} mb-2 ${
-							effectiveSize === 'small-square' || effectiveSize === 'medium-square' || effectiveSize === 'large-square' 
+							effectiveSize === 'small-circle' || effectiveSize === 'small-square' || effectiveSize === 'medium-square' || effectiveSize === 'large-square' 
 								? 'mr-2' : ''
 						}` 
 						: `absolute ${sizeClass} transition-all duration-150 ease-out ${widget.data.link_type !== 'qr_code' ? 'cursor-pointer' : ''}`
@@ -1299,12 +1224,16 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 	return (
 		<div className="min-h-screen" style={{ backgroundColor: page.background_color || '#ffffff' }}>
 			{/* Main Content */}
-			<div className={`${isMobile ? 'flex flex-col' : 'flex justify-center'} min-h-screen`}>
+			<div className={`${
+				isMobile 
+					? 'flex flex-col' 
+					: 'flex flex-col items-center justify-start max-w-7xl mx-auto px-4 py-8 lg:py-12'
+			} min-h-screen`}>
 				{/* Profile Section */}
 				<div className={`${
 					isMobile 
 						? 'w-full p-4' 
-						: 'w-[340px] lg:w-[400px] xl:w-[480px] 2xl:w-[520px] p-8 mx-4'
+						: 'w-full max-w-lg lg:max-w-xl mb-12'
 				} flex flex-col items-center`}>
 					<div className={`w-full ${
 						isMobile 
@@ -1315,8 +1244,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 						<div className="text-center mb-6">
 							<div className="mb-6">
 								<Avatar className={`${
-									isMobile ? 'w-24 h-24' : 'w-36 h-36'
-								} mx-auto mb-4 ring-4 ring-white shadow-2xl`}>
+									isMobile ? 'w-24 h-24' : 'w-32 h-32 lg:w-36 lg:h-36'
+								} mx-auto mb-6 ring-4 ring-white shadow-2xl`}>
 									<AvatarImage
 										src={profile?.avatar_url || ""}
 										alt={profile?.display_name || page.page_title}
@@ -1332,15 +1261,15 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 							</div>
 
 							<h1 className={`${
-								isMobile ? 'text-2xl' : 'text-4xl'
-							} font-black mb-3 !text-gray-900`}>
+								isMobile ? 'text-2xl' : 'text-3xl lg:text-4xl'
+							} font-black mb-4 !text-gray-900`}>
 								{profile?.display_name || page.page_title || page.username}
 							</h1>
 
 							{profile?.bio && (
 								<p className={`${
-									isMobile ? 'text-base' : 'text-lg'
-								} !text-gray-700 font-medium mb-6 leading-relaxed max-w-md mx-auto`}>
+									isMobile ? 'text-base' : 'text-lg lg:text-xl'
+								} !text-gray-700 font-medium mb-8 leading-relaxed max-w-lg mx-auto`}>
 									{profile.bio}
 								</p>
 							)}
@@ -1394,9 +1323,9 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				</div>
 
 				{/* Widgets Section */}
-				<div className={`${isMobile ? 'w-full p-4' : 'w-[740px] p-4 relative'}`}>
+				<div className={`${isMobile ? 'w-full p-4' : 'w-full max-w-5xl lg:max-w-6xl p-4 relative'}`}>
 					{isMobile ? (
-						<div className="flex justify-center lg:justify-end">
+						<div className="flex justify-center">
 							<div
 								className="relative w-80 rounded-lg p-6"
 								style={{
@@ -1469,7 +1398,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 						</div>
 					) : (
 						<div
-							className="relative w-full rounded-lg p-6"
+							className="relative w-full rounded-lg p-6 mx-auto"
 							style={{
 								maxWidth: "100%",
 								overflow: "visible",
@@ -1505,9 +1434,9 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				</div>
 			</div>
 			
-			{/* CTA Button - Web (bottom-left of entire page) */}
+			{/* CTA Button - Web (bottom-center or bottom-right of page) */}
 			{!isMobile && (
-				<div className="fixed bottom-6 left-6 z-10 group">
+				<div className="fixed bottom-6 right-6 z-10 group">
 					<div className="relative">
 						{/* Pulse animation background */}
 						<div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full animate-pulse opacity-75 group-hover:opacity-100 transition-opacity"></div>
