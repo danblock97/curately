@@ -123,6 +123,7 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<head>
+			<script defer data-url="https://devhunt.org/tool/curately" src="https://cdn.jsdelivr.net/gh/sidiDev/devhunt-banner/indexV0.js"></script>
 				{process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
 					<>
 						<script async src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}></script>
