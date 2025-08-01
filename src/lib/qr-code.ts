@@ -203,20 +203,21 @@ export function getOptimalQRCodeSize(content: string): number {
 }
 
 /**
- * Calculate optimal logo size based on QR code size for better visual appearance
+ * Calculate optimal logo size based on QR code size for maximum scannability
+ * Conservative sizing to ensure QR codes remain scannable
  */
 export function getOptimalLogoSize(qrSize: number): number {
   if (qrSize <= 150) {
-    // Small QR codes: 40% of size, min 32px
-    return Math.max(qrSize * 0.40, 32)
+    // Small QR codes: 25% of size max, min 24px for visibility
+    return Math.max(qrSize * 0.25, 24)
   } else if (qrSize <= 300) {
-    // Medium QR codes: 35% of size, min 60px, max 140px
-    const calculatedSize = qrSize * 0.35
-    return Math.max(Math.min(calculatedSize, 140), 60)
+    // Medium QR codes: 20% of size max, min 40px, max 80px
+    const calculatedSize = qrSize * 0.20
+    return Math.max(Math.min(calculatedSize, 80), 40)
   } else {
-    // Large QR codes: 30% of size, min 90px, max 200px
-    const calculatedSize = qrSize * 0.30
-    return Math.max(Math.min(calculatedSize, 200), 90)
+    // Large QR codes: 18% of size max, min 60px, max 100px
+    const calculatedSize = qrSize * 0.18
+    return Math.max(Math.min(calculatedSize, 100), 60)
   }
 }
 

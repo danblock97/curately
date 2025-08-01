@@ -611,8 +611,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				if (extendedData.link_type === 'qr_code' && extendedData.qr_codes) {
 					const qrData = extendedData.qr_codes
 					
-					// Use the actual QR code size from database, same as appearance customizer
-					const qrSize = widget.data.size || 200 // Use database size or default to 200px for scannability
+					// Ensure minimum QR code size for scannability - never go below 200px
+					const qrSize = Math.max(widget.data.size || 200, 200) // Minimum 200px for good scannability
 					
 					// Get platform logo if it's a social media link
 					let logoUrl = ''
@@ -627,6 +627,23 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 					// Use custom logo if available, otherwise platform logo
 					const finalLogoUrl = customLogoUrl || logoUrl
 					
+					// Ensure good color contrast for scannability
+					const foregroundColor = qrData.foreground_color || '#000000'
+					const backgroundColor = qrData.background_color || '#FFFFFF'
+					
+					// Validate color contrast - ensure sufficient difference
+					const isValidContrast = (fg: string, bg: string) => {
+						// Simple contrast check - ensure colors are different enough
+						const fgLuminance = parseInt(fg.replace('#', ''), 16)
+						const bgLuminance = parseInt(bg.replace('#', ''), 16)
+						const contrast = Math.abs(fgLuminance - bgLuminance)
+						return contrast > 0x888888 // Require significant contrast
+					}
+					
+					// Use default colors if contrast is too low
+					const finalForegroundColor = isValidContrast(foregroundColor, backgroundColor) ? foregroundColor : '#000000'
+					const finalBackgroundColor = isValidContrast(foregroundColor, backgroundColor) ? backgroundColor : '#FFFFFF'
+					
 					// Square layouts only - match exact AppearanceCustomizer styling
 					return (
 						<div className={`relative h-full w-full overflow-hidden ${
@@ -638,10 +655,10 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									url={widget.data.url || ''}
 									size={qrSize}
 									logoUrl={finalLogoUrl}
-									logoSize={getOptimalLogoSize(qrSize)}
+									logoSize={Math.min(getOptimalLogoSize(qrSize) * 0.8, qrSize * 0.25)} // Reduce logo size by 20% and cap at 25% of QR size
 									errorCorrection="H"
-									foregroundColor={qrData.foreground_color || '#000000'}
-									backgroundColor={qrData.background_color || '#FFFFFF'}
+									foregroundColor={finalForegroundColor}
+									backgroundColor={finalBackgroundColor}
 									className={effectiveSize === 'large-square' ? 'w-56 h-56' : 'w-28 h-28'}
 								/>
 							</div>
