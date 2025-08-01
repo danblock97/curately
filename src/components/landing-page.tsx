@@ -132,7 +132,7 @@ export function LandingPage() {
       <section className="py-20 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="relative w-full flex justify-center">
-            <div className="relative transform -rotate-3 hover:rotate-0 transition-transform duration-500 ease-out">
+            <div className="relative transition-transform duration-500 ease-out" style={{ transform: 'perspective(1000px) rotateX(15deg)', transformStyle: 'preserve-3d' }}>
               <div className="relative rounded-lg overflow-hidden shadow-2xl">
                 <Image
                   src="/dashboard.png"
