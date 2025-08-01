@@ -50,14 +50,14 @@ interface WidgetModalProps {
 }
 
 const platforms = [
-  { name: 'Instagram', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg', icon: Instagram, value: 'instagram', color: 'bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500', baseUrl: 'https://instagram.com/' },
-  { name: 'Facebook', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg', icon: Facebook, value: 'facebook', color: 'bg-blue-600', baseUrl: 'https://facebook.com/' },
-  { name: 'TikTok', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/tiktok.svg', icon: Package, value: 'tiktok', color: 'bg-black', baseUrl: 'https://tiktok.com/@' },
-  { name: 'LinkedIn', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg', icon: Linkedin, value: 'linkedin', color: 'bg-blue-700', baseUrl: 'https://linkedin.com/in/' },
-  { name: 'YouTube', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg', icon: Youtube, value: 'youtube', color: 'bg-red-500', baseUrl: 'https://youtube.com/@' },
+  { name: 'Instagram', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg', icon: Instagram, value: 'instagram', color: 'bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500', baseUrl: 'https://www.instagram.com/' },
+  { name: 'Facebook', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg', icon: Facebook, value: 'facebook', color: 'bg-blue-600', baseUrl: 'https://www.facebook.com/' },
+  { name: 'TikTok', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/tiktok.svg', icon: Package, value: 'tiktok', color: 'bg-black', baseUrl: 'https://www.tiktok.com/@' },
+  { name: 'LinkedIn', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg', icon: Linkedin, value: 'linkedin', color: 'bg-blue-700', baseUrl: 'https://www.linkedin.com/in/' },
+  { name: 'YouTube', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg', icon: Youtube, value: 'youtube', color: 'bg-red-500', baseUrl: 'https://www.youtube.com/@' },
   { name: 'X (Twitter)', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg', icon: Twitter, value: 'twitter', color: 'bg-black', baseUrl: 'https://x.com/' },
   { name: 'GitHub', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', icon: Github, value: 'github', color: 'bg-gray-800', baseUrl: 'https://github.com/' },
-  { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', icon: Music, value: 'spotify', color: 'bg-green-500', baseUrl: 'https://open.spotify.com/' },
+  { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', icon: Music, value: 'spotify', color: 'bg-green-500', baseUrl: 'https://open.spotify.com/user/' },
   { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', icon: Globe, value: 'website', color: 'bg-blue-500', baseUrl: '' },
 ]
 
@@ -658,30 +658,37 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label htmlFor="url" className="text-sm font-medium text-gray-700">URL</Label>
+                                <Label htmlFor="url" className="text-sm font-medium text-gray-700">
+                                  {widgetData.platform === 'website' ? 'Website URL' : 'URL'}
+                                </Label>
                                 <Input
                                   id="url"
-                                  placeholder="https://..."
+                                  placeholder={widgetData.platform === 'website' ? 'https://yourwebsite.com' : 'https://...'}
                                   value={widgetData.url || ''}
                                   onChange={(e) => setWidgetData({...widgetData, url: e.target.value})}
-                                  className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                                  className={`h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20 ${
+                                    !!widgetData.baseUrl && widgetData.platform !== 'website' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''
+                                  }`}
+                                  readOnly={!!widgetData.baseUrl && widgetData.platform !== 'website'}
                                 />
                               </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="username" className="text-sm font-medium text-gray-700">Username</Label>
-                                <Input
-                                  id="username"
-                                  placeholder="yourusername"
-                                  value={widgetData.username || ''}
-                                  onChange={(e) => {
-                                    const username = e.target.value
-                                    const baseUrl = widgetData.baseUrl || ''
-                                    const constructedUrl = username ? baseUrl + username : baseUrl
-                                    setWidgetData({...widgetData, username, url: constructedUrl})
-                                  }}
-                                  className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
-                                />
-                              </div>
+                              {widgetData.platform !== 'website' && (
+                                <div className="space-y-2">
+                                  <Label htmlFor="username" className="text-sm font-medium text-gray-700">Username</Label>
+                                  <Input
+                                    id="username"
+                                    placeholder="yourusername"
+                                    value={widgetData.username || ''}
+                                    onChange={(e) => {
+                                      const username = e.target.value
+                                      const baseUrl = widgetData.baseUrl || ''
+                                      const constructedUrl = username ? baseUrl + username : baseUrl
+                                      setWidgetData({...widgetData, username, url: constructedUrl})
+                                    }}
+                                    className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                                  />
+                                </div>
+                              )}
                             </>
                           )}
                         </>
