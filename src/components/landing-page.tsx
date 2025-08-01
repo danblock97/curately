@@ -129,7 +129,7 @@ export function LandingPage() {
       </section>
 
       {/* Product Demo Area */}
-      <section className="py-20 px-4">
+      <section className="px-4">
         <div className="max-w-5xl mx-auto">
           <div className="relative w-full flex justify-center">
             <div className="relative transition-transform duration-500 ease-out" style={{ transform: 'perspective(1000px) rotateX(15deg)', transformStyle: 'preserve-3d' }}>
