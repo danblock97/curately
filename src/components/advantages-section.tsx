@@ -152,9 +152,9 @@ export function AdvantagesSection() {
           
           <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
             <CardContent className="p-8 text-center">
-              <div className="text-4xl font-bold text-gray-900 mb-2">∞</div>
-              <div className="text-purple-600 font-semibold mb-2">Pages & Links</div>
-              <div className="text-gray-600 text-sm">Create unlimited pages and links</div>
+              <div className="text-4xl font-bold text-gray-900 mb-2">100</div>
+              <div className="text-purple-600 font-semibold mb-2">Links & Codes</div>
+              <div className="text-gray-600 text-sm">Create many links and QR codes</div>
             </CardContent>
           </Card>
         </div>
