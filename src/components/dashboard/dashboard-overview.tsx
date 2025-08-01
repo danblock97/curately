@@ -62,7 +62,6 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
   const [itemsPerPage] = useState(6)
   const [showWidgetModal, setShowWidgetModal] = useState(false)
   const [widgetModalDefaultType, setWidgetModalDefaultType] = useState<string | null>(null)
-  const [isHydrated, setIsHydrated] = useState(false)
   
   // Get the current page (default to primary page, only consider active pages)
   const activePages = pages.filter(page => page.is_active !== false)
@@ -124,9 +123,8 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
   
   const planUsage = usePlanLimits(links, profile.tier, pages.filter(page => page.is_active !== false).length, qrCodes.map(qr => ({ is_active: qr.is_active })))
 
-  // Handle hydration and initialize with server data
+  // Initialize with server data
   useEffect(() => {
-    setIsHydrated(true)
     setLinks(initialLinks)
     setQrCodes(initialQrCodes)
   }, [initialLinks, initialQrCodes])
@@ -188,8 +186,6 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
   }
 
   const totalClicks = useMemo(() => {
-    if (!isHydrated) return 0
-    
     const linkClicks = pageLinks.reduce((sum, link) => {
       if (!link || typeof link !== 'object') return sum
       const clicks = typeof link.clicks === 'number' && !isNaN(link.clicks) ? link.clicks : 0
@@ -197,24 +193,8 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
     }, 0)
     
     return linkClicks
-  }, [pageLinks, isHydrated])
+  }, [pageLinks])
 
-  // Show loading state until hydration is complete
-  if (!isHydrated) {
-    return (
-      <div className="space-y-8 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
-              <div className="w-12 h-12 bg-gray-200 rounded-xl mb-4"></div>
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-6 bg-gray-200 rounded"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
 
   return (
     <>
