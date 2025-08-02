@@ -81,29 +81,29 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
     <div 
       ref={setNodeRef} 
       style={style} 
-      className={`bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all duration-200 shadow-sm ${isDragging ? 'opacity-50' : ''}`}
+      className={`bg-white border border-gray-200 rounded-xl p-3 sm:p-4 hover:shadow-md transition-all duration-200 shadow-sm ${isDragging ? 'opacity-50' : ''}`}
     >
-      <div className="flex items-center space-x-4">
+      <div className="flex items-start sm:items-center space-x-3 sm:space-x-4">
         <div className="cursor-move" {...attributes} {...listeners}>
           <GripVertical className="w-5 h-5 text-gray-500 hover:text-gray-700" />
         </div>
         
         <div className="flex-1 min-w-0">
           {editingId === link.id ? (
-            <div className="space-y-2">
+            <div className="space-y-2 w-full">
               <Input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
                 placeholder="Link title"
                 maxLength={100}
-                className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
+                className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20 text-sm"
               />
               <Input
                 value={editUrl}
                 onChange={(e) => setEditUrl(e.target.value)}
                 placeholder="https://example.com"
                 type="url"
-                className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20"
+                className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-gray-900 focus:ring-gray-900/20 text-sm"
               />
             </div>
           ) : (
@@ -125,10 +125,10 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
               
               {(link.link_type === 'qr_code' && link.qr_codes) || ((link as any).type === 'qr_code' && (link as any).qr_code_data) ? (
                 <div className="mt-2">
-                  <div className="flex items-start space-x-3">
+                  <div className="flex flex-col sm:flex-row items-start space-y-3 sm:space-y-0 sm:space-x-3">
                     <Dialog>
                       <DialogTrigger asChild>
-                        <div className="bg-white border border-gray-300 rounded-lg p-3 flex-shrink-0 shadow-sm cursor-pointer hover:border-gray-400 transition-colors group relative">
+                        <div className="bg-white border border-gray-300 rounded-lg p-2 sm:p-3 flex-shrink-0 shadow-sm cursor-pointer hover:border-gray-400 transition-colors group relative self-start">
                           {(() => {
                             // Get QR data from either nested structure (legacy) or direct structure (standalone)
                             const qrData = link.qr_codes?.qr_code_data || (link as any).qr_code_data
@@ -136,14 +136,14 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                             
                             return qrFormat === 'SVG' ? (
                               <div 
-                                className="w-16 h-16 [&>svg]:w-full [&>svg]:h-full"
+                                className="w-12 h-12 sm:w-16 sm:h-16 [&>svg]:w-full [&>svg]:h-full"
                                 dangerouslySetInnerHTML={{ __html: qrData }}
                               />
                             ) : (
                               <img 
                                 src={qrData}
                                 alt={`QR Code for ${link.title}`}
-                                className="w-16 h-16 object-contain"
+                                className="w-12 h-12 sm:w-16 sm:h-16 object-contain"
                                 onError={(e) => {
                                   console.error('QR Code image failed to load:', {
                                     format: qrFormat || 'unknown',
@@ -153,7 +153,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                                   })
                                   // Show fallback
                                   const fallback = document.createElement('div')
-                                  fallback.className = 'w-16 h-16 bg-gray-100 border border-gray-300 rounded flex items-center justify-center'
+                                  fallback.className = 'w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 border border-gray-300 rounded flex items-center justify-center'
                                   fallback.innerHTML = '<span class="text-xs text-gray-500">QR Error</span>'
                                   e.currentTarget.parentNode?.replaceChild(fallback, e.currentTarget)
                                 }}
@@ -161,19 +161,19 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                             )
                           })()}
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all duration-200 flex items-center justify-center">
-                            <Eye className="w-5 h-5 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                            <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                           </div>
                         </div>
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-md bg-white">
+                      <DialogContent className="sm:max-w-md bg-white max-w-[90vw] max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                          <DialogTitle className="text-gray-900">QR Code - {link.title}</DialogTitle>
-                          <DialogDescription className="text-gray-600">
+                          <DialogTitle className="text-gray-900 text-lg">QR Code - {link.title}</DialogTitle>
+                          <DialogDescription className="text-gray-600 text-sm">
                             Scan this QR code or download it for later use
                           </DialogDescription>
                         </DialogHeader>
                         <div className="flex flex-col items-center space-y-4">
-                          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                          <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm">
                             {(() => {
                               // Get QR data from either nested structure (legacy) or direct structure (standalone)
                               const qrData = link.qr_codes?.qr_code_data || (link as any).qr_code_data
@@ -181,21 +181,24 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                               
                               return qrFormat === 'SVG' ? (
                                 <div 
-                                  className="w-48 h-48 [&>svg]:w-full [&>svg]:h-full"
+                                  className="w-32 h-32 sm:w-48 sm:h-48 [&>svg]:w-full [&>svg]:h-full"
                                   dangerouslySetInnerHTML={{ __html: qrData }}
                                 />
                               ) : (
                                 <img 
                                   src={qrData}
                                   alt={`QR Code for ${link.title}`}
-                                  className="w-48 h-48 object-contain"
+                                  className="w-32 h-32 sm:w-48 sm:h-48 object-contain"
                                 />
                               )
                             })()}
                           </div>
-                          <div className="text-center space-y-2">
-                            <p className="text-sm text-gray-600">
-                              Target URL: <span className="font-mono text-gray-900">{link.url}</span>
+                          <div className="text-center space-y-2 w-full px-2">
+                            <p className="text-xs sm:text-sm text-gray-600">
+                              Target URL:
+                            </p>
+                            <p className="font-mono text-xs sm:text-sm text-gray-900 break-all bg-gray-50 p-2 rounded">
+                              {link.url}
                             </p>
                             <p className="text-xs text-gray-500">
                               Format: {link.qr_codes?.format} | Size: {link.qr_codes?.size}x{link.qr_codes?.size}
@@ -211,7 +214,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                               document.body.removeChild(element)
                               toast.success('QR code downloaded!')
                             }}
-                            className="bg-gray-900 hover:bg-gray-800 text-white"
+                            className="bg-gray-900 hover:bg-gray-800 text-white w-full sm:w-auto"
                           >
                             <Download className="w-4 h-4 mr-2" />
                             Download QR Code
@@ -219,20 +222,22 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                         </div>
                       </DialogContent>
                     </Dialog>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-600 mb-1">
-                        Scan this QR code to access: {link.url}
+                    <div className="flex-1 min-w-0 w-full sm:w-auto">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1">
+                        Scan this QR code to access:
                       </p>
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:text-blue-700 flex items-center space-x-1 truncate"
-                      >
-                        <span className="truncate">{link.url}</span>
-                        <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                      </a>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <div className="mb-2">
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 flex items-start space-x-1 break-all"
+                        >
+                          <span className="break-all">{link.url}</span>
+                          <ExternalLink className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                        </a>
+                      </div>
+                      <p className="text-xs text-gray-500">
                         Click QR code to view and download
                       </p>
                     </div>
@@ -243,10 +248,10 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:text-blue-700 flex items-center space-x-1 truncate"
+                  className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 flex items-start space-x-1 break-all"
                 >
-                  <span className="truncate">{link.url}</span>
-                  <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                  <span className="break-all">{link.url}</span>
+                  <ExternalLink className="w-3 h-3 flex-shrink-0 mt-0.5" />
                 </a>
               )}
               
@@ -257,12 +262,17 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
           )}
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={link.is_active}
-            onCheckedChange={() => onToggleActive(link)}
-            disabled={editingId === link.id}
-          />
+        <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-gray-500 sm:hidden">
+              {link.is_active ? 'Active' : 'Inactive'}
+            </span>
+            <Switch
+              checked={link.is_active}
+              onCheckedChange={() => onToggleActive(link)}
+              disabled={editingId === link.id}
+            />
+          </div>
 
           {editingId === link.id ? (
             <div className="flex items-center space-x-1">
@@ -270,7 +280,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 size="sm"
                 onClick={() => onSave(link.id)}
                 disabled={isLoading || !editTitle.trim() || !editUrl.trim()}
-                className="bg-gray-900 hover:bg-gray-800 text-white"
+                className="bg-gray-900 hover:bg-gray-800 text-white px-2 py-1"
               >
                 <Save className="w-4 h-4" />
               </Button>
@@ -279,7 +289,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 variant="outline"
                 onClick={onCancel}
                 disabled={isLoading}
-                className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 px-2 py-1"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -290,7 +300,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 size="sm"
                 variant="outline"
                 onClick={() => onEdit(link)}
-                className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 px-2 py-1"
               >
                 <Edit2 className="w-4 h-4" />
               </Button>
@@ -298,7 +308,7 @@ function SortableLink({ link, onEdit, onSave, onCancel, onToggleActive, onDelete
                 size="sm"
                 variant="outline"
                 onClick={() => onDelete(link.id)}
-                className="bg-white border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                className="bg-white border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600 px-2 py-1"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
