@@ -21,39 +21,39 @@ export function TestimonialsSection() {
   }, [])
 
   return (
-    <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
+    <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-b from-gray-50 to-white">
       {/* Header */}
-      <div className="text-center mb-16 px-4">
+      <div className="text-center mb-12 sm:mb-16 px-4 sm:px-6 lg:px-8">
         <Badge variant="outline" className="mb-4 bg-green-100 text-green-700 border-green-200">
           TESTIMONIALS
         </Badge>
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6">
           Join Our Community
         </h2>
-        <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+        <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto">
           Be among the first to share your experience with Curately
         </p>
       </div>
 
       {/* Be the First Message */}
-      <div className="flex justify-center">
-        <Card className="bg-white border border-gray-200 rounded-2xl p-12 max-w-2xl mx-4 shadow-lg text-center">
+      <div className="flex justify-center px-4 sm:px-6 lg:px-8">
+        <Card className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 lg:p-12 max-w-2xl mx-auto shadow-lg text-center">
           <CardContent className="p-0">
             <div className="mb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="w-8 h-8 text-white" />
+              <div className="w-12 sm:w-16 h-12 sm:h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">
+              <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-3">
                 Be the First to Share Your Experience
               </h3>
-              <p className="text-gray-600 text-lg leading-relaxed">
+              <p className="text-sm sm:text-base lg:text-lg text-gray-600 leading-relaxed">
                 Join our growing community and be among the first to leave a review. 
                 Your feedback helps us improve and helps others discover Curately.
               </p>
             </div>
             <div className="flex justify-center">
               <Link href="/contact">
-                <button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 group inline-flex items-center shadow-lg hover:shadow-xl">
+                <button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 sm:px-8 py-3 rounded-lg font-semibold transition-all duration-300 group inline-flex items-center shadow-lg hover:shadow-xl w-full sm:w-auto">
                   Leave a Review
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </button>
@@ -64,19 +64,19 @@ export function TestimonialsSection() {
       </div>
       
       {/* Call to Action */}
-      <div className="text-center mt-16 px-4">
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 max-w-2xl mx-auto shadow-lg">
+      <div className="text-center mt-12 sm:mt-16 px-4 sm:px-6 lg:px-8">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 max-w-2xl mx-auto shadow-lg">
           {isAuthenticated ? (
             <>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-4">
                 Ready to get back to work?
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-sm sm:text-base text-gray-600 mb-6">
                 Continue building your perfect link-in-bio page and managing your links with Curately.
               </p>
               <div className="flex justify-center">
                 <Link href="/dashboard">
-                  <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-lg font-semibold transition-colors group inline-flex items-center">
+                  <button className="bg-gray-900 hover:bg-gray-800 text-white px-6 sm:px-8 py-3 rounded-lg font-semibold transition-colors group inline-flex items-center w-full sm:w-auto">
                     Open Dashboard
                     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </button>
@@ -85,15 +85,15 @@ export function TestimonialsSection() {
             </>
           ) : (
             <>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-4">
                 Ready to join them?
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-sm sm:text-base text-gray-600 mb-6">
                 Start creating your perfect link-in-bio page today and see why thousands of creators trust Curately.
               </p>
               <div className="flex justify-center">
                 <Link href="/auth">
-                  <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
+                  <button className="bg-gray-900 hover:bg-gray-800 text-white px-6 sm:px-8 py-3 rounded-lg font-semibold transition-colors w-full sm:w-auto">
                     Get Started Free
                   </button>
                 </Link>

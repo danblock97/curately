@@ -59,54 +59,54 @@ const metrics = [
 
 export function AnalyticsSection() {
   return (
-    <section className="py-20 px-4">
+    <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-12 sm:mb-16">
           <Badge variant="outline" className="mb-4 bg-blue-100 text-blue-700 border-blue-200">
             ANALYTICS
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6">
             Track your link performance
           </h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto">
             Monitor click counts, see your top performing links, and track your growth over time with powerful analytics
           </p>
         </div>
 
         {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-12">
           {metrics.map((metric, index) => (
             <Card key={index} className="bg-white border border-gray-200 shadow-sm">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between space-y-0 pb-2">
-                  <div className="text-sm font-medium text-gray-600">{metric.title}</div>
-                  <div className={`w-8 h-8 ${metric.bgColor} rounded-lg flex items-center justify-center`}>
+                  <div className="text-xs sm:text-sm font-medium text-gray-600">{metric.title}</div>
+                  <div className={`w-6 sm:w-8 h-6 sm:h-8 ${metric.bgColor} rounded-lg flex items-center justify-center`}>
                     <div className={metric.iconColor}>{metric.icon}</div>
                   </div>
                 </div>
-                <div className="text-3xl font-bold text-gray-900 mb-1">{metric.value}</div>
-                <div className="text-sm text-gray-500">{metric.change}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{metric.value}</div>
+                <div className="text-xs sm:text-sm text-gray-500">{metric.change}</div>
               </CardContent>
             </Card>
           ))}
         </div>
 
         {/* Main Analytics Dashboard */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Line Chart */}
           <Card className="lg:col-span-2 bg-white border border-gray-200 shadow-sm">
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
                 <div>
-                  <CardTitle className="text-lg font-semibold text-gray-900">Traffic Overview</CardTitle>
-                  <p className="text-gray-600">Daily clicks over the selected period</p>
+                  <CardTitle className="text-base sm:text-lg font-semibold text-gray-900">Traffic Overview</CardTitle>
+                  <p className="text-sm sm:text-base text-gray-600">Daily clicks over the selected period</p>
                 </div>
                 <div className="flex items-center space-x-1">
                   {['7D', '30D', '90D'].map((period) => (
                     <button
                       key={period}
-                      className={`text-xs h-7 px-2 rounded border ${
+                      className={`text-xs h-6 sm:h-7 px-2 rounded border ${
                         period === '30D'
                           ? 'bg-gray-900 text-white border-gray-900'
                           : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
@@ -119,7 +119,7 @@ export function AnalyticsSection() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-80 bg-gray-50 rounded-lg p-6 relative border border-gray-100">
+              <div className="h-48 sm:h-64 lg:h-80 bg-gray-50 rounded-lg p-3 sm:p-6 relative border border-gray-100">
                 <svg className="w-full h-full" viewBox="0 0 600 240">
                   <defs>
                     <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -171,42 +171,42 @@ export function AnalyticsSection() {
           {/* Side Stats */}
           <Card className="bg-white border border-gray-200 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-900">Link Types</CardTitle>
-              <p className="text-gray-600">Distribution by link type</p>
+              <CardTitle className="text-base sm:text-lg font-semibold text-gray-900">Link Types</CardTitle>
+              <p className="text-sm sm:text-base text-gray-600">Distribution by link type</p>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-gray-700">Link in Bio</span>
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 bg-blue-500 rounded-full"></div>
+                    <span className="text-xs sm:text-sm font-medium text-gray-700">Link in Bio</span>
                   </div>
-                  <span className="text-sm font-semibold text-gray-900">14</span>
+                  <span className="text-xs sm:text-sm font-semibold text-gray-900">14</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-500 h-2 rounded-full" style={{width: '70%'}}></div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
+                  <div className="bg-blue-500 h-1.5 sm:h-2 rounded-full" style={{width: '70%'}}></div>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-gray-700">QR Codes</span>
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-xs sm:text-sm font-medium text-gray-700">QR Codes</span>
                   </div>
-                  <span className="text-sm font-semibold text-gray-900">3</span>
+                  <span className="text-xs sm:text-sm font-semibold text-gray-900">3</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-500 h-2 rounded-full" style={{width: '15%'}}></div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
+                  <div className="bg-green-500 h-1.5 sm:h-2 rounded-full" style={{width: '15%'}}></div>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-gray-700">Deep Links</span>
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 bg-purple-500 rounded-full"></div>
+                    <span className="text-xs sm:text-sm font-medium text-gray-700">Deep Links</span>
                   </div>
-                  <span className="text-sm font-semibold text-gray-900">1</span>
+                  <span className="text-xs sm:text-sm font-semibold text-gray-900">1</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-purple-500 h-2 rounded-full" style={{width: '5%'}}></div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
+                  <div className="bg-purple-500 h-1.5 sm:h-2 rounded-full" style={{width: '5%'}}></div>
                 </div>
               </div>
             </CardContent>
@@ -219,13 +219,13 @@ export function AnalyticsSection() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg font-semibold text-gray-900">Top Performing Links</CardTitle>
-                <p className="text-gray-600">Your most clicked links and their performance metrics</p>
+                <CardTitle className="text-base sm:text-lg font-semibold text-gray-900">Top Performing Links</CardTitle>
+                <p className="text-sm sm:text-base text-gray-600">Your most clicked links and their performance metrics</p>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {[
                 { title: 'Portfolio Website', url: 'johnsmith.dev', clicks: 3249, percentage: '25.3%', type: 'link' },
                 { title: 'GitHub Profile', url: 'github.com/johnsmith', clicks: 2847, percentage: '22.1%', type: 'link' },
@@ -233,38 +233,38 @@ export function AnalyticsSection() {
                 { title: 'Contact QR Code', url: 'QR Code', clicks: 1247, percentage: '9.7%', type: 'qr' },
                 { title: 'Instagram Deep Link', url: 'Deep Link to Instagram', clicks: 856, percentage: '6.7%', type: 'deep' }
               ].map((link, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center justify-center w-8 h-8 bg-white rounded-lg border border-gray-200">
-                      <span className="text-sm font-semibold text-gray-600">#{index + 1}</span>
+                <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-100 space-y-3 sm:space-y-0">
+                  <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
+                    <div className="flex items-center justify-center w-6 sm:w-8 h-6 sm:h-8 bg-white rounded-lg border border-gray-200">
+                      <span className="text-xs sm:text-sm font-semibold text-gray-600">#{index + 1}</span>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <div className={`w-8 sm:w-10 h-8 sm:h-10 rounded-lg flex items-center justify-center ${
                         link.type === 'qr' ? 'bg-green-100' : 
                         link.type === 'deep' ? 'bg-purple-100' : 'bg-blue-100'
                       }`}>
                         {link.type === 'qr' ? (
-                          <QrCode className="w-5 h-5 text-green-600" />
+                          <QrCode className="w-4 sm:w-5 h-4 sm:h-5 text-green-600" />
                         ) : link.type === 'deep' ? (
-                          <ExternalLink className="w-5 h-5 text-purple-600" />
+                          <ExternalLink className="w-4 sm:w-5 h-4 sm:h-5 text-purple-600" />
                         ) : (
-                          <Globe className="w-5 h-5 text-blue-600" />
+                          <Globe className="w-4 sm:w-5 h-4 sm:h-5 text-blue-600" />
                         )}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">{link.title}</h3>
-                        <p className="text-sm text-gray-500">{link.url}</p>
+                        <h3 className="text-sm sm:text-base font-semibold text-gray-900">{link.title}</h3>
+                        <p className="text-xs sm:text-sm text-gray-500 truncate max-w-[200px] sm:max-w-none">{link.url}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-6">
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-900">{link.clicks.toLocaleString()}</div>
-                      <div className="text-sm text-gray-500">clicks</div>
+                  <div className="flex items-center justify-between sm:justify-end space-x-4 sm:space-x-6 w-full sm:w-auto">
+                    <div className="text-left sm:text-right">
+                      <div className="text-lg sm:text-2xl font-bold text-gray-900">{link.clicks.toLocaleString()}</div>
+                      <div className="text-xs sm:text-sm text-gray-500">clicks</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-semibold text-green-600">{link.percentage}</div>
-                      <div className="text-sm text-gray-500">of total</div>
+                      <div className="text-base sm:text-lg font-semibold text-green-600">{link.percentage}</div>
+                      <div className="text-xs sm:text-sm text-gray-500">of total</div>
                     </div>
                   </div>
                 </div>
@@ -273,8 +273,8 @@ export function AnalyticsSection() {
           </CardContent>
         </Card>
 
-        <div className="text-center mt-16">
-          <Button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-lg font-semibold">
+        <div className="text-center mt-12 sm:mt-16">
+          <Button className="bg-gray-900 hover:bg-gray-800 text-white px-6 sm:px-8 py-3 rounded-lg font-semibold w-full sm:w-auto">
             Start tracking your links
           </Button>
         </div>

@@ -85,29 +85,29 @@ export function LandingPage() {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="flex flex-col items-center justify-center min-h-[80vh] px-4 pb-8">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
+      <section className="flex flex-col items-center justify-center min-h-[80vh] px-4 sm:px-6 lg:px-8 pb-8 pt-20 sm:pt-24 md:pt-16">
+        <div className="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8">
           {/* Trusted By */}
-          <div className="text-sm text-gray-500 font-medium">
+          <div className="text-xs sm:text-sm text-gray-500 font-medium">
             Trusted by 100+ creators
           </div>
           
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight">
             Create Your Perfect
-            <br />
-            Link in Bio — Effortlessly
+            <br className="hidden sm:block" />
+            <span className="sm:hidden"> </span>Link in Bio — Effortlessly
           </h1>
           
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed px-4 sm:px-0">
             Curately helps you create beautiful, customizable link pages that showcase everything important to your audience in one place.
           </p>
           
-          <div className="pt-4 relative">
+          <div className="pt-2 sm:pt-4 relative">
             {isAuthenticated ? (
               <>
                 <Button 
                   size="lg" 
-                  className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-4 rounded-full text-base font-medium transition-all duration-200 group" 
+                  className="bg-gray-900 hover:bg-gray-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-base font-medium transition-all duration-200 group w-full sm:w-auto" 
                   asChild
                 >
                   <Link href="/dashboard">
@@ -115,18 +115,18 @@ export function LandingPage() {
                     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
-                <p className="text-sm text-gray-500 mt-3">Welcome back, {profile?.display_name || user?.email}!</p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-3">Welcome back, {profile?.display_name || user?.email}!</p>
               </>
             ) : (
               <>
                 <Button 
                   size="lg" 
-                  className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-4 rounded-full text-base font-medium transition-all duration-200" 
+                  className="bg-gray-900 hover:bg-gray-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-base font-medium transition-all duration-200 w-full sm:w-auto" 
                   asChild
                 >
                   <Link href="/auth">Start Creating Free</Link>
                 </Button>
-                <p className="text-sm text-gray-500 mt-3">No credit card required</p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-3">No credit card required</p>
               </>
             )}
           </div>
@@ -134,11 +134,11 @@ export function LandingPage() {
       </section>
 
       {/* Product Demo Area */}
-      <section className="px-4 pt-4">
+      <section className="px-4 sm:px-6 lg:px-8 pt-4">
         <div className="max-w-5xl mx-auto">
           <div className="relative w-full flex justify-center">
             <div className="relative transition-transform duration-500 ease-out" style={{ transform: 'perspective(1000px) rotateX(15deg)', transformStyle: 'preserve-3d' }}>
-              <div className="relative rounded-lg overflow-hidden shadow-2xl">
+              <div className="relative rounded-lg overflow-hidden shadow-xl sm:shadow-2xl">
                 <Image
                   src="/dashboard.png"
                   alt="Curately Dashboard"
@@ -154,8 +154,8 @@ export function LandingPage() {
       </section>
 
       {/* Three Ways Section */}
-      <section className="py-20">
-        <div className="max-w-6xl mx-auto px-4">
+      <section className="py-12 sm:py-16 lg:py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <ThreeWaysSection />
         </div>
       </section>
