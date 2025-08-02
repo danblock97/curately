@@ -22,7 +22,7 @@ export default async function PagesPage() {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
       <PagesManager profile={profile} userId={user.id} />
     </div>
   )

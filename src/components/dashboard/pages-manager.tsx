@@ -130,17 +130,17 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Your Pages</h2>
-          <p className="text-gray-600">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Your Pages</h2>
+          <p className="text-gray-600 text-sm sm:text-base">
             Manage your public pages. Pro users can create up to 2 pages.
           </p>
         </div>
         {canCreatePage && (
           <Button
             onClick={() => setShowCreateForm(true)}
-            className="bg-gray-900 hover:bg-gray-800 text-white"
+            className="bg-gray-900 hover:bg-gray-800 text-white w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
             Create Page
@@ -152,8 +152,8 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
       {profile.tier === 'free' && (
         <Card className="border border-amber-200 bg-amber-50">
           <CardContent className="pt-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <Globe className="w-5 h-5 text-amber-600" />
               </div>
               <div>
@@ -171,8 +171,8 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
       {!isLoading && pages.some(page => !page.is_active) && (
         <Card className="border border-orange-200 bg-orange-50">
           <CardContent className="pt-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <Globe className="w-5 h-5 text-orange-600" />
               </div>
               <div>
@@ -197,10 +197,10 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
                 ? "bg-white border border-gray-200" 
                 : "bg-gray-50 border border-gray-300 opacity-75"
             }`}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
                       page.is_active 
                         ? "bg-gray-100" 
                         : "bg-gray-200"
@@ -211,34 +211,36 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
                           : "text-gray-400"
                       }`} />
                     </div>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold text-gray-900">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <h3 className="font-semibold text-gray-900 truncate">
                           {page.page_title || page.username}
                         </h3>
-                        {page.is_primary && (
-                          <Badge variant="default" className="text-xs">
-                            Primary
-                          </Badge>
-                        )}
-                        {!page.is_active && (
-                          <Badge variant="secondary" className="text-xs">
-                            Inactive
-                          </Badge>
-                        )}
+                        <div className="flex items-center space-x-2">
+                          {page.is_primary && (
+                            <Badge variant="default" className="text-xs">
+                              Primary
+                            </Badge>
+                          )}
+                          {!page.is_active && (
+                            <Badge variant="secondary" className="text-xs">
+                              Inactive
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-600">@{page.username}</p>
+                      <p className="text-sm text-gray-600 truncate">@{page.username}</p>
                       {page.page_description && (
-                        <p className="text-sm text-gray-500 mt-1">{page.page_description}</p>
+                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">{page.page_description}</p>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full lg:w-auto">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => window.open(`/${page.username}`, '_blank')}
-                      className="text-gray-600 hover:text-gray-900"
+                      className="text-gray-600 hover:text-gray-900 w-full sm:w-auto"
                       disabled={!page.is_active}
                     >
                       <ExternalLink className="w-4 h-4 mr-2" />
@@ -249,7 +251,7 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
                         variant="outline"
                         size="sm"
                         onClick={() => router.push(`/dashboard/appearance?pageId=${page.id}`)}
-                        className="text-gray-600 hover:text-gray-900"
+                        className="text-gray-600 hover:text-gray-900 w-full sm:w-auto"
                       >
                         <Settings className="w-4 h-4 mr-2" />
                         Edit
@@ -261,10 +263,11 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
                         onClick={() => {
                           toast.error('This page is inactive. Upgrade to Pro to reactivate and edit your additional pages.')
                         }}
-                        className="text-orange-600 hover:text-orange-700 border-orange-300 hover:border-orange-400"
+                        className="text-orange-600 hover:text-orange-700 border-orange-300 hover:border-orange-400 w-full sm:w-auto"
                       >
                         <Settings className="w-4 h-4 mr-2" />
-                        Upgrade to Edit
+                        <span className="hidden sm:inline">Upgrade to Edit</span>
+                        <span className="sm:hidden">Upgrade</span>
                       </Button>
                     )}
                   </div>
@@ -278,7 +281,7 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
       {/* Create Page Modal */}
       {showCreateForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl">
+          <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl mx-4">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Create New Page</h2>
@@ -356,7 +359,7 @@ export function PagesManager({ profile, userId }: PagesManagerProps) {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 mt-6">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 mt-6">
                 <Button
                   onClick={handleCreatePage}
                   disabled={isCreating}
