@@ -91,40 +91,40 @@ export function AdvantagesSection() {
   }, [])
 
   return (
-    <section className="py-20 px-4">
+    <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-12 sm:mb-16">
           <Badge variant="outline" className="mb-4 bg-purple-100 text-purple-700 border-purple-200">
             ADVANTAGES
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6">
             Why choose Curately for your links?
           </h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto">
             Powerful features designed specifically for content creators, businesses, and influencers who want more than just a basic link-in-bio
           </p>
         </div>
 
         {/* Advantages Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-12 sm:mb-16">
           {advantages.map((advantage, index) => (
             <Card 
               key={index} 
               className="group bg-white border-gray-200 hover:border-gray-300 transition-all duration-300 hover:scale-105 hover:shadow-xl"
             >
-              <CardContent className="p-8">
-                <div className={`w-16 h-16 rounded-2xl ${advantage.iconBg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+              <CardContent className="p-4 sm:p-6 lg:p-8">
+                <div className={`w-12 sm:w-14 lg:w-16 h-12 sm:h-14 lg:h-16 rounded-2xl ${advantage.iconBg} flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300`}>
                   <div className={advantage.color}>
                     {advantage.icon}
                   </div>
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-gray-800 transition-colors">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 group-hover:text-gray-800 transition-colors">
                   {advantage.title}
                 </h3>
                 
-                <p className="text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors">
+                <p className="text-sm sm:text-base text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors">
                   {advantage.description}
                 </p>
               </CardContent>
@@ -133,48 +133,48 @@ export function AdvantagesSection() {
         </div>
 
         {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-12 sm:mb-16">
           <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
-            <CardContent className="p-8 text-center">
-              <div className="text-4xl font-bold text-gray-900 mb-2">5+</div>
-              <div className="text-blue-600 font-semibold mb-2">Widget Types</div>
-              <div className="text-gray-600 text-sm">Social, links, text, images, QR codes</div>
+            <CardContent className="p-4 sm:p-6 lg:p-8 text-center">
+              <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">5+</div>
+              <div className="text-blue-600 font-semibold mb-2 text-sm sm:text-base">Widget Types</div>
+              <div className="text-gray-600 text-xs sm:text-sm">Social, links, text, images, QR codes</div>
             </CardContent>
           </Card>
           
           <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-            <CardContent className="p-8 text-center">
-              <div className="text-4xl font-bold text-gray-900 mb-2">3</div>
-              <div className="text-green-600 font-semibold mb-2">Link Types</div>
-              <div className="text-gray-600 text-sm">Bio links, deeplinks, and QR codes</div>
+            <CardContent className="p-4 sm:p-6 lg:p-8 text-center">
+              <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">3</div>
+              <div className="text-green-600 font-semibold mb-2 text-sm sm:text-base">Link Types</div>
+              <div className="text-gray-600 text-xs sm:text-sm">Bio links, deeplinks, and QR codes</div>
             </CardContent>
           </Card>
           
           <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
-            <CardContent className="p-8 text-center">
-              <div className="text-4xl font-bold text-gray-900 mb-2">100</div>
-              <div className="text-purple-600 font-semibold mb-2">Links & Codes</div>
-              <div className="text-gray-600 text-sm">Create many links and QR codes</div>
+            <CardContent className="p-4 sm:p-6 lg:p-8 text-center">
+              <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">100</div>
+              <div className="text-purple-600 font-semibold mb-2 text-sm sm:text-base">Links & Codes</div>
+              <div className="text-gray-600 text-xs sm:text-sm">Create many links and QR codes</div>
             </CardContent>
           </Card>
         </div>
 
 
         {/* Call to Action */}
-        <div className="text-center mt-16">
+        <div className="text-center mt-12 sm:mt-16">
           {isAuthenticated ? (
             <>
-              <Button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-4 rounded-lg font-semibold text-lg" asChild>
+              <Button className="bg-gray-900 hover:bg-gray-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg w-full sm:w-auto" asChild>
                 <Link href="/dashboard">Open Dashboard</Link>
               </Button>
-              <p className="text-gray-600 mt-4">Continue building your perfect link-in-bio experience</p>
+              <p className="text-sm sm:text-base text-gray-600 mt-3 sm:mt-4">Continue building your perfect link-in-bio experience</p>
             </>
           ) : (
             <>
-              <Button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-4 rounded-lg font-semibold text-lg" asChild>
+              <Button className="bg-gray-900 hover:bg-gray-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg w-full sm:w-auto" asChild>
                 <Link href="/auth">Get Started with Curately</Link>
               </Button>
-              <p className="text-gray-600 mt-4">Join thousands of creators already using Curately</p>
+              <p className="text-sm sm:text-base text-gray-600 mt-3 sm:mt-4">Join thousands of creators already using Curately</p>
             </>
           )}
         </div>
