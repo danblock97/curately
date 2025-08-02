@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Navbar } from '@/components/navbar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Mail, MessageCircle, Clock, Users, ArrowRight, CheckCircle, Globe, Bug } from 'lucide-react'
+import { Mail, Clock, Users, ArrowRight, CheckCircle, Globe, Bug, Lightbulb } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ContactPage() {
@@ -77,30 +77,59 @@ export default function ContactPage() {
           <div className="grid lg:grid-cols-3 gap-16">
             {/* Contact Options */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Notion Form Card */}
+              {/* Bug Report Form Card */}
               <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <div className="flex items-center space-x-3 mb-8">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-                    <MessageCircle className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-orange-500 rounded-xl flex items-center justify-center">
+                    <Bug className="w-6 h-6 text-white" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900">
-                      Contact Form
+                      Report a Bug
                     </h2>
-                    <p className="text-gray-600">Submit your questions, feedback, or support requests</p>
+                    <p className="text-gray-600">Found a bug? Let us know so we can fix it quickly</p>
                   </div>
                 </div>
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 text-center">
+                <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 text-center">
                   <p className="text-gray-600 mb-6">
-                    Use our contact form to send us your questions, feedback, or support requests. We&apos;ll get back to you as soon as possible.
+                    Help us improve Curately by reporting any bugs or issues you encounter. We appreciate your feedback!
                   </p>
                   <a 
-                    href="https://roomy-pick-4e2.notion.site/23905d85e5838176bfc2df81a22881c0?pvs=105" 
+                    href="https://danblock97.atlassian.net/jira/software/c/form/ba5ea50a-e79f-4118-a670-d80c2953eb13?atlOrigin=eyJpIjoiODY0MGNkMDM2MzM1NDYzZDliNmM3YjM1YWQ1Yjk4YjgiLCJwIjoiaiJ9" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white font-semibold rounded-xl hover:from-red-700 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl group"
+                  >
+                    Report Bug
+                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Feature Request Form Card */}
+              <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="flex items-center space-x-3 mb-8">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                    <Lightbulb className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      Request a Feature
+                    </h2>
+                    <p className="text-gray-600">Have an idea for a new feature? We&apos;d love to hear it!</p>
+                  </div>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 text-center">
+                  <p className="text-gray-600 mb-6">
+                    Share your ideas for new features or improvements. Your feedback helps shape the future of Curately!
+                  </p>
+                  <a 
+                    href="https://danblock97.atlassian.net/jira/software/c/form/ac22a469-8a4d-447b-9c26-d648ad07cfa1?atlOrigin=eyJpIjoiZjc2NmFhYmYzOGU4NDRhYjk5NWM2NGI5ZGFhYjNjZjMiLCJwIjoiaiJ9" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl group"
                   >
-                    Open Contact Form
+                    Request Feature
                     <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </a>
                 </div>
@@ -173,11 +202,17 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h4 className="font-bold text-gray-900 mb-2">Bug Reports & Feature Requests</h4>
-                      <p className="text-gray-600 text-sm mb-3">Submit bugs and suggest new features</p>
-                      <a href="https://roomy-pick-4e2.notion.site/23905d85e5838176bfc2df81a22881c0?pvs=105" target="_blank" rel="noopener noreferrer" className="text-orange-600 font-semibold hover:text-orange-700 inline-flex items-center group">
-                        Submit via Notion Form
-                        <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                      </a>
+                      <p className="text-gray-600 text-sm mb-3">Use our dedicated Jira forms for bugs and features</p>
+                      <div className="space-y-1 flex flex-col">
+                        <a href="https://danblock97.atlassian.net/jira/software/c/form/ba5ea50a-e79f-4118-a670-d80c2953eb13?atlOrigin=eyJpIjoiODY0MGNkMDM2MzM1NDYzZDliNmM3YjM1YWQ1Yjk4YjgiLCJwIjoiaiJ9" target="_blank" rel="noopener noreferrer" className="text-red-600 font-semibold hover:text-red-700 inline-flex items-center group">
+                          Report Bug
+                          <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                        </a>
+                        <a href="https://danblock97.atlassian.net/jira/software/c/form/ac22a469-8a4d-447b-9c26-d648ad07cfa1?atlOrigin=eyJpIjoiZjc2NmFhYmYzOGU4NDRhYjk5NWM2NGI5ZGFhYjNjZjMiLCJwIjoiaiJ9" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold hover:text-blue-700 inline-flex items-center group">
+                          Request Feature
+                          <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                        </a>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
