@@ -17,6 +17,7 @@ export interface Database {
           page_title: string
           page_description: string | null
           background_color: string
+          background_image_url: string | null
           is_primary: boolean
           is_active: boolean
           created_at: string
@@ -29,6 +30,7 @@ export interface Database {
           page_title: string
           page_description?: string | null
           background_color?: string
+          background_image_url?: string | null
           is_primary?: boolean
           is_active?: boolean
           created_at?: string
@@ -41,6 +43,7 @@ export interface Database {
           page_title?: string
           page_description?: string | null
           background_color?: string
+          background_image_url?: string | null
           is_primary?: boolean
           is_active?: boolean
           created_at?: string

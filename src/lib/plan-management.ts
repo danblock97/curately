@@ -49,7 +49,7 @@ export async function handlePlanDowngrade(): Promise<DowngradeResult> {
     }
 
     if (backgroundColorReset) {
-      changes.push('reset your background color to white')
+      changes.push('reset your background color to white and removed background images')
     }
     
     if (changes.length > 0) {
