@@ -189,7 +189,22 @@ export function AppearanceCustomizer({
 	selectedPageId,
 }: AppearanceCustomizerProps) {
 	const router = useRouter();
-	const [activeView, setActiveView] = useState<"web" | "mobile">("web");
+	// Set mobile view by default on mobile screens, web view on larger screens
+	const [activeView, setActiveView] = useState<"web" | "mobile">(
+		typeof window !== 'undefined' && window.innerWidth < 640 ? "mobile" : "web"
+	);
+
+	// Auto-switch to mobile view on small screens
+	useEffect(() => {
+		const handleResize = () => {
+			if (window.innerWidth < 640 && activeView === "web") {
+				setActiveView("mobile");
+			}
+		};
+
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, [activeView]);
 	const [showWidgetModal, setShowWidgetModal] = useState(false);
 	const [widgets, setWidgets] = useState<Widget[]>([]);
 	const [hoveredWidget, setHoveredWidget] = useState<string | null>(null);
@@ -2940,17 +2955,19 @@ export function AppearanceCustomizer({
 			}}
 		>
 			{/* Header */}
-			<div className="flex items-center justify-between p-3 border-b border-gray-200">
-				<div className="flex items-center space-x-4">
+			<div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 bg-white/95 backdrop-blur-sm sticky top-0 z-40">
+				<div className="flex items-center space-x-2 sm:space-x-4">
 					<Button
 						variant="ghost"
 						size="sm"
 						onClick={() => router.push("/dashboard/pages")}
+						className="flex-shrink-0"
 					>
-						<ArrowLeft className="w-4 h-4 mr-2" />
-						Return
+						<ArrowLeft className="w-4 h-4 mr-1 sm:mr-2" />
+						<span className="hidden sm:inline">Return</span>
 					</Button>
-					<div className="flex items-center bg-gray-100 rounded-xl p-1">
+					{/* View Toggle - Hide on mobile screens (< sm) */}
+					<div className="hidden sm:flex items-center bg-gray-100 rounded-xl p-1">
 						<Button
 							variant="ghost"
 							size="sm"
@@ -2984,8 +3001,10 @@ export function AppearanceCustomizer({
 						variant="ghost"
 						size="sm"
 						onClick={() => router.push("/dashboard/analytics")}
+						className="text-xs sm:text-sm"
 					>
-						See page analytics
+						<span className="hidden sm:inline">See page analytics</span>
+						<span className="sm:hidden">Analytics</span>
 					</Button>
 				</div>
 			</div>
@@ -2994,21 +3013,21 @@ export function AppearanceCustomizer({
 			<div className={`min-h-[calc(100vh-120px)] ${
 				activeView === "web" 
 					? "flex flex-col items-center justify-start max-w-7xl mx-auto px-4 py-8"
-					: "flex flex-col items-center"
+					: "flex flex-col items-center px-4 sm:px-6 py-4 pb-32 sm:pb-40"
 			}`}>
 				{/* Profile Preview */}
 				<div
 					className={`${
 						activeView === "web"
 							? "w-full max-w-lg lg:max-w-xl mb-12"
-							: "w-full max-w-md"
+							: "w-full max-w-xs sm:max-w-sm md:max-w-md"
 					} p-4 flex flex-col items-center`}
 				>
 					<div
 						className={`w-full ${
 							activeView === "web"
 								? "max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl"
-								: "max-w-7xl"
+								: "max-w-full"
 						}`}
 					>
 						{/* Profile Section */}
@@ -3018,8 +3037,8 @@ export function AppearanceCustomizer({
 									<div className="relative">
 										<Avatar
 											className={`${
-												activeView === "web" ? "w-32 h-32" : "w-20 h-20"
-											} mx-auto mb-6 ring-3 ring-white/80 shadow-lg`}
+												activeView === "web" ? "w-24 h-24 sm:w-32 sm:h-32" : "w-16 h-16 sm:w-20 sm:h-20"
+											} mx-auto mb-4 sm:mb-6 ring-2 sm:ring-3 ring-white/80 shadow-lg`}
 										>
 											<AvatarImage
 												src={profile?.avatar_url || ""}
@@ -3027,7 +3046,7 @@ export function AppearanceCustomizer({
 											/>
 											<AvatarFallback
 												className={`${
-													activeView === "web" ? "text-3xl" : "text-xl"
+													activeView === "web" ? "text-xl sm:text-3xl" : "text-lg sm:text-xl"
 												} bg-gradient-to-br from-gray-100 to-gray-200 text-gray-700 font-semibold`}
 											>
 												{isHydrated
@@ -3037,16 +3056,16 @@ export function AppearanceCustomizer({
 										</Avatar>
 										<div
 											className={`absolute inset-0 ${
-												activeView === "web" ? "w-32 h-32" : "w-20 h-20"
-											} mx-auto mb-6 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200`}
+												activeView === "web" ? "w-24 h-24 sm:w-32 sm:h-32" : "w-16 h-16 sm:w-20 sm:h-20"
+											} mx-auto mb-4 sm:mb-6 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200`}
 										>
 											<div className="text-center">
 												<Edit
 													className={`${
-														activeView === "web" ? "w-5 h-5" : "w-4 h-4"
+														activeView === "web" ? "w-4 h-4 sm:w-5 sm:h-5" : "w-3 h-3 sm:w-4 sm:h-4"
 													} text-white mb-1 mx-auto`}
 												/>
-												<span className={`text-white text-xs font-medium`}>
+												<span className={`text-white text-xs font-medium hidden sm:block`}>
 													Edit
 												</span>
 											</div>
@@ -3066,8 +3085,8 @@ export function AppearanceCustomizer({
 								onChange={(e) => handleDisplayNameChange(e.target.value)}
 								onBlur={handleDisplayNameBlur}
 								className={`${
-									activeView === "web" ? "text-3xl" : "text-xl"
-								} font-bold text-gray-900 bg-transparent border-none text-center w-full focus:outline-none focus:ring-1 focus:ring-gray-200 focus:bg-white/50 rounded-xl px-4 py-3 mb-3 transition-all hover:bg-gray-50/30`}
+									activeView === "web" ? "text-xl sm:text-2xl lg:text-3xl" : "text-lg sm:text-xl"
+								} font-bold text-gray-900 bg-transparent border-none text-center w-full focus:outline-none focus:ring-1 focus:ring-gray-200 focus:bg-white/50 rounded-xl px-3 sm:px-4 py-2 sm:py-3 mb-2 sm:mb-3 transition-all hover:bg-gray-50/30`}
 								placeholder="Your name"
 							/>
 							<textarea
@@ -3075,10 +3094,10 @@ export function AppearanceCustomizer({
 								onChange={(e) => handleBioChange(e.target.value)}
 								onBlur={handleBioBlur}
 								className={`${
-									activeView === "web" ? "text-base" : "text-sm"
-								} text-gray-600 bg-transparent border-none text-center w-full resize-none focus:outline-none focus:ring-1 focus:ring-gray-200 focus:bg-white/50 rounded-xl px-4 py-3 mb-4 transition-all hover:bg-gray-50/30 leading-relaxed`}
+									activeView === "web" ? "text-sm sm:text-base" : "text-xs sm:text-sm"
+								} text-gray-600 bg-transparent border-none text-center w-full resize-none focus:outline-none focus:ring-1 focus:ring-gray-200 focus:bg-white/50 rounded-xl px-3 sm:px-4 py-2 sm:py-3 mb-3 sm:mb-4 transition-all hover:bg-gray-50/30 leading-relaxed min-h-[2.5rem] sm:min-h-[3rem]`}
 								placeholder="Tell people about yourself..."
-								rows={activeView === "web" ? 2 : 1}
+								rows={activeView === "web" ? 2 : 2}
 							/>
 
 							{/* Page Info Section */}
@@ -3089,8 +3108,8 @@ export function AppearanceCustomizer({
 									onChange={(e) => handlePageTitleChange(e.target.value)}
 									onBlur={handlePageTitleBlur}
 									className={`${
-										activeView === "web" ? "text-lg" : "text-base"
-									} font-medium text-gray-700 bg-transparent border-none text-center w-full focus:outline-none focus:ring-1 focus:ring-gray-200 focus:bg-white/50 rounded-xl px-4 py-2 transition-all hover:bg-gray-50/30`}
+										activeView === "web" ? "text-base sm:text-lg" : "text-sm sm:text-base"
+									} font-medium text-gray-700 bg-transparent border-none text-center w-full focus:outline-none focus:ring-1 focus:ring-gray-200 focus:bg-white/50 rounded-xl px-3 sm:px-4 py-2 transition-all hover:bg-gray-50/30`}
 									placeholder="Page title (optional)"
 								/>
 
@@ -3099,8 +3118,8 @@ export function AppearanceCustomizer({
 									onChange={(e) => handlePageDescriptionChange(e.target.value)}
 									onBlur={handlePageDescriptionBlur}
 									className={`${
-										activeView === "web" ? "text-sm" : "text-xs"
-									} text-gray-500 bg-transparent border-none text-center w-full resize-none focus:outline-none focus:ring-1 focus:ring-gray-200 focus:bg-white/50 rounded-xl px-4 py-2 transition-all hover:bg-gray-50/30 leading-relaxed mb-6`}
+										activeView === "web" ? "text-xs sm:text-sm" : "text-xs"
+									} text-gray-500 bg-transparent border-none text-center w-full resize-none focus:outline-none focus:ring-1 focus:ring-gray-200 focus:bg-white/50 rounded-xl px-3 sm:px-4 py-2 transition-all hover:bg-gray-50/30 leading-relaxed mb-4 sm:mb-6`}
 									placeholder="Page description (optional)"
 									rows={1}
 								/>
@@ -3109,10 +3128,10 @@ export function AppearanceCustomizer({
 
 						{/* Widgets Area - Only for mobile view */}
 						{activeView === "mobile" && (
-							<div className="w-full flex justify-center mt-8">
+							<div className="w-full flex justify-center mt-6 sm:mt-8 mb-8 sm:mb-12">
 								<div
 									ref={gridRef}
-									className={`relative min-h-[600px] w-80 bg-gray-50 rounded-lg p-6 border-2 border-dashed transition-all duration-200 ${
+									className={`relative min-h-[600px] w-full max-w-[280px] md:max-w-[310px] sm:w-80 bg-gray-50 rounded-lg p-4 md:p-5 sm:p-6 border-2 border-dashed transition-all duration-200 ${
 										draggedWidget
 											? "border-blue-300 bg-blue-50"
 											: "border-gray-200"
@@ -3275,66 +3294,69 @@ export function AppearanceCustomizer({
 			</div>
 
 			{/* Bottom Toolbar */}
-			<div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
-				<div className="bg-white border border-gray-200 rounded-full shadow-lg px-4 py-2">
-					<div className="flex items-center space-x-2">
+			<div className="fixed bottom-16 sm:bottom-12 left-1/2 transform -translate-x-1/2 z-[60] px-4 w-full max-w-full pointer-events-none" style={{paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))'}}>
+				<div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-2xl sm:rounded-full shadow-xl px-4 sm:px-5 py-3 sm:py-2 max-w-full overflow-x-auto pointer-events-auto mx-auto w-fit">
+					<div className="flex items-center justify-center space-x-1 sm:space-x-2 min-w-max">
 						<Button
 							variant="ghost"
 							size="sm"
 							onClick={handleShareLink}
-							className="rounded-full text-gray-700 hover:bg-gray-100"
+							className="rounded-full text-gray-700 hover:bg-gray-100 flex-shrink-0"
 						>
-							<Copy className="w-4 h-4 mr-1" />
-							Share
+							<Copy className="w-4 h-4 sm:mr-1" />
+							<span className="hidden sm:inline">Share</span>
 						</Button>
 						<div className="w-px h-6 bg-gray-200"></div>
 						<Button
 							variant="ghost"
 							size="sm"
 							onClick={handleAddLink}
-							className="rounded-full text-gray-700 hover:bg-gray-100"
+							className="rounded-full text-gray-700 hover:bg-gray-100 flex-shrink-0"
 						>
-							<Link className="w-4 h-4 mr-1" />
-							Link
+							<Link className="w-4 h-4 sm:mr-1" />
+							<span className="hidden sm:inline">Link</span>
 						</Button>
 						<Button
 							variant="ghost"
 							size="sm"
 							onClick={handleAddImage}
-							className="rounded-full text-gray-700 hover:bg-gray-100"
+							className="rounded-full text-gray-700 hover:bg-gray-100 flex-shrink-0"
 						>
-							<ImageIcon className="w-4 h-4 mr-1" />
-							Image
+							<ImageIcon className="w-4 h-4 sm:mr-1" />
+							<span className="hidden sm:inline">Image</span>
 						</Button>
 						<Button
 							variant="ghost"
 							size="sm"
 							onClick={handleAddText}
-							className="rounded-full text-gray-700 hover:bg-gray-100"
+							className="rounded-full text-gray-700 hover:bg-gray-100 flex-shrink-0"
 						>
-							<Type className="w-4 h-4 mr-1" />
-							Text
+							<Type className="w-4 h-4 sm:mr-1" />
+							<span className="hidden sm:inline">Text</span>
 						</Button>
 						<Button
 							variant="ghost"
 							size="sm"
 							onClick={() => setShowWidgetModal(true)}
-							className="rounded-full text-gray-700 hover:bg-gray-100"
+							className="rounded-full text-gray-700 hover:bg-gray-100 flex-shrink-0"
 						>
-							<Grid3x3 className="w-4 h-4 mr-1" />
-							Widgets
+							<Grid3x3 className="w-4 h-4 sm:mr-1" />
+							<span className="hidden sm:inline">Widgets</span>
 						</Button>
-						{(profile.tier === "pro" || !profile.tier) && (
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={() => setShowBackgroundPicker(!showBackgroundPicker)}
-								className="rounded-full text-gray-700 hover:bg-gray-100"
-							>
-								<Palette className="w-4 h-4 mr-1" />
-								Background
-							</Button>
-						)}
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() => (profile.tier === "pro" || !profile.tier) ? setShowBackgroundPicker(!showBackgroundPicker) : null}
+							className={`rounded-full flex-shrink-0 ${
+								(profile.tier === "pro" || !profile.tier) 
+									? "text-gray-700 hover:bg-gray-100" 
+									: "text-gray-400 cursor-not-allowed"
+							}`}
+							disabled={!(profile.tier === "pro" || !profile.tier)}
+						>
+							<Palette className="w-4 h-4 sm:mr-1" />
+							<span className="hidden sm:inline">Background</span>
+						</Button>
 					</div>
 				</div>
 			</div>
@@ -3630,8 +3652,8 @@ export function AppearanceCustomizer({
 
 			{/* Link Popover */}
 			{showLinkDialog && (
-				<div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
-					<Card className="w-80 bg-white border border-gray-200 shadow-lg">
+				<div className="fixed bottom-32 sm:bottom-28 left-1/2 transform -translate-x-1/2 z-[70] px-4 w-full max-w-full">
+					<Card className="w-full max-w-xs sm:w-80 bg-white border border-gray-200 shadow-lg mx-auto">
 						<CardContent className="p-4">
 							<div className="flex items-center justify-between mb-4">
 								<h3 className="font-semibold text-gray-900">Add Link</h3>
@@ -3701,8 +3723,8 @@ export function AppearanceCustomizer({
 
 			{/* Image Popover */}
 			{showImageDialog && (
-				<div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
-					<Card className="w-80 bg-white border border-gray-200 shadow-lg">
+				<div className="fixed bottom-32 sm:bottom-28 left-1/2 transform -translate-x-1/2 z-[70] px-4 w-full max-w-full">
+					<Card className="w-full max-w-xs sm:w-80 bg-white border border-gray-200 shadow-lg mx-auto">
 						<CardContent className="p-4">
 							<div className="flex items-center justify-between mb-4">
 								<h3 className="font-semibold text-gray-900">Add Image</h3>
@@ -3768,8 +3790,8 @@ export function AppearanceCustomizer({
 
 			{/* Text Popover */}
 			{showTextDialog && (
-				<div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
-					<Card className="w-80 bg-white border border-gray-200 shadow-lg">
+				<div className="fixed bottom-32 sm:bottom-28 left-1/2 transform -translate-x-1/2 z-[70] px-4 w-full max-w-full">
+					<Card className="w-full max-w-xs sm:w-80 bg-white border border-gray-200 shadow-lg mx-auto">
 						<CardContent className="p-4">
 							<div className="flex items-center justify-between mb-4">
 								<h3 className="font-semibold text-gray-900">Add Text</h3>
