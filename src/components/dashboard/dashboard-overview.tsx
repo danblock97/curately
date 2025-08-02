@@ -202,27 +202,27 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
         variants={container}
         initial="hidden"
         animate="show"
-        className="space-y-8 p-6"
+        className="space-y-6 sm:space-y-8 p-4 sm:p-6"
       >
         {/* Header Section with Upgrade Banner */}
         <motion.div variants={item} className="space-y-6">
           {/* Welcome Header */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back! 👋</h1>
-              <p className="text-gray-600">Here's what's happening with your links today.</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Welcome back! 👋</h1>
+              <p className="text-gray-600 text-sm sm:text-base">Here's what's happening with your links today.</p>
             </div>
             
             {currentPage && (
-              <div className="flex items-center space-x-3 bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
-                <Globe className="w-5 h-5 text-blue-500" />
-                <div>
+              <div className="flex items-center space-x-3 bg-white rounded-xl p-3 border border-gray-200 shadow-sm w-full xl:w-auto">
+                <Globe className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-gray-900">Your Page</p>
                   <Link 
                     href={`/${currentPage.username}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:text-blue-700 font-mono"
+                    className="text-sm text-blue-600 hover:text-blue-700 font-mono break-all"
                   >
                     curately.co.uk/{currentPage.username}
                   </Link>
@@ -235,24 +235,24 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
           {profile.tier === 'free' && (
             <motion.div 
               variants={item}
-              className="relative overflow-hidden bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 border border-blue-200 rounded-2xl p-6"
+              className="relative overflow-hidden bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 sm:p-6"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-2xl"></div>
               <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <Sparkles className="w-6 h-6 text-white" />
+                <div className="flex items-start space-x-3 sm:space-x-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                    <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-1">Ready to unlock more features?</h3>
-                    <p className="text-gray-600">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">Ready to unlock more features?</h3>
+                    <p className="text-gray-600 text-sm sm:text-base">
                       Upgrade to Pro for 50 links, 50 QR codes, 2 pages, and advanced analytics
                     </p>
                   </div>
                 </div>
                 <Link
                   href="/pricing"
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg"
+                  className="inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg text-sm sm:text-base w-full lg:w-auto"
                 >
                   <Star className="w-4 h-4 mr-2" />
                   Upgrade to Pro
@@ -263,11 +263,11 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
         </motion.div>
 
         {/* Stats Cards */}
-        <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <motion.div variants={item} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <motion.div 
             whileHover={{ scale: 1.02, y: -5 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden"
+            className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
             <div className="relative z-10">
@@ -298,7 +298,7 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
           <motion.div 
             whileHover={{ scale: 1.02, y: -5 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden"
+            className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
             <div className="relative z-10">
@@ -329,7 +329,7 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
           <motion.div 
             whileHover={{ scale: 1.02, y: -5 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden"
+            className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
             <div className="relative z-10">
@@ -365,7 +365,7 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
           <motion.div 
             whileHover={{ scale: 1.02, y: -5 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden"
+            className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
             <div className="relative z-10">
@@ -403,20 +403,20 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             <motion.div 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="group bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
+              className="group bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
               onClick={handleCustomLinkClick}
             >
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <Link2 className="w-8 h-8 text-white" />
+              <div className="flex items-center space-x-3 sm:space-x-4 mb-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                  <Link2 className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Add Link</h3>
-                  <p className="text-gray-600 text-sm">Share all your content</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Add Link</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm">Share all your content</p>
                 </div>
               </div>
               <Button 
@@ -435,16 +435,16 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
             <motion.div 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="group bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
+              className="group bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
               onClick={handleDeeplinkClick}
             >
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <ExternalLink className="w-8 h-8 text-white" />
+              <div className="flex items-center space-x-3 sm:space-x-4 mb-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                  <ExternalLink className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Deeplink</h3>
-                  <p className="text-gray-600 text-sm">Redirect to apps</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Deeplink</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm">Redirect to apps</p>
                 </div>
               </div>
               <Button 
@@ -463,16 +463,16 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
             <motion.div 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="group bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
+              className="group bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
               onClick={handleQRCodeClick}
             >
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <QrCode className="w-8 h-8 text-white" />
+              <div className="flex items-center space-x-3 sm:space-x-4 mb-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-green-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                  <QrCode className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">QR Code</h3>
-                  <p className="text-gray-600 text-sm">Scan to redirect</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">QR Code</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm">Scan to redirect</p>
                 </div>
               </div>
               <Button 
@@ -493,22 +493,22 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
         {/* Page Switcher */}
         {pages.filter(page => page.is_active !== false).length > 1 && (
           <motion.div variants={item} className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 p-6">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 p-4 sm:p-6">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <Globe className="w-6 h-6 text-white" />
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                    <Globe className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900">Page Management</h3>
-                    <p className="text-sm text-gray-600">Switch between your active pages</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900">Page Management</h3>
+                    <p className="text-xs sm:text-sm text-gray-600">Switch between your active pages</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                     <span className="text-sm font-medium text-gray-700">Current page:</span>
                     <Select value={currentPage?.id || ''} onValueChange={(value) => setSelectedPageId(value || null)}>
-                      <SelectTrigger className="w-64 bg-white border-gray-300 shadow-sm">
+                      <SelectTrigger className="w-full sm:w-64 bg-white border-gray-300 shadow-sm">
                         <SelectValue placeholder="Select page" />
                       </SelectTrigger>
                       <SelectContent>
@@ -520,7 +520,7 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-center space-x-2 bg-white rounded-lg px-3 py-2 shadow-sm">
+                  <div className="flex items-center justify-center space-x-2 bg-white rounded-lg px-3 py-2 shadow-sm">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <span className="text-sm font-semibold text-gray-900">{pageItems.length}</span>
                     <span className="text-sm text-gray-600">items</span>
@@ -533,15 +533,15 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
 
         {/* Analytics Overview */}
         <motion.div variants={item} className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-          <div className="bg-gradient-to-r from-green-50 to-teal-50 border-b border-gray-200 p-6">
+          <div className="bg-gradient-to-r from-green-50 to-teal-50 border-b border-gray-200 p-4 sm:p-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <BarChart3 className="w-6 h-6 text-white" />
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                  <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">Analytics Overview</h3>
-                  <p className="text-sm text-gray-600">Track your performance metrics</p>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900">Analytics Overview</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">Track your performance metrics</p>
                 </div>
               </div>
               <motion.div
@@ -550,7 +550,7 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
               >
                 <Link
                   href="/dashboard/analytics"
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl hover:from-gray-800 hover:to-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl hover:from-gray-800 hover:to-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl text-sm sm:text-base w-full lg:w-auto"
                 >
                   <BarChart3 className="w-4 h-4 mr-2" />
                   View Full Analytics
@@ -559,11 +559,11 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
             </div>
           </div>
           
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-4 sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
               <motion.div 
                 whileHover={{ scale: 1.02 }}
-                className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200 shadow-sm"
+                className="text-center p-4 sm:p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200 shadow-sm"
               >
                 <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
                   <TrendingUp className="w-6 h-6 text-white" />
@@ -581,7 +581,7 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
               
               <motion.div 
                 whileHover={{ scale: 1.02 }}
-                className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 shadow-sm"
+                className="text-center p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 shadow-sm"
               >
                 <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
                   <Link2 className="w-6 h-6 text-white" />
@@ -599,7 +599,7 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
               
               <motion.div 
                 whileHover={{ scale: 1.02 }}
-                className="text-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200 shadow-sm"
+                className="text-center p-4 sm:p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200 shadow-sm sm:col-span-2 md:col-span-1"
               >
                 <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
                   {profile.tier === 'pro' ? <Award className="w-6 h-6 text-white" /> : <BarChart3 className="w-6 h-6 text-white" />}
@@ -621,17 +621,17 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
         {/* Links & QR Codes List */}
         <motion.div variants={item} className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           {/* Enhanced Header */}
-          <div className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200 p-6">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <Link2 className="w-6 h-6 text-white" />
+          <div className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200 p-4 sm:p-6">
+            <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                  <Link2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">My Content</h3>
-                  <p className="text-sm text-gray-600">Manage your links and QR codes</p>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900">My Content</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">Manage your links and QR codes</p>
                 </div>
-                <div className="hidden sm:flex items-center space-x-4 text-sm">
+                <div className="hidden lg:flex items-center space-x-4 text-sm">
                   <div className="flex items-center space-x-2 bg-white rounded-lg px-3 py-2 shadow-sm">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <span className="text-gray-700 font-medium">{linkItems.length} Links</span>
@@ -643,12 +643,12 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
                 </div>
               </div>
               
-              <div className="flex items-center space-x-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 {pages.filter(page => page.is_active !== false).length > 1 && (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                     <span className="text-sm font-medium text-gray-700">Filter by page:</span>
                     <Select value={selectedPageId || currentPage?.id || ''} onValueChange={(value) => setSelectedPageId(value)}>
-                      <SelectTrigger className="w-48 bg-white border-gray-300 shadow-sm">
+                      <SelectTrigger className="w-full sm:w-48 bg-white border-gray-300 shadow-sm">
                         <SelectValue placeholder="All pages" />
                       </SelectTrigger>
                       <SelectContent>
@@ -663,7 +663,7 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
                   </div>
                 )}
                 
-                <div className="flex items-center space-x-2 bg-white rounded-lg px-3 py-2 shadow-sm">
+                <div className="flex items-center justify-center space-x-2 bg-white rounded-lg px-3 py-2 shadow-sm">
                   <TrendingUp className="w-4 h-4 text-green-500" />
                   <span className="text-sm font-semibold text-gray-900">{totalClicks} clicks</span>
                 </div>
@@ -671,7 +671,7 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
             </div>
             
             {/* Mobile stats */}
-            <div className="flex sm:hidden items-center justify-center space-x-4 mt-4 pt-4 border-t border-gray-200">
+            <div className="flex lg:hidden items-center justify-center space-x-4 mt-4 pt-4 border-t border-gray-200">
               <div className="flex items-center space-x-2 bg-white rounded-lg px-3 py-2 shadow-sm">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 <span className="text-gray-700 font-medium text-sm">{linkItems.length} Links</span>
@@ -684,7 +684,7 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
           </div>
           
           {/* Content Area */}
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
           
           <AnimatePresence mode="wait">
             {Array.isArray(paginatedItems) && paginatedItems.length > 0 ? (
@@ -738,7 +738,7 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.8 }}
-                  className="flex flex-col sm:flex-row gap-4 justify-center"
+                  className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"
                 >
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button 
@@ -768,8 +768,8 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
           
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
-              <div className="text-sm text-gray-600">
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-6 border-t border-gray-200 gap-4">
+              <div className="text-sm text-gray-600 text-center sm:text-left">
                 Showing <span className="font-semibold text-gray-900">{startIndex + 1}-{Math.min(endIndex, totalItems)}</span> of <span className="font-semibold text-gray-900">{totalItems}</span> items
               </div>
               <div className="flex items-center space-x-2">

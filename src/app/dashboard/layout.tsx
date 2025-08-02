@@ -122,10 +122,12 @@ export default function DashboardLayout({
       </div>
       
       <DashboardHeader user={user} profile={profile} primaryPage={primaryPage} />
-      <div className="flex flex-1 relative z-10">
+      <div className="flex flex-1 relative z-10 lg:flex-row flex-col">
         <DashboardSidebar profile={profile} primaryPage={primaryPage} />
-        <main className="flex-1 min-h-0 overflow-auto">
-          {children}
+        <main className="flex-1 min-h-0 overflow-auto w-full">
+          <div className="h-full">
+            {children}
+          </div>
         </main>
       </div>
     </div>

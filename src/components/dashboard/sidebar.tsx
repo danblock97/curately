@@ -4,9 +4,10 @@ import { motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { Link as LinkIcon, Palette, Settings, BarChart3, Globe, MessageCircle, Crown, Star } from 'lucide-react'
+import { Link as LinkIcon, Palette, Settings, BarChart3, Globe, MessageCircle, Crown, Star, Menu, X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Database } from '@/lib/supabase/types'
+import { useState, useEffect } from 'react'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 type Page = Database['public']['Tables']['pages']['Row']
@@ -45,7 +46,7 @@ const itemVariants = {
 
 export function DashboardSidebar({ profile, primaryPage }: DashboardSidebarProps) {
   const pathname = usePathname()
-  
+  const [isOpen, setIsOpen] = useState(false)
 
   const getInitials = (name: string) => {
     return name
@@ -56,13 +57,55 @@ export function DashboardSidebar({ profile, primaryPage }: DashboardSidebarProps
       .slice(0, 2)
   }
 
+  // Close sidebar on mobile when route changes
+  useEffect(() => {
+    setIsOpen(false)
+  }, [pathname])
+
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isOpen])
+
   return (
-    <motion.div 
-      variants={sidebarVariants}
-      initial="hidden"
-      animate="visible"
-      className="w-72 bg-white/80 backdrop-blur-lg border-r border-gray-200/50 h-full flex flex-col"
-    >
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white/90 backdrop-blur-lg border border-gray-200 rounded-xl shadow-lg hover:bg-white transition-all"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+      </button>
+
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      <motion.div 
+        variants={sidebarVariants}
+        initial="hidden"
+        animate="visible"
+        className={cn(
+          "bg-white/80 backdrop-blur-lg border-r border-gray-200/50 h-full flex flex-col transition-transform duration-300 ease-in-out",
+          // Desktop styles
+          "lg:w-72 lg:relative lg:translate-x-0",
+          // Mobile styles
+          "fixed top-0 left-0 w-80 z-40",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
       {/* User Profile Section */}
       {profile && (
         <motion.div variants={itemVariants} className="p-6 border-b border-gray-200/50">
@@ -173,5 +216,6 @@ export function DashboardSidebar({ profile, primaryPage }: DashboardSidebarProps
         </motion.div>
       </nav>
     </motion.div>
+    </>
   )
 }
