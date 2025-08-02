@@ -31,7 +31,7 @@ export default function DashboardLayout({
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [primaryPage, setPrimaryPage] = useState<Page | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -81,6 +81,7 @@ export default function DashboardLayout({
       }
     }
 
+    // Run auth check on mount
     checkAuthAndLoadData()
 
     // Listen for auth state changes
@@ -109,33 +110,8 @@ export default function DashboardLayout({
     }
   }, [router, supabase])
 
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // If no user, redirect is handled above
-  if (!user) {
-    return null
-  }
-
-  // If no profile exists, don't show the sidebar/header layout (user needs to complete setup)
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-white">
-        {children}
-      </div>
-    )
-  }
-
-  // Render full dashboard layout
+  // Render layout immediately since server handles auth protection
+  // The header and sidebar components will handle their own loading states
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex flex-col">
       {/* Background decoration */}
