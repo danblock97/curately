@@ -1249,7 +1249,17 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 	}
 
 	return (
-		<div className="min-h-screen" style={{ backgroundColor: page.background_color || '#ffffff' }}>
+		<div 
+			className="min-h-screen" 
+			style={{ 
+				backgroundColor: page.background_color || '#ffffff',
+				backgroundImage: page.background_image_url ? `url(${page.background_image_url})` : 'none',
+				backgroundSize: 'cover',
+				backgroundPosition: 'center',
+				backgroundRepeat: 'no-repeat',
+				backgroundAttachment: 'fixed'
+			}}
+		>
 			{/* Main Content */}
 			<div className={`${
 				isMobile 

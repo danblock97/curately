@@ -211,7 +211,10 @@ export function AppearanceCustomizer({
 	const [pageTitle, setPageTitle] = useState("");
 	const [pageDescription, setPageDescription] = useState("");
 	const [backgroundColor, setBackgroundColor] = useState("#ffffff");
+	const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
 	const [showBackgroundPicker, setShowBackgroundPicker] = useState(false);
+	const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
+	const [isUploadingBackgroundImage, setIsUploadingBackgroundImage] = useState(false);
 
 	// Plan limits
 	const planUsage = usePlanLimits(links, profile.tier);
@@ -245,16 +248,20 @@ export function AppearanceCustomizer({
 			: pages?.find((p) => p.is_primary) || pages?.[0] || null;
 		setCurrentPage(initialPage);
 		setBackgroundColor(initialPage?.background_color || "#ffffff");
+		setBackgroundImageUrl(initialPage?.background_image_url || null);
 		setPageTitle(initialPage?.page_title || "");
 		setPageDescription(initialPage?.page_description || "");
 	}, [profile, pages, selectedPageId]);
 
-	// Update background color when current page changes
+	// Update background color and image when current page changes
 	useEffect(() => {
 		if (currentPage?.background_color) {
 			setBackgroundColor(currentPage.background_color);
 		}
-	}, [currentPage?.id, currentPage?.background_color]);
+		if (currentPage?.background_image_url !== undefined) {
+			setBackgroundImageUrl(currentPage.background_image_url);
+		}
+	}, [currentPage?.id, currentPage?.background_color, currentPage?.background_image_url]);
 
 	// Load existing widgets from database on component mount
 	useEffect(() => {
@@ -1173,6 +1180,122 @@ export function AppearanceCustomizer({
 			toast.error("An error occurred. Please try again.");
 		} finally {
 			setIsUpdatingBackgroundColor(false);
+		}
+	};
+
+	const handleBackgroundImageUpload = async (file: File) => {
+		if (profile.tier !== "pro") {
+			toast.error("Background image upload is only available for Pro users.");
+			return;
+		}
+
+		if (!currentPage) {
+			toast.error("No page selected");
+			return;
+		}
+
+		// Validate file type
+		if (!file.type.startsWith('image/')) {
+			toast.error("Please select a valid image file.");
+			return;
+		}
+
+		// Validate file size (max 10MB)
+		if (file.size > 10 * 1024 * 1024) {
+			toast.error("Image file size must be less than 10MB.");
+			return;
+		}
+
+		setIsUploadingBackgroundImage(true);
+
+		try {
+			// Upload to Supabase storage
+			const fileExt = file.name.split('.').pop();
+			const fileName = `${profile.id}/${currentPage.id}/background-${Date.now()}.${fileExt}`;
+
+			const { data: uploadData, error: uploadError } = await supabase.storage
+				.from("widget-uploads")
+				.upload(fileName, file);
+
+			if (uploadError) {
+				console.error("Background image upload error:", uploadError);
+				toast.error(`Failed to upload image: ${uploadError.message}`);
+				return;
+			}
+
+			// Get public URL
+			const { data: urlData } = supabase.storage
+				.from("widget-uploads")
+				.getPublicUrl(fileName);
+
+			const imageUrl = urlData.publicUrl;
+
+			// Update page with background image URL
+			const { data, error } = await supabase
+				.from("pages")
+				.update({ background_image_url: imageUrl })
+				.eq("id", currentPage.id)
+				.select();
+
+			if (error) {
+				console.error("Background image update error:", error);
+				toast.error(`Error updating background image: ${error.message}`);
+				return;
+			}
+
+			setBackgroundImageUrl(imageUrl);
+			// Update current page state with new background image
+			if (data && data[0]) {
+				setCurrentPage(data[0]);
+			}
+			toast.success("Background image updated successfully!");
+		} catch (error) {
+			console.error("Caught error in background image upload:", error);
+			toast.error("An error occurred. Please try again.");
+		} finally {
+			setIsUploadingBackgroundImage(false);
+			setBackgroundImageFile(null);
+		}
+	};
+
+	const handleRemoveBackgroundImage = async () => {
+		if (profile.tier !== "pro") {
+			toast.error("Background image customization is only available for Pro users.");
+			return;
+		}
+
+		if (!currentPage) {
+			toast.error("No page selected");
+			return;
+		}
+
+		setIsUploadingBackgroundImage(true);
+
+		try {
+			// Update page to remove background image URL
+			const { data, error } = await supabase
+				.from("pages")
+				.update({ background_image_url: null })
+				.eq("id", currentPage.id)
+				.select();
+
+			if (error) {
+				console.error("Background image removal error:", error);
+				toast.error(`Error removing background image: ${error.message}`);
+				return;
+			}
+
+			setBackgroundImageUrl(null);
+			// Update current page state
+			if (data && data[0]) {
+				setCurrentPage(data[0]);
+			}
+			toast.success("Background image removed successfully!");
+		} catch (error) {
+			console.error("Caught error in background image removal:", error);
+			toast.error("An error occurred. Please try again.");
+		} finally {
+			setIsUploadingBackgroundImage(false);
 		}
 	};
 
@@ -2805,7 +2928,17 @@ export function AppearanceCustomizer({
 	}
 
 	return (
-		<div className="min-h-screen bg-white">
+		<div 
+			className="min-h-screen"
+			style={{
+				backgroundColor: currentPage?.background_color || "#ffffff",
+				backgroundImage: currentPage?.background_image_url ? `url(${currentPage.background_image_url})` : 'none',
+				backgroundSize: 'cover',
+				backgroundPosition: 'center',
+				backgroundRepeat: 'no-repeat',
+				backgroundAttachment: 'fixed'
+			}}
+		>
 			{/* Header */}
 			<div className="flex items-center justify-between p-3 border-b border-gray-200">
 				<div className="flex items-center space-x-4">
@@ -3233,9 +3366,9 @@ export function AppearanceCustomizer({
 										<Palette className="w-6 h-6" />
 									</div>
 									<div>
-										<h3 className="text-xl font-bold">Background Color</h3>
+										<h3 className="text-xl font-bold">Page Background</h3>
 										<p className="text-white/80 text-sm">
-											Customize your page background
+											Customize your page background color or image
 										</p>
 									</div>
 								</div>
@@ -3351,6 +3484,84 @@ export function AppearanceCustomizer({
 									</div>
 								</div>
 
+								{/* Background Image Section */}
+								<div>
+									<Label className="text-base font-semibold text-gray-900 mb-3 block">
+										Background Image (Pro Only)
+									</Label>
+									
+									{backgroundImageUrl ? (
+										<div className="space-y-3">
+											{/* Current Background Image Preview */}
+											<div className="relative w-full h-32 rounded-xl border-2 border-gray-200 overflow-hidden">
+												<img 
+													src={backgroundImageUrl} 
+													alt="Current background" 
+													className="w-full h-full object-cover"
+												/>
+												<div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+													<Button
+														variant="secondary"
+														size="sm"
+														onClick={handleRemoveBackgroundImage}
+														disabled={isUploadingBackgroundImage}
+														className="bg-white/90 hover:bg-white text-gray-700"
+													>
+														<Trash2 className="w-4 h-4 mr-1" />
+														Remove
+													</Button>
+												</div>
+											</div>
+										</div>
+									) : (
+										<div className="space-y-3">
+											{/* Image Upload Area */}
+											<div className="relative">
+												<input
+													type="file"
+													accept="image/*"
+													onChange={(e) => {
+														const file = e.target.files?.[0];
+														if (file) {
+															setBackgroundImageFile(file);
+															handleBackgroundImageUpload(file);
+														}
+													}}
+													className="hidden"
+													id="background-image-upload"
+													disabled={isUploadingBackgroundImage}
+												/>
+												<label
+													htmlFor="background-image-upload"
+													className={`block w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
+														isUploadingBackgroundImage 
+															? 'border-gray-300 bg-gray-50 cursor-not-allowed' 
+															: 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+													}`}
+												>
+													<div className="flex flex-col items-center justify-center h-full text-gray-500">
+														{isUploadingBackgroundImage ? (
+															<div className="flex items-center space-x-2">
+																<div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+																<span className="text-sm">Uploading...</span>
+															</div>
+														) : (
+															<>
+																<Upload className="w-8 h-8 mb-2" />
+																<span className="text-sm font-medium">Click to upload image</span>
+																<span className="text-xs text-gray-400">Max 10MB • PNG, JPG, GIF</span>
+															</>
+														)}
+													</div>
+												</label>
+											</div>
+											<p className="text-xs text-gray-500">
+												Upload a background image that will be displayed behind your page content. The image will be automatically scaled to fit your page.
+											</p>
+										</div>
+									)}
+								</div>
+
 								{/* Live Preview */}
 								<div>
 									<Label className="text-base font-semibold text-gray-900 mb-3 block">
@@ -3358,7 +3569,13 @@ export function AppearanceCustomizer({
 									</Label>
 									<div
 										className="w-full h-24 rounded-xl border-2 border-gray-200 flex items-center justify-center relative overflow-hidden shadow-inner"
-										style={{ backgroundColor: backgroundColor || "#ffffff" }}
+										style={{ 
+											backgroundColor: backgroundColor || "#ffffff",
+											backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : 'none',
+											backgroundSize: 'cover',
+											backgroundPosition: 'center',
+											backgroundRepeat: 'no-repeat'
+										}}
 									>
 										<div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-gray-200">
 											<span className="text-sm text-gray-900 font-medium">
@@ -3393,14 +3610,17 @@ export function AppearanceCustomizer({
 								</Button>
 								<Button
 									variant="outline"
-									onClick={() => {
+									onClick={async () => {
 										setBackgroundColor("#ffffff");
+										if (backgroundImageUrl) {
+											await handleRemoveBackgroundImage();
+										}
 										handleBackgroundColorUpdate("#ffffff");
 									}}
-									disabled={isUpdatingBackgroundColor}
+									disabled={isUpdatingBackgroundColor || isUploadingBackgroundImage}
 									className="h-12 px-6 border-gray-300 hover:bg-gray-50 rounded-xl font-medium"
 								>
-									Reset
+									Reset All
 								</Button>
 							</div>
 						</CardContent>

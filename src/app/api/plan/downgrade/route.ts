@@ -182,10 +182,13 @@ export async function POST(request: NextRequest) {
       deactivatedPages = pageIds.length
     }
 
-    // Reset all page background colors to white (free plan restriction)
+    // Reset all page background colors to white and remove background images (free plan restriction)
     const { error: pagesError } = await supabase
       .from('pages')
-      .update({ background_color: '#ffffff' })
+      .update({ 
+        background_color: '#ffffff',
+        background_image_url: null
+      })
       .eq('user_id', userId)
 
     if (pagesError) {
@@ -222,7 +225,7 @@ export async function POST(request: NextRequest) {
       changes.push(`${deactivatedPages} page${deactivatedPages > 1 ? 's' : ''} deactivated`)
     }
     
-    changes.push('background color reset to white')
+    changes.push('background color reset to white and background images removed')
     
     if (changes.length > 0) {
       message += '. We\'ve ' + changes.join(', ') + ' to fit your new plan limits'
