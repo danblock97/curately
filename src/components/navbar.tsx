@@ -80,7 +80,7 @@ export function Navbar() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [supabase])
+  }, [])
 
   const handleSignOut = async () => {
     try {
