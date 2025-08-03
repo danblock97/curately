@@ -58,6 +58,7 @@ const platforms = [
   { name: 'X (Twitter)', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg', icon: Twitter, value: 'twitter', color: 'bg-black', baseUrl: 'https://x.com/' },
   { name: 'GitHub', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', icon: Github, value: 'github', color: 'bg-gray-800', baseUrl: 'https://github.com/' },
   { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', icon: Music, value: 'spotify', color: 'bg-green-500', baseUrl: 'https://open.spotify.com/user/' },
+  { name: 'Twitch', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/twitch.svg', icon: Package, value: 'twitch', color: 'bg-purple-600', baseUrl: 'https://www.twitch.tv/' },
   { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', icon: Globe, value: 'website', color: 'bg-blue-500', baseUrl: '' },
 ]
 
@@ -67,6 +68,10 @@ const essentialWidgets = [
   { name: 'Photo / Video', icon: ImageIcon, value: 'media', description: 'Show an image or video on your page', color: 'bg-green-500' },
   { name: 'Voice', icon: Mic, value: 'voice', description: 'Add a voice message', color: 'bg-purple-500' },
   { name: 'Product', icon: Package, value: 'product', description: 'Highlight a product', color: 'bg-orange-500' },
+]
+
+const proWidgets = [
+  { name: 'Twitch Stream', icon: Package, value: 'twitch_embed', description: 'Embed your live Twitch stream', color: 'bg-purple-600' },
 ]
 
 export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, userTier = 'free', defaultType = null, profile }: WidgetModalProps) {
@@ -303,12 +308,13 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
         toast.error(`Failed to create QR code: ${error instanceof Error ? error.message : 'Unknown error'}`)
       }
     } else {
-      // Handle normal widget creation (social links and essential widgets)
+      // Handle normal widget creation (social links, essential widgets, and pro widgets)
       const widget: Widget = {
         id: Date.now().toString(),
         type: (selectedWidget.startsWith('platform_') ? 'social' : 
-              selectedWidget.startsWith('essential') ? widgetData.type || 'link' : 'link') as Widget['type'],
-        size: 'small-square',
+              selectedWidget.startsWith('essential') ? widgetData.type || 'link' :
+              selectedWidget === 'pro_twitch_embed' ? 'social' : 'link') as Widget['type'],
+        size: selectedWidget === 'pro_twitch_embed' ? 'large-square' : 'small-square',
         data: {
           ...widgetData,
           platform: widgetData.platform,
@@ -344,8 +350,13 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
   }
 
   const handleEssentialSelect = (type: string) => {
-    setSelectedWidget(`essential_${type}`)
-    setWidgetData({ type, title: '', url: '' })
+    if (type === 'twitch_embed') {
+      setSelectedWidget('pro_twitch_embed')
+      setWidgetData({ type: 'twitch_embed', title: '', username: '', platform: 'twitch', url: '' })
+    } else {
+      setSelectedWidget(`essential_${type}`)
+      setWidgetData({ type, title: '', url: '' })
+    }
   }
 
   const filteredPlatforms = platforms.filter(platform =>
@@ -353,6 +364,10 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
   )
 
   const filteredEssentials = essentialWidgets.filter(widget =>
+    widget.name.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const filteredProWidgets = proWidgets.filter(widget =>
     widget.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -477,6 +492,9 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                           if (selectedWidget === 'convert_linktree') {
                             return 'Import from Linktree';
                           }
+                          if (selectedWidget === 'pro_twitch_embed') {
+                            return 'Add Twitch Stream';
+                          }
                           return 'Add Widget';
                         })()}
                       </h2>
@@ -498,6 +516,9 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                           }
                           if (selectedWidget === 'convert_linktree') {
                             return 'Import all your existing links';
+                          }
+                          if (selectedWidget === 'pro_twitch_embed') {
+                            return 'Embed your live stream with automatic online/offline detection';
                           }
                           return 'Configure your widget';
                         })()}
@@ -992,6 +1013,52 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                             />
                           </div>
                         </>
+                      ) : widgetData.type === 'twitch_embed' ? (
+                        /* Twitch Embed Configuration */
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="twitch-channel" className="text-sm font-medium text-gray-700">Twitch Channel</Label>
+                            <Input
+                              id="twitch-channel"
+                              placeholder="yourusername"
+                              value={widgetData.username || ''}
+                              onChange={(e) => {
+                                const username = e.target.value.replace(/^@/, '')
+                                setWidgetData({
+                                  ...widgetData, 
+                                  username,
+                                  url: `https://www.twitch.tv/${username}`,
+                                  title: widgetData.title || `${username} Live Stream`
+                                })
+                              }}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                            <p className="text-xs text-gray-500">
+                              Enter your Twitch username (without @)
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="twitch-title" className="text-sm font-medium text-gray-700">Widget Title</Label>
+                            <Input
+                              id="twitch-title"
+                              placeholder="My Live Stream"
+                              value={widgetData.title || ''}
+                              onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
+                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            />
+                          </div>
+                          <div className="bg-purple-50 border border-purple-200 rounded-xl p-3">
+                            <div className="flex items-start space-x-2">
+                              <Sparkles className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-purple-900">Pro Feature</p>
+                                <p className="text-xs text-purple-700 mt-1">
+                                  This widget will show your live Twitch stream when you're online, or an attractive offline screen when you're not streaming. Viewers can click to visit your channel.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </>
                       ) : (
                         /* Standard Link Configuration */
                         <>
@@ -1157,6 +1224,90 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                         ))}
                       </div>
                     </motion.div>
+
+                    {/* Pro Widgets - Visible to all, but disabled for free users */}
+                    {filteredProWidgets.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                      >
+                        <div className="flex items-center space-x-2 mb-4">
+                          <Sparkles className={`w-5 h-5 ${userTier === 'pro' ? 'text-purple-500' : 'text-gray-400'}`} />
+                          <h3 className={`text-lg font-semibold ${userTier === 'pro' ? 'text-gray-900' : 'text-gray-600'}`}>Pro Features</h3>
+                          <div className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            userTier === 'pro' 
+                              ? 'bg-purple-100 text-purple-700' 
+                              : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            PRO
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {filteredProWidgets.map((widget, index) => (
+                            <motion.div
+                              key={widget.value}
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.35 + index * 0.05 }}
+                              whileHover={userTier === 'pro' ? { y: -2, scale: 1.02 } : {}}
+                              whileTap={userTier === 'pro' ? { scale: 0.98 } : {}}
+                            >
+                              <Card
+                                className={`transition-all duration-200 rounded-xl ${
+                                  userTier === 'pro' 
+                                    ? 'cursor-pointer border-2 border-purple-200 hover:border-purple-300 hover:shadow-lg bg-gradient-to-br from-purple-50 to-indigo-50' 
+                                    : 'cursor-not-allowed border-2 border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 opacity-60'
+                                }`}
+                                onClick={() => {
+                                  if (userTier === 'pro') {
+                                    handleEssentialSelect(widget.value)
+                                    setShowDetailsPage(true)
+                                  } else {
+                                    toast.error('Upgrade to Pro to access Twitch Stream embeds and other premium features!')
+                                  }
+                                }}
+                              >
+                                <CardContent className="p-3">
+                                  <div className="flex items-center space-x-3">
+                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-sm ${
+                                      userTier === 'pro' ? widget.color : 'bg-gray-400'
+                                    }`}>
+                                      <widget.icon className="w-4 h-4 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className={`font-medium text-sm ${
+                                        userTier === 'pro' ? 'text-gray-900' : 'text-gray-500'
+                                      }`}>{widget.name}</h4>
+                                      <p className={`text-xs truncate ${
+                                        userTier === 'pro' ? 'text-gray-600' : 'text-gray-400'
+                                      }`}>{widget.description}</p>
+                                    </div>
+                                  </div>
+                                  {userTier !== 'pro' && (
+                                    <div className="mt-2 pt-2 border-t border-gray-200">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-xs text-gray-500">Pro Feature</span>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            // Here you could add navigation to pricing page
+                                            toast.info('Upgrade to Pro to unlock premium widgets!')
+                                          }}
+                                          className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+                                        >
+                                          Upgrade
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
 
                     {/* Platforms */}
                     <motion.div

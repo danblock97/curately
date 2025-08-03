@@ -18,6 +18,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { getPlatformLogoUrl, getOptimalLogoSize } from "@/lib/qr-code";
 import { BrandedQRCode } from "@/components/ui/branded-qr-code";
+import { TwitchEmbed } from "@/components/ui/twitch-embed";
 
 // Platform definitions matching widget-modal exactly
 const platforms = [
@@ -29,6 +30,7 @@ const platforms = [
   { name: 'X (Twitter)', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg', value: 'twitter', color: 'bg-black' },
   { name: 'GitHub', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', value: 'github', color: 'bg-gray-800' },
   { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', value: 'spotify', color: 'bg-green-500' },
+  { name: 'Twitch', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/twitch.svg', value: 'twitch', color: 'bg-purple-600' },
   { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', value: 'website', color: 'bg-blue-500' },
 ];
 
@@ -71,7 +73,8 @@ export interface Widget {
 		| "medium-square"
 		| "large-square"
 		| "wide"
-		| "tall";
+		| "tall"
+		| "extra-large";
 	data: {
 		platform?: string;
 		username?: string;
@@ -559,6 +562,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 					return "w-32 h-32"; // Convert to small for mobile
 				case "large-square":
 					return "w-32 h-32"; // Convert to small for mobile
+				case "extra-large":
+					return "w-full h-48"; // Special handling for Twitch embeds on mobile
 				case "wide":
 					return "w-full min-h-12 h-auto"; // Convert to thin for mobile with text wrapping
 				case "tall":
@@ -580,6 +585,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				return "w-56 h-56";
 			case "large-square":
 				return "w-80 h-80";
+			case "extra-large":
+				return "w-96 h-72"; // 384x288px - optimal for Twitch embeds
 			case "wide":
 				return "w-80 h-36";
 			case "tall":
@@ -677,6 +684,19 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 					)
 				}
 				
+				// Check for Twitch embed widget (special case) - handle both legacy and new sizes
+				if (widget.data.platform === 'twitch' && (widget.size === 'extra-large' || widget.size === 'large-square')) {
+					return (
+						<div className="h-full w-full">
+							<TwitchEmbed
+								channel={widget.data.username || ''}
+								size={(effectiveSize === 'extra-large' || effectiveSize === 'large-square') ? 'large' : 'medium'}
+								className="w-full h-full"
+							/>
+						</div>
+					);
+				}
+
 				const getSocialInfo = (platform: string) => {
 					// Use the same platform data as widget-modal
 					const platformData = platforms.find(p => p.value === platform.toLowerCase());

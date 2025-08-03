@@ -45,6 +45,7 @@ const platforms = [
   { name: 'X (Twitter)', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg', value: 'twitter', color: 'bg-black' },
   { name: 'GitHub', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', value: 'github', color: 'bg-gray-800' },
   { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', value: 'spotify', color: 'bg-green-500' },
+  { name: 'Twitch', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/twitch.svg', value: 'twitch', color: 'bg-purple-600' },
   { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', value: 'website', color: 'bg-blue-500' },
 ];
 
@@ -82,7 +83,8 @@ export interface Widget {
 		| "medium-square"
 		| "large-square"
 		| "wide"
-		| "tall";
+		| "tall"
+		| "extra-large";
 	data: {
 		platform?: string;
 		username?: string;
@@ -466,6 +468,14 @@ export function AppearanceCustomizer({
 										if (pathSegments.length > 0) {
 											username = pathSegments[0];
 										}
+									} else if (hostname.includes("twitch.tv")) {
+										platform = "twitch";
+										const pathSegments = urlObj.pathname
+											.split("/")
+											.filter(Boolean);
+										if (pathSegments.length > 0) {
+											username = pathSegments[0];
+										}
 									}
 								}
 
@@ -557,7 +567,8 @@ export function AppearanceCustomizer({
 								item.type === "qr_code"
 									? "qr_code"
 									: item.widget_type || "link";
-							const itemSize = item.size || "thin";
+							
+							let itemSize = item.size || "thin";
 							return {
 								id: item.id,
 								type: itemType,
@@ -2040,6 +2051,8 @@ export function AppearanceCustomizer({
 					return "w-56 h-56";
 				case "large-square":
 					return "w-80 h-80";
+				case "extra-large":
+					return "w-96 h-72"; // 384x288px - good for Twitch embeds
 				case "wide":
 					return "w-80 h-36";
 				case "tall":
@@ -2069,6 +2082,8 @@ export function AppearanceCustomizer({
 				return "w-56 h-56";
 			case "large-square":
 				return "w-80 h-80";
+			case "extra-large":
+				return "w-96 h-72"; // 384x288px - optimal for Twitch embeds
 			case "wide":
 				return "w-80 h-32";
 			case "tall":
@@ -2112,6 +2127,61 @@ export function AppearanceCustomizer({
 					};
 				};
 
+				// Check for Twitch embed widget (special case) - handle both legacy and new sizes
+				if (widget.data.platform === 'twitch' && (widget.size === 'extra-large' || widget.size === 'large-square')) {
+					return (
+						<div className="relative h-full w-full bg-gray-900 rounded-lg overflow-hidden">
+							{/* Twitch embed preview */}
+							<div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-purple-800">
+								{/* Header */}
+								<div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/60 to-transparent p-2">
+									<div className="flex items-center justify-between">
+										<div className="flex items-center space-x-2">
+											<div className="w-4 h-4 bg-purple-600 rounded flex items-center justify-center">
+												<svg className="w-2 h-2 text-white fill-white" viewBox="0 0 24 24">
+													<polygon points="5,3 19,12 5,21" />
+												</svg>
+											</div>
+											<span className="text-white text-xs font-medium">
+												{widget.data.username || 'Channel'}
+											</span>
+										</div>
+										<div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+									</div>
+								</div>
+								
+								{/* Center content */}
+								<div className="absolute inset-0 flex items-center justify-center">
+									<div className="text-center">
+										<div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
+											<svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+												<path d="M2.149 0L.537 4.119v15.024h5.731V24h3.224l4.867-4.857h7.81l10.69-10.69V0H2.149Zm29.751 7.533l-4.736 4.736h-9.267l-4.736 4.736V12.27H8.425V2.149h23.475v5.384ZM18.637 7.533V15.024h2.149V7.533h-2.149Zm-5.731 0V15.024h2.149V7.533h-2.149Z"/>
+											</svg>
+										</div>
+										<p className="text-white/90 text-xs font-medium">
+											{widget.data.title || 'Live Stream'}
+										</p>
+										<p className="text-white/60 text-xs mt-1">
+											{widget.data.username ? 'Live on Twitch' : 'Currently Offline'}
+										</p>
+									</div>
+								</div>
+								
+								{/* Bottom info */}
+								<div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+									<div className="flex items-center justify-between">
+										<div className="flex items-center space-x-1">
+											<div className="w-2 h-2 bg-red-500 rounded-full" />
+											<span className="text-white/80 text-xs">LIVE</span>
+										</div>
+										<span className="text-white/60 text-xs">Pro Feature</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					);
+				}
+
 				// Extract platform from URL if not provided
 				let platform = widget.data.platform || "";
 				if (!platform && widget.data.url) {
@@ -2129,6 +2199,7 @@ export function AppearanceCustomizer({
 						else if (hostname.includes("linkedin.com")) platform = "LinkedIn";
 						else if (hostname.includes("youtube.com")) platform = "YouTube";
 						else if (hostname.includes("tiktok.com")) platform = "TikTok";
+						else if (hostname.includes("twitch.tv")) platform = "twitch";
 						else if (hostname.includes("spotify.com")) platform = "Spotify";
 						else if (hostname.includes("music.apple.com"))
 							platform = "Apple Music";
@@ -2179,18 +2250,22 @@ export function AppearanceCustomizer({
 										: "w-8 h-8 rounded-xl"
 								} flex items-center justify-center ${socialInfo.color} ${activeView === "mobile" ? "p-1" : "p-1.5"}`}
 							>
-								<img
-									src={socialInfo.logoUrl}
-									alt={platform || widget.data.title || "External Link"}
-									className="w-5 h-5 object-contain filter invert brightness-0"
-									onError={(e) => {
-										const target = e.target as HTMLImageElement;
-										target.style.display = 'none';
-										const fallback = target.nextElementSibling as HTMLElement;
-										if (fallback) fallback.style.display = 'block';
-									}}
-								/>
-								<div className="w-5 h-5 flex items-center justify-center text-white text-sm font-bold hidden">
+								{socialInfo.logoUrl ? (
+									<img
+										src={socialInfo.logoUrl}
+										alt={platform || widget.data.title || "External Link"}
+										className="w-5 h-5 object-contain filter invert brightness-0"
+										onError={(e) => {
+											const target = e.target as HTMLImageElement;
+											target.style.display = 'none';
+											const fallback = target.nextElementSibling as HTMLElement;
+											if (fallback) fallback.style.display = 'block';
+										}}
+									/>
+								) : null}
+								<div className={`w-5 h-5 flex items-center justify-center text-white text-sm font-bold ${
+									socialInfo.logoUrl ? 'hidden' : 'block'
+								}`}>
 									{socialInfo.fallback}
 								</div>
 							</div>
@@ -2222,18 +2297,22 @@ export function AppearanceCustomizer({
 						<div className="relative h-full w-full overflow-hidden rounded-full">
 							{/* Background - Platform Logo Only */}
 							<div className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}>
-								<img
-									src={socialInfo.logoUrl}
-									alt={platform || widget.data.title || "External Link"}
-									className="w-8 h-8 object-contain filter invert brightness-0"
-									onError={(e) => {
-										const target = e.target as HTMLImageElement;
-										target.style.display = 'none';
-										const fallback = target.nextElementSibling as HTMLElement;
-										if (fallback) fallback.style.display = 'block';
-									}}
-								/>
-								<div className="w-8 h-8 flex items-center justify-center text-white text-xs font-bold hidden">
+								{socialInfo.logoUrl ? (
+									<img
+										src={socialInfo.logoUrl}
+										alt={platform || widget.data.title || "External Link"}
+										className="w-8 h-8 object-contain filter invert brightness-0"
+										onError={(e) => {
+											const target = e.target as HTMLImageElement;
+											target.style.display = 'none';
+											const fallback = target.nextElementSibling as HTMLElement;
+											if (fallback) fallback.style.display = 'block';
+										}}
+									/>
+								) : null}
+								<div className={`w-8 h-8 flex items-center justify-center text-white text-xs font-bold ${
+									socialInfo.logoUrl ? 'hidden' : 'block'
+								}`}>
 									{socialInfo.fallback}
 								</div>
 							</div>
@@ -2270,24 +2349,28 @@ export function AppearanceCustomizer({
 							) : (
 								<div className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}>
 									{/* Background logo - subtle and smaller */}
-									<img
-										src={socialInfo.logoUrl}
-										alt={platform || widget.data.title || "External Link"}
-										className={`${
-											activeView === "mobile" ? "w-20 h-20" : "w-32 h-32"
-										} object-contain filter invert brightness-0 opacity-20`}
-										onError={(e) => {
-											const target = e.target as HTMLImageElement;
-											target.style.display = 'none';
-											const fallback = target.nextElementSibling as HTMLElement;
-											if (fallback) fallback.style.display = 'block';
-										}}
-									/>
+									{socialInfo.logoUrl ? (
+										<img
+											src={socialInfo.logoUrl}
+											alt={platform || widget.data.title || "External Link"}
+											className={`${
+												activeView === "mobile" ? "w-20 h-20" : "w-32 h-32"
+											} object-contain filter invert brightness-0 opacity-20`}
+											onError={(e) => {
+												const target = e.target as HTMLImageElement;
+												target.style.display = 'none';
+												const fallback = target.nextElementSibling as HTMLElement;
+												if (fallback) fallback.style.display = 'block';
+											}}
+										/>
+									) : null}
 									<div className={`${
 										activeView === "mobile" ? "w-20 h-20" : "w-32 h-32"
 									} flex items-center justify-center text-white ${
 										activeView === "mobile" ? "text-sm" : "text-lg"
-									} font-bold hidden opacity-20`}>
+									} font-bold opacity-20 ${
+										socialInfo.logoUrl ? 'hidden' : 'block'
+									}`}>
 										{socialInfo.fallback}
 									</div>
 								</div>
@@ -2347,17 +2430,19 @@ export function AppearanceCustomizer({
 							) : (
 								<div className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}>
 									{/* Background logo - subtle and smaller */}
-									<img
-										src={socialInfo.logoUrl}
-										alt={platform || widget.data.title || "External Link"}
-										className="w-36 h-36 object-contain filter invert brightness-0 opacity-20"
-										onError={(e) => {
-											const target = e.target as HTMLImageElement;
-											target.style.display = 'none';
-											const fallback = target.nextElementSibling as HTMLElement;
-											if (fallback) fallback.style.display = 'block';
-										}}
-									/>
+									{socialInfo.logoUrl ? (
+										<img
+											src={socialInfo.logoUrl}
+											alt={platform || widget.data.title || "External Link"}
+											className="w-36 h-36 object-contain filter invert brightness-0 opacity-20"
+											onError={(e) => {
+												const target = e.target as HTMLImageElement;
+												target.style.display = 'none';
+												const fallback = target.nextElementSibling as HTMLElement;
+												if (fallback) fallback.style.display = 'block';
+											}}
+										/>
+									) : null}
 									<div className="w-20 h-20 flex items-center justify-center text-white text-2xl font-bold hidden opacity-20">
 										{socialInfo.fallback}
 									</div>
@@ -2418,18 +2503,22 @@ export function AppearanceCustomizer({
 							) : (
 								<div className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}>
 									{/* Background logo - subtle and smaller */}
-									<img
-										src={socialInfo.logoUrl}
-										alt={platform || widget.data.title || "External Link"}
-										className="w-48 h-48 object-contain filter invert brightness-0 opacity-20"
-										onError={(e) => {
-											const target = e.target as HTMLImageElement;
-											target.style.display = 'none';
-											const fallback = target.nextElementSibling as HTMLElement;
-											if (fallback) fallback.style.display = 'block';
-										}}
-									/>
-									<div className="w-24 h-24 flex items-center justify-center text-white text-3xl font-bold hidden opacity-20">
+									{socialInfo.logoUrl ? (
+										<img
+											src={socialInfo.logoUrl}
+											alt={platform || widget.data.title || "External Link"}
+											className="w-48 h-48 object-contain filter invert brightness-0 opacity-20"
+											onError={(e) => {
+												const target = e.target as HTMLImageElement;
+												target.style.display = 'none';
+												const fallback = target.nextElementSibling as HTMLElement;
+												if (fallback) fallback.style.display = 'block';
+											}}
+										/>
+									) : null}
+									<div className={`w-24 h-24 flex items-center justify-center text-white text-3xl font-bold opacity-20 ${
+										socialInfo.logoUrl ? 'hidden' : 'block'
+									}`}>
 										{socialInfo.fallback}
 									</div>
 								</div>
@@ -2473,18 +2562,22 @@ export function AppearanceCustomizer({
 						) : (
 							<div className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}>
 								{/* Background logo - subtle and smaller */}
-								<img
-									src={socialInfo.logoUrl}
-									alt={platform || widget.data.title || "External Link"}
-									className="w-32 h-32 object-contain filter invert brightness-0 opacity-20"
-									onError={(e) => {
-										const target = e.target as HTMLImageElement;
-										target.style.display = 'none';
-										const fallback = target.nextElementSibling as HTMLElement;
-										if (fallback) fallback.style.display = 'block';
-									}}
-								/>
-								<div className="w-16 h-16 flex items-center justify-center text-white text-2xl font-bold hidden opacity-20">
+								{socialInfo.logoUrl ? (
+									<img
+										src={socialInfo.logoUrl}
+										alt={platform || widget.data.title || "External Link"}
+										className="w-32 h-32 object-contain filter invert brightness-0 opacity-20"
+										onError={(e) => {
+											const target = e.target as HTMLImageElement;
+											target.style.display = 'none';
+											const fallback = target.nextElementSibling as HTMLElement;
+											if (fallback) fallback.style.display = 'block';
+										}}
+									/>
+								) : null}
+								<div className={`w-16 h-16 flex items-center justify-center text-white text-2xl font-bold opacity-20 ${
+									socialInfo.logoUrl ? 'hidden' : 'block'
+								}`}>
 									{socialInfo.fallback}
 								</div>
 							</div>
