@@ -18,6 +18,8 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { getPlatformLogoUrl, getOptimalLogoSize } from "@/lib/qr-code";
 import { BrandedQRCode } from "@/components/ui/branded-qr-code";
+import { TwitchEmbed } from "@/components/ui/twitch-embed";
+import { YouTubeLiveEmbed } from "@/components/ui/youtube-live-embed";
 
 // Platform definitions matching widget-modal exactly
 const platforms = [
@@ -29,6 +31,7 @@ const platforms = [
   { name: 'X (Twitter)', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg', value: 'twitter', color: 'bg-black' },
   { name: 'GitHub', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', value: 'github', color: 'bg-gray-800' },
   { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', value: 'spotify', color: 'bg-green-500' },
+  { name: 'Twitch', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/twitch.svg', value: 'twitch', color: 'bg-purple-600' },
   { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', value: 'website', color: 'bg-blue-500' },
 ];
 
@@ -71,11 +74,12 @@ export interface Widget {
 		| "medium-square"
 		| "large-square"
 		| "wide"
-		| "tall";
+		| "tall"
+		| "extra-large";
 	data: {
 		platform?: string;
 		username?: string;
-		displayName?: string;
+		display_name?: string;
 		url?: string;
 		title?: string;
 		type?: string;
@@ -84,7 +88,7 @@ export interface Widget {
 		isPopularApp?: boolean;
 		appName?: string;
 		appLogo?: string;
-		profileImage?: string;
+		profile_image_url?: string;
 		content?: string;
 		caption?: string;
 		file?: File;
@@ -371,8 +375,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									appLogo: metadata.appLogo || metadata.favicon || "",
 									platform: link.platform || platform || undefined,
 									username: link.username || username || undefined,
-									displayName: link.display_name || displayName || "",
-									profileImage: link.profile_image_url || "",
+									display_name: link.display_name || displayName || "",
+									profile_image_url: link.profile_image_url || "",
 									content: link.content || "",
 									caption: link.caption || "",
 									price: link.price || "",
@@ -559,6 +563,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 					return "w-32 h-32"; // Convert to small for mobile
 				case "large-square":
 					return "w-32 h-32"; // Convert to small for mobile
+				case "extra-large":
+					return "w-full h-48"; // Special handling for Twitch embeds on mobile
 				case "wide":
 					return "w-full min-h-12 h-auto"; // Convert to thin for mobile with text wrapping
 				case "tall":
@@ -580,6 +586,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				return "w-56 h-56";
 			case "large-square":
 				return "w-80 h-80";
+			case "extra-large":
+				return "w-96 h-72"; // 384x288px - optimal for Twitch embeds
 			case "wide":
 				return "w-80 h-36";
 			case "tall":
@@ -590,6 +598,17 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 	};
 
 	const renderWidget = (widget: Widget) => {
+		// Debug logging for Spotify widgets
+		if (widget.data.platform === 'spotify') {
+			console.log('=== PROFILE PAGE SPOTIFY WIDGET RENDER DEBUG ===');
+			console.log('Widget ID:', widget.id);
+			console.log('widget.data.display_name:', widget.data.display_name);
+			console.log('widget.data.username:', widget.data.username);
+			console.log('widget.data.title:', widget.data.title);
+			console.log('widget.data.platform:', widget.data.platform);
+			console.log('Full widget.data:', widget.data);
+			console.log('=================================================');
+		}
 		// In mobile view, force all widgets except small-circle to be treated as small-square for consistent behavior
 		const effectiveSize = isMobile && widget.size !== 'small-circle' ? 'small-square' : widget.size;
 		const sizeClass = getWidgetSizeClass(effectiveSize);
@@ -677,6 +696,34 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 					)
 				}
 				
+				// Check for Twitch embed widget (special case) - handle both legacy and new sizes
+				if (widget.data.platform === 'twitch' && (widget.size === 'extra-large' || widget.size === 'large-square')) {
+					return (
+						<div className="h-full w-full">
+							<TwitchEmbed
+								channel={widget.data.username || ''}
+								size={(effectiveSize === 'extra-large' || effectiveSize === 'large-square') ? 'large' : 'medium'}
+								className="w-full h-full"
+								profileImage={widget.data.profile_image_url}
+							/>
+						</div>
+					);
+				}
+
+				// Check for YouTube Live embed widget (special case) - handle both legacy and new sizes
+				if (widget.data.platform === 'youtube' && (widget.size === 'extra-large' || widget.size === 'large-square')) {
+					return (
+						<div className="h-full w-full">
+							<YouTubeLiveEmbed
+								channelHandle={widget.data.username?.startsWith('@') || !widget.data.username?.startsWith('UC') ? widget.data.username : undefined}
+								channelId={widget.data.username?.startsWith('UC') && widget.data.username?.length === 24 ? widget.data.username : undefined}
+								size={(effectiveSize === 'extra-large' || effectiveSize === 'large-square') ? 'large' : 'medium'}
+								className="w-full h-full"
+							/>
+						</div>
+					);
+				}
+
 				const getSocialInfo = (platform: string) => {
 					// Use the same platform data as widget-modal
 					const platformData = platforms.find(p => p.value === platform.toLowerCase());
@@ -694,6 +741,29 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 						color: "bg-gray-500",
 						name: platform,
 						fallback: platform.charAt(0).toUpperCase()
+					};
+				};
+
+				// Helper function to get the appropriate image for a platform
+				const getWidgetImage = (platform: string, widget: any, socialInfo: any) => {
+					// Check if profile image is available for supported platforms (except small-circle)
+					const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube'];
+					const shouldUseProfileImage = widget.size !== 'small-circle';
+					
+					if (supportedPlatforms.includes(platform) && shouldUseProfileImage && widget.data.profile_image_url) {
+						return {
+							src: widget.data.profile_image_url,
+							alt: widget.data.username || `${platform} Profile`,
+							className: "object-cover rounded-full",
+							fallbackSrc: socialInfo.logoUrl,
+							fallbackClassName: "object-contain filter invert brightness-0"
+						};
+					}
+					// For small widgets or when profile image is not available, use platform logo
+					return {
+						src: socialInfo.logoUrl,
+						alt: platform || widget.data.title || "External Link",
+						className: "object-contain filter invert brightness-0"
 					};
 				};
 
@@ -759,17 +829,27 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									isMobile ? 'p-1' : 'p-1.5'
 								}`}
 							>
-								<img
-									src={socialInfo.logoUrl}
-									alt={platform || widget.data.title || "External Link"}
-									className="w-4 h-4 object-contain filter invert brightness-0"
-									onError={(e) => {
-										const target = e.target as HTMLImageElement;
-										target.style.display = 'none';
-										const fallback = target.nextElementSibling as HTMLElement;
-										if (fallback) fallback.style.display = 'block';
-									}}
-								/>
+								{(() => {
+									const imageInfo = getWidgetImage(platform, widget, socialInfo);
+									return (
+										<img
+											src={imageInfo.src}
+											alt={imageInfo.alt}
+											className={`w-4 h-4 ${imageInfo.className}`}
+											onError={(e) => {
+												const target = e.target as HTMLImageElement;
+												if (imageInfo.fallbackSrc) {
+													target.src = imageInfo.fallbackSrc;
+													target.className = `w-4 h-4 ${imageInfo.fallbackClassName || imageInfo.className}`;
+												} else {
+													target.style.display = 'none';
+													const fallback = target.nextElementSibling as HTMLElement;
+													if (fallback) fallback.style.display = 'block';
+												}
+											}}
+										/>
+									);
+								})()}
 								<div className="w-4 h-4 flex items-center justify-center text-white text-sm font-bold hidden">
 									{socialInfo.fallback}
 								</div>
@@ -778,13 +858,10 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 								<div className={`font-medium ${
 									isMobile ? 'text-gray-900 text-xs' : 'text-gray-900 text-sm'
 								} break-words leading-tight`}>
-									{isMobile
-										? (widget.data.title || widget.data.displayName || capitalizedPlatform || 'Link')
-										: (widget.data.displayName ||
-											(widget.data.username
-												? `@${widget.data.username}`
-												: widget.data.title || capitalizedPlatform || "Link"))
-									}
+									{widget.data.display_name ||
+										(widget.data.username
+											? `@${widget.data.username}`
+											: widget.data.title || capitalizedPlatform || "Link")}
 								</div>
 							</div>
 						</div>
@@ -821,10 +898,10 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 							isMobile ? 'rounded-lg' : 'rounded-xl'
 						}`}>
 							{/* Background - Profile Picture or Platform Logo */}
-							{widget.data.profileImage ? (
+							{widget.data.profile_image_url ? (
 								<div className="absolute inset-0">
 									<img
-										src={widget.data.profileImage}
+										src={widget.data.profile_image_url}
 										alt={widget.data.username || platform}
 										className="w-full h-full object-cover"
 										onError={(e) => {
@@ -874,13 +951,10 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 								<div className={`${
 									isMobile ? 'text-xs' : 'text-xs'
 								} font-medium text-white leading-tight`}>
-									{isMobile
-										? (widget.data.title || widget.data.displayName || capitalizedPlatform || 'Link')
-										: (widget.data.displayName ||
-											(widget.data.username
-												? `@${widget.data.username}`
-												: widget.data.title || capitalizedPlatform || "Link"))
-									}
+									{widget.data.display_name ||
+										(widget.data.username
+											? `@${widget.data.username}`
+											: widget.data.title || capitalizedPlatform || "Link")}
 								</div>
 								{widget.data.username && platform && !isMobile && (
 									<div className="text-xs text-white/80 mt-0.5 capitalize">
@@ -896,10 +970,10 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 					return (
 						<div className="relative h-full w-full overflow-hidden rounded-2xl">
 							{/* Background - Profile Picture or Platform Logo */}
-							{widget.data.profileImage ? (
+							{widget.data.profile_image_url ? (
 								<div className="absolute inset-0">
 									<img
-										src={widget.data.profileImage}
+										src={widget.data.profile_image_url}
 										alt={widget.data.username || platform}
 										className="w-full h-full object-cover"
 										onError={(e) => {
@@ -939,7 +1013,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 							{/* Content */}
 							<div className="absolute bottom-3 left-3 right-3">
 								<div className="text-sm font-medium text-white">
-									{widget.data.displayName ||
+									{widget.data.display_name ||
 										(widget.data.username
 											? `@${widget.data.username}`
 											: widget.data.title || platform || "Link")}
@@ -958,10 +1032,10 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 					return (
 						<div className="relative h-full w-full overflow-hidden rounded-3xl">
 							{/* Background - Profile Picture or Platform Logo */}
-							{widget.data.profileImage ? (
+							{widget.data.profile_image_url ? (
 								<div className="absolute inset-0">
 									<img
-										src={widget.data.profileImage}
+										src={widget.data.profile_image_url}
 										alt={widget.data.username || platform}
 										className="w-full h-full object-cover"
 										onError={(e) => {
@@ -1018,7 +1092,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 							{/* Content */}
 							<div className="absolute bottom-4 left-4 right-4 z-10">
 								<div className="text-base font-semibold text-white">
-									{widget.data.displayName ||
+									{widget.data.display_name ||
 										(widget.data.username
 											? `@${widget.data.username}`
 											: widget.data.title || platform || "Link")}
@@ -1037,10 +1111,10 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				return (
 					<div className="relative h-full w-full overflow-hidden rounded-2xl">
 						{/* Background - Profile Picture or Platform Logo */}
-						{widget.data.profileImage ? (
+						{widget.data.profile_image_url ? (
 							<div className="absolute inset-0">
 								<img
-									src={widget.data.profileImage}
+									src={widget.data.profile_image_url}
 									alt={widget.data.username || platform}
 									className="w-full h-full object-cover"
 									onError={(e) => {
@@ -1081,7 +1155,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 						{/* Content */}
 						<div className="absolute bottom-3 left-3 right-3 z-10">
 							<div className="text-sm font-medium text-white">
-								{widget.data.displayName ||
+								{widget.data.display_name ||
 									(widget.data.username
 										? `@${widget.data.username}`
 										: widget.data.title || platform || "Link")}

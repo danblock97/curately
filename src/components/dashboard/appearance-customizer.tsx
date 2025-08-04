@@ -45,6 +45,7 @@ const platforms = [
   { name: 'X (Twitter)', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg', value: 'twitter', color: 'bg-black' },
   { name: 'GitHub', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', value: 'github', color: 'bg-gray-800' },
   { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', value: 'spotify', color: 'bg-green-500' },
+  { name: 'Twitch', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/twitch.svg', value: 'twitch', color: 'bg-purple-600' },
   { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', value: 'website', color: 'bg-blue-500' },
 ];
 
@@ -82,7 +83,8 @@ export interface Widget {
 		| "medium-square"
 		| "large-square"
 		| "wide"
-		| "tall";
+		| "tall"
+		| "extra-large";
 	data: {
 		platform?: string;
 		username?: string;
@@ -358,6 +360,11 @@ export function AppearanceCustomizer({
 										);
 										if (metadataResponse.ok) {
 											metadata = await metadataResponse.json();
+											
+											// Map the image field to profileImage for consistency
+											if (metadata.image && !metadata.profileImage) {
+												metadata.profileImage = metadata.image;
+											}
 										}
 									}
 								} catch (error) {
@@ -466,6 +473,14 @@ export function AppearanceCustomizer({
 										if (pathSegments.length > 0) {
 											username = pathSegments[0];
 										}
+									} else if (hostname.includes("twitch.tv")) {
+										platform = "twitch";
+										const pathSegments = urlObj.pathname
+											.split("/")
+											.filter(Boolean);
+										if (pathSegments.length > 0) {
+											username = pathSegments[0];
+										}
 									}
 								}
 
@@ -486,6 +501,23 @@ export function AppearanceCustomizer({
 								}
 							} catch (error) {
 								// Failed to extract platform info from URL
+							}
+
+							// For Spotify, try to extract display name from description after metadata is available
+							if (metadata.description && item.url && item.url.includes('spotify.com')) {
+								console.log('=== SPOTIFY LOADWIDGETS DEBUG ===');
+								console.log('metadata.description:', metadata.description);
+								console.log('item.url:', item.url);
+								console.log('Before parsing - displayName:', displayName);
+								
+								// Extract name from descriptions like "User · Dan Block"
+								const parts = metadata.description.split(" · ");
+								console.log('Split parts:', parts);
+								if (parts.length > 1) {
+									displayName = parts[1].trim();
+									console.log('After parsing - displayName:', displayName);
+								}
+								console.log('=====================================');
 							}
 
 							// Safe JSON parsing with fallback - position mobile widgets more tightly
@@ -557,7 +589,10 @@ export function AppearanceCustomizer({
 								item.type === "qr_code"
 									? "qr_code"
 									: item.widget_type || "link";
-							const itemSize = item.size || "thin";
+							
+							let itemSize = item.size || "thin";
+							
+							
 							return {
 								id: item.id,
 								type: itemType,
@@ -572,8 +607,17 @@ export function AppearanceCustomizer({
 									appLogo: metadata.appLogo || metadata.favicon || "",
 									platform: item.platform || platform || undefined,
 									username: item.username || username || undefined,
-									displayName: item.display_name || displayName || "",
-									profileImage: item.profile_image_url || "",
+									display_name: (() => {
+										if (item.url && item.url.includes('spotify.com')) {
+											console.log('=== SPOTIFY WIDGET DATA ASSIGNMENT DEBUG ===');
+											console.log('item.display_name (from database):', item.display_name);
+											console.log('displayName (extracted):', displayName);
+											console.log('Final choice:', item.display_name || displayName || "");
+											console.log('============================================');
+										}
+										return item.display_name || displayName || "";
+									})(),
+									profile_image_url: item.profile_image_url || metadata.profileImage || "",
 									content: item.content || "",
 									caption: item.caption || "",
 									price: item.price || "",
@@ -1347,8 +1391,10 @@ export function AppearanceCustomizer({
 			let finalUrl = widget.data.url || "";
 			let title = widget.data.title || widget.data.platform || "Widget";
 
-			// For social platforms, use the username as title if available
-			if (widget.data.username) {
+			// For social platforms, prefer display name over username
+			if (widget.data.display_name) {
+				title = widget.data.display_name;
+			} else if (widget.data.username) {
 				title =
 					widget.data.platform === "website"
 						? widget.data.username
@@ -1416,24 +1462,42 @@ export function AppearanceCustomizer({
 					) {
 						metadata.displayName = profileMetadata.displayName;
 						// Update the title to use display name
-						title = `@${widget.data.username}`;
+						title = profileMetadata.displayName;
 					}
 
 					// For Spotify, try to extract display name from metadata description
-					if (widget.data.platform === "spotify" && !metadata.displayName) {
+					if (widget.data.platform === "spotify") {
 						try {
 							const metadataResponse = await fetch(
 								`/api/metadata?url=${encodeURIComponent(widget.data.url || "")}`
 							);
 							if (metadataResponse.ok) {
 								const metadataData = await metadataResponse.json();
-								if (metadataData.description) {
+								console.log('=== SPOTIFY METADATA EXTRACTION DEBUG ===');
+								console.log('metadataData:', metadataData);
+								console.log('metadataData.description:', metadataData.description);
+								console.log('metadataData.displayName:', metadataData.displayName);
+								
+								// Map the image field to profileImage for consistency
+								if (metadataData.image && !metadata.profileImage) {
+									metadata.profileImage = metadataData.image;
+								}
+								
+								// First try the displayName from server-side extraction
+								if (metadataData.displayName && metadataData.displayName !== widget.data.username) {
+									metadata.displayName = metadataData.displayName;
+									console.log('Using server displayName:', metadataData.displayName);
+								} else if (metadataData.description) {
 									// Extract name from descriptions like "User · Dan Block"
 									const parts = metadataData.description.split(" · ");
+									console.log('Description parts:', parts);
 									if (parts.length > 1) {
 										metadata.displayName = parts[1].trim();
+										console.log('Extracted from description:', parts[1].trim());
 									}
 								}
+								console.log('Final metadata.displayName:', metadata.displayName);
+								console.log('==========================================');
 							}
 						} catch (error) {
 							console.warn("Failed to fetch Spotify metadata:", error);
@@ -1527,6 +1591,17 @@ export function AppearanceCustomizer({
 				return;
 			}
 
+			// Debug logging for Spotify database insert
+			if (widget.data.platform === 'spotify') {
+				console.log('=== SPOTIFY DATABASE INSERT DEBUG ===');
+				console.log('metadata.displayName:', metadata.displayName);
+				console.log('title (variable):', title);
+				console.log('metadata.title:', metadata.title);
+				console.log('Database title will be:', metadata.displayName || title.trim() || metadata.title);
+				console.log('Database display_name will be:', metadata.displayName);
+				console.log('======================================');
+			}
+
 			// Save to links table for non-QR code widgets
 			const { data: linkData, error: linkError } = await supabase
 				.from("links")
@@ -1536,7 +1611,7 @@ export function AppearanceCustomizer({
 						currentPage?.id ||
 						pages?.find((p) => p.is_primary)?.id ||
 						pages?.[0]?.id,
-					title: title.trim() || metadata.title,
+					title: metadata.displayName || title.trim() || metadata.title,
 					url: finalUrl,
 					order: widgets.length + 1,
 					is_active: true,
@@ -1545,7 +1620,7 @@ export function AppearanceCustomizer({
 					platform: widget.data.platform,
 					username: widget.data.username,
 					display_name: metadata.displayName,
-					profile_image_url: metadata.profileImage,
+					profile_image_url: widget.data.profile_image_url || metadata.profileImage,
 					widget_type: widget.type,
 					content: widget.data.content,
 					caption: widget.data.caption,
@@ -1581,8 +1656,8 @@ export function AppearanceCustomizer({
 					appLogo: metadata.appLogo,
 					platform: widget.data.platform,
 					username: widget.data.username,
-					displayName: metadata.displayName || "",
-					profileImage: metadata.profileImage || "",
+					display_name: metadata.displayName || "",
+					profile_image_url: widget.data.profile_image_url || metadata.profileImage || "",
 					content: widget.data.content,
 					caption: widget.data.caption,
 					price: widget.data.price,
@@ -2040,6 +2115,8 @@ export function AppearanceCustomizer({
 					return "w-56 h-56";
 				case "large-square":
 					return "w-80 h-80";
+				case "extra-large":
+					return "w-96 h-72"; // 384x288px - good for Twitch embeds
 				case "wide":
 					return "w-80 h-36";
 				case "tall":
@@ -2069,6 +2146,8 @@ export function AppearanceCustomizer({
 				return "w-56 h-56";
 			case "large-square":
 				return "w-80 h-80";
+			case "extra-large":
+				return "w-96 h-72"; // 384x288px - optimal for Twitch embeds
 			case "wide":
 				return "w-80 h-32";
 			case "tall":
@@ -2079,6 +2158,18 @@ export function AppearanceCustomizer({
 	};
 
 	const renderWidget = (widget: Widget, inRightPanel = false) => {
+		// Debug logging for Spotify widgets
+		if (widget.data.platform === 'spotify') {
+			console.log('=== SPOTIFY WIDGET RENDER DEBUG ===');
+			console.log('Widget ID:', widget.id);
+			console.log('widget.data.display_name:', widget.data.display_name);
+			console.log('widget.data.username:', widget.data.username);
+			console.log('widget.data.title:', widget.data.title);
+			console.log('widget.data.platform:', widget.data.platform);
+			console.log('Full widget.data:', widget.data);
+			console.log('=====================================');
+		}
+		
 		// In mobile view, force all widgets except small-circle to be treated as small-square for consistent behavior
 		const effectiveSize =
 			activeView === "mobile" && widget.size !== "small-circle" ? "small-square" : widget.size;
@@ -2112,6 +2203,34 @@ export function AppearanceCustomizer({
 					};
 				};
 
+				// Helper function to get the appropriate image for a platform
+				const getWidgetImage = (platform: string, widget: any, socialInfo: any) => {
+					// Check if profile image is available for supported platforms (except small-circle)
+					const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube'];
+					const shouldUseProfileImage = widget.size !== 'small-circle';
+					
+					if (supportedPlatforms.includes(platform) && shouldUseProfileImage && (widget.data.profile_image_url || widget.data.profileImage)) {
+						return {
+							src: widget.data.profile_image_url || widget.data.profileImage,
+							alt: widget.data.username || `${platform} Profile`,
+							className: "object-cover rounded-full",
+							fallbackSrc: socialInfo.logoUrl,
+							fallbackClassName: "object-contain filter invert brightness-0"
+						};
+					}
+					// For small widgets or when profile image is not available, use platform logo
+					if (socialInfo.logoUrl) {
+						return {
+							src: socialInfo.logoUrl,
+							alt: platform || widget.data.title || "External Link",
+							className: "object-contain filter invert brightness-0",
+							fallbackSrc: null,
+							fallbackClassName: null
+						};
+					}
+					return null;
+				};
+
 				// Extract platform from URL if not provided
 				let platform = widget.data.platform || "";
 				if (!platform && widget.data.url) {
@@ -2127,8 +2246,9 @@ export function AppearanceCustomizer({
 						else if (hostname.includes("instagram.com")) platform = "Instagram";
 						else if (hostname.includes("facebook.com")) platform = "Facebook";
 						else if (hostname.includes("linkedin.com")) platform = "LinkedIn";
-						else if (hostname.includes("youtube.com")) platform = "YouTube";
+						else if (hostname.includes("youtube.com")) platform = "youtube";
 						else if (hostname.includes("tiktok.com")) platform = "TikTok";
+						else if (hostname.includes("twitch.tv")) platform = "twitch";
 						else if (hostname.includes("spotify.com")) platform = "Spotify";
 						else if (hostname.includes("music.apple.com"))
 							platform = "Apple Music";
@@ -2179,18 +2299,30 @@ export function AppearanceCustomizer({
 										: "w-8 h-8 rounded-xl"
 								} flex items-center justify-center ${socialInfo.color} ${activeView === "mobile" ? "p-1" : "p-1.5"}`}
 							>
-								<img
-									src={socialInfo.logoUrl}
-									alt={platform || widget.data.title || "External Link"}
-									className="w-5 h-5 object-contain filter invert brightness-0"
-									onError={(e) => {
-										const target = e.target as HTMLImageElement;
-										target.style.display = 'none';
-										const fallback = target.nextElementSibling as HTMLElement;
-										if (fallback) fallback.style.display = 'block';
-									}}
-								/>
-								<div className="w-5 h-5 flex items-center justify-center text-white text-sm font-bold hidden">
+								{(() => {
+									const imageInfo = getWidgetImage(platform, widget, socialInfo);
+									return imageInfo ? (
+										<img
+											src={imageInfo.src}
+											alt={imageInfo.alt}
+											className={`w-5 h-5 ${imageInfo.className}`}
+											onError={(e) => {
+												const target = e.target as HTMLImageElement;
+												if (imageInfo.fallbackSrc) {
+													target.src = imageInfo.fallbackSrc;
+													target.className = `w-5 h-5 ${imageInfo.fallbackClassName}`;
+												} else {
+													target.style.display = 'none';
+													const fallback = target.nextElementSibling as HTMLElement;
+													if (fallback) fallback.style.display = 'block';
+												}
+											}}
+										/>
+									) : null;
+								})()}
+								<div className={`w-5 h-5 flex items-center justify-center text-white text-sm font-bold ${
+									getWidgetImage(platform, widget, socialInfo) ? 'hidden' : 'block'
+								}`}>
 									{socialInfo.fallback}
 								</div>
 							</div>
@@ -2202,15 +2334,10 @@ export function AppearanceCustomizer({
 											: "text-gray-900 text-sm"
 									} break-words leading-tight`}
 								>
-									{activeView === "mobile"
-										? widget.data.title ||
-										  widget.data.displayName ||
-										  capitalizedPlatform ||
-										  "Link"
-										: widget.data.displayName ||
-										  (widget.data.username
-												? `@${widget.data.username}`
-												: widget.data.title || capitalizedPlatform || "Link")}
+									{widget.data.display_name ||
+										(widget.data.username
+											? `@${widget.data.username}`
+											: widget.data.title || capitalizedPlatform || "Link")}
 								</div>
 							</div>
 						</div>
@@ -2222,18 +2349,22 @@ export function AppearanceCustomizer({
 						<div className="relative h-full w-full overflow-hidden rounded-full">
 							{/* Background - Platform Logo Only */}
 							<div className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}>
-								<img
-									src={socialInfo.logoUrl}
-									alt={platform || widget.data.title || "External Link"}
-									className="w-8 h-8 object-contain filter invert brightness-0"
-									onError={(e) => {
-										const target = e.target as HTMLImageElement;
-										target.style.display = 'none';
-										const fallback = target.nextElementSibling as HTMLElement;
-										if (fallback) fallback.style.display = 'block';
-									}}
-								/>
-								<div className="w-8 h-8 flex items-center justify-center text-white text-xs font-bold hidden">
+								{socialInfo.logoUrl ? (
+									<img
+										src={socialInfo.logoUrl}
+										alt={platform || widget.data.title || "External Link"}
+										className="w-8 h-8 object-contain filter invert brightness-0"
+										onError={(e) => {
+											const target = e.target as HTMLImageElement;
+											target.style.display = 'none';
+											const fallback = target.nextElementSibling as HTMLElement;
+											if (fallback) fallback.style.display = 'block';
+										}}
+									/>
+								) : null}
+								<div className={`w-8 h-8 flex items-center justify-center text-white text-xs font-bold ${
+									socialInfo.logoUrl ? 'hidden' : 'block'
+								}`}>
 									{socialInfo.fallback}
 								</div>
 							</div>
@@ -2249,10 +2380,10 @@ export function AppearanceCustomizer({
 							}`}
 						>
 							{/* Background - Profile Picture or Platform Logo */}
-							{widget.data.profileImage ? (
+							{widget.data.profile_image_url ? (
 								<div className="absolute inset-0">
 									<img
-										src={widget.data.profileImage}
+										src={widget.data.profile_image_url}
 										alt={widget.data.username || platform}
 										className="w-full h-full object-cover"
 										onError={(e) => {
@@ -2270,24 +2401,28 @@ export function AppearanceCustomizer({
 							) : (
 								<div className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}>
 									{/* Background logo - subtle and smaller */}
-									<img
-										src={socialInfo.logoUrl}
-										alt={platform || widget.data.title || "External Link"}
-										className={`${
-											activeView === "mobile" ? "w-20 h-20" : "w-32 h-32"
-										} object-contain filter invert brightness-0 opacity-20`}
-										onError={(e) => {
-											const target = e.target as HTMLImageElement;
-											target.style.display = 'none';
-											const fallback = target.nextElementSibling as HTMLElement;
-											if (fallback) fallback.style.display = 'block';
-										}}
-									/>
+									{socialInfo.logoUrl ? (
+										<img
+											src={socialInfo.logoUrl}
+											alt={platform || widget.data.title || "External Link"}
+											className={`${
+												activeView === "mobile" ? "w-20 h-20" : "w-32 h-32"
+											} object-contain filter invert brightness-0 opacity-20`}
+											onError={(e) => {
+												const target = e.target as HTMLImageElement;
+												target.style.display = 'none';
+												const fallback = target.nextElementSibling as HTMLElement;
+												if (fallback) fallback.style.display = 'block';
+											}}
+										/>
+									) : null}
 									<div className={`${
 										activeView === "mobile" ? "w-20 h-20" : "w-32 h-32"
 									} flex items-center justify-center text-white ${
 										activeView === "mobile" ? "text-sm" : "text-lg"
-									} font-bold hidden opacity-20`}>
+									} font-bold opacity-20 ${
+										socialInfo.logoUrl ? 'hidden' : 'block'
+									}`}>
 										{socialInfo.fallback}
 									</div>
 								</div>
@@ -2306,15 +2441,10 @@ export function AppearanceCustomizer({
 										activeView === "mobile" ? "text-xs" : "text-xs"
 									} font-medium text-white leading-tight`}
 								>
-									{activeView === "mobile"
-										? widget.data.title ||
-										  widget.data.displayName ||
-										  capitalizedPlatform ||
-										  "Link"
-										: widget.data.displayName ||
-										  (widget.data.username
-												? `@${widget.data.username}`
-												: widget.data.title || capitalizedPlatform || "Link")}
+									{widget.data.display_name ||
+										(widget.data.username
+											? `@${widget.data.username}`
+											: widget.data.title || capitalizedPlatform || "Link")}
 								</div>
 								{widget.data.username &&
 									platform &&
@@ -2332,10 +2462,10 @@ export function AppearanceCustomizer({
 					return (
 						<div className="relative h-full w-full overflow-hidden rounded-2xl">
 							{/* Background - Profile Picture or Platform Logo */}
-							{widget.data.profileImage ? (
+							{widget.data.profile_image_url ? (
 								<div className="absolute inset-0">
 									<img
-										src={widget.data.profileImage}
+										src={widget.data.profile_image_url}
 										alt={widget.data.username || platform}
 										className="w-full h-full object-cover"
 										onError={(e) => {
@@ -2347,17 +2477,19 @@ export function AppearanceCustomizer({
 							) : (
 								<div className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}>
 									{/* Background logo - subtle and smaller */}
-									<img
-										src={socialInfo.logoUrl}
-										alt={platform || widget.data.title || "External Link"}
-										className="w-36 h-36 object-contain filter invert brightness-0 opacity-20"
-										onError={(e) => {
-											const target = e.target as HTMLImageElement;
-											target.style.display = 'none';
-											const fallback = target.nextElementSibling as HTMLElement;
-											if (fallback) fallback.style.display = 'block';
-										}}
-									/>
+									{socialInfo.logoUrl ? (
+										<img
+											src={socialInfo.logoUrl}
+											alt={platform || widget.data.title || "External Link"}
+											className="w-36 h-36 object-contain filter invert brightness-0 opacity-20"
+											onError={(e) => {
+												const target = e.target as HTMLImageElement;
+												target.style.display = 'none';
+												const fallback = target.nextElementSibling as HTMLElement;
+												if (fallback) fallback.style.display = 'block';
+											}}
+										/>
+									) : null}
 									<div className="w-20 h-20 flex items-center justify-center text-white text-2xl font-bold hidden opacity-20">
 										{socialInfo.fallback}
 									</div>
@@ -2367,7 +2499,7 @@ export function AppearanceCustomizer({
 							{/* Content */}
 							<div className="absolute bottom-3 left-3 right-3 z-10">
 								<div className="text-sm font-medium text-white">
-									{widget.data.displayName ||
+									{widget.data.display_name ||
 										(widget.data.username
 											? `@${widget.data.username}`
 											: widget.data.title || platform || "Link")}
@@ -2386,10 +2518,10 @@ export function AppearanceCustomizer({
 					return (
 						<div className="relative h-full w-full overflow-hidden rounded-3xl">
 							{/* Background - Profile Picture or Platform Logo */}
-							{widget.data.profileImage ? (
+							{widget.data.profile_image_url ? (
 								<div className="absolute inset-0">
 									<img
-										src={widget.data.profileImage}
+										src={widget.data.profile_image_url}
 										alt={widget.data.username || platform}
 										className="w-full h-full object-cover"
 										onError={(e) => {
@@ -2418,18 +2550,22 @@ export function AppearanceCustomizer({
 							) : (
 								<div className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}>
 									{/* Background logo - subtle and smaller */}
-									<img
-										src={socialInfo.logoUrl}
-										alt={platform || widget.data.title || "External Link"}
-										className="w-48 h-48 object-contain filter invert brightness-0 opacity-20"
-										onError={(e) => {
-											const target = e.target as HTMLImageElement;
-											target.style.display = 'none';
-											const fallback = target.nextElementSibling as HTMLElement;
-											if (fallback) fallback.style.display = 'block';
-										}}
-									/>
-									<div className="w-24 h-24 flex items-center justify-center text-white text-3xl font-bold hidden opacity-20">
+									{socialInfo.logoUrl ? (
+										<img
+											src={socialInfo.logoUrl}
+											alt={platform || widget.data.title || "External Link"}
+											className="w-48 h-48 object-contain filter invert brightness-0 opacity-20"
+											onError={(e) => {
+												const target = e.target as HTMLImageElement;
+												target.style.display = 'none';
+												const fallback = target.nextElementSibling as HTMLElement;
+												if (fallback) fallback.style.display = 'block';
+											}}
+										/>
+									) : null}
+									<div className={`w-24 h-24 flex items-center justify-center text-white text-3xl font-bold opacity-20 ${
+										socialInfo.logoUrl ? 'hidden' : 'block'
+									}`}>
 										{socialInfo.fallback}
 									</div>
 								</div>
@@ -2438,7 +2574,7 @@ export function AppearanceCustomizer({
 							{/* Content */}
 							<div className="absolute bottom-4 left-4 right-4 z-10">
 								<div className="text-base font-semibold text-white">
-									{widget.data.displayName ||
+									{widget.data.display_name ||
 										(widget.data.username
 											? `@${widget.data.username}`
 											: widget.data.title || platform || "Link")}
@@ -2457,10 +2593,10 @@ export function AppearanceCustomizer({
 				return (
 					<div className="relative h-full w-full overflow-hidden rounded-2xl">
 						{/* Background - Profile Picture or Platform Logo */}
-						{widget.data.profileImage ? (
+						{widget.data.profile_image_url ? (
 							<div className="absolute inset-0">
 								<img
-									src={widget.data.profileImage}
+									src={widget.data.profile_image_url}
 									alt={widget.data.username || platform}
 									className="w-full h-full object-cover"
 									onError={(e) => {
@@ -2473,18 +2609,22 @@ export function AppearanceCustomizer({
 						) : (
 							<div className={`absolute inset-0 ${socialInfo.color} flex items-center justify-center`}>
 								{/* Background logo - subtle and smaller */}
-								<img
-									src={socialInfo.logoUrl}
-									alt={platform || widget.data.title || "External Link"}
-									className="w-32 h-32 object-contain filter invert brightness-0 opacity-20"
-									onError={(e) => {
-										const target = e.target as HTMLImageElement;
-										target.style.display = 'none';
-										const fallback = target.nextElementSibling as HTMLElement;
-										if (fallback) fallback.style.display = 'block';
-									}}
-								/>
-								<div className="w-16 h-16 flex items-center justify-center text-white text-2xl font-bold hidden opacity-20">
+								{socialInfo.logoUrl ? (
+									<img
+										src={socialInfo.logoUrl}
+										alt={platform || widget.data.title || "External Link"}
+										className="w-32 h-32 object-contain filter invert brightness-0 opacity-20"
+										onError={(e) => {
+											const target = e.target as HTMLImageElement;
+											target.style.display = 'none';
+											const fallback = target.nextElementSibling as HTMLElement;
+											if (fallback) fallback.style.display = 'block';
+										}}
+									/>
+								) : null}
+								<div className={`w-16 h-16 flex items-center justify-center text-white text-2xl font-bold opacity-20 ${
+									socialInfo.logoUrl ? 'hidden' : 'block'
+								}`}>
 									{socialInfo.fallback}
 								</div>
 							</div>
@@ -2493,7 +2633,7 @@ export function AppearanceCustomizer({
 						{/* Content */}
 						<div className="absolute bottom-3 left-3 right-3">
 							<div className="text-sm font-medium text-white">
-								{widget.data.displayName ||
+								{widget.data.display_name ||
 									(widget.data.username
 										? `@${widget.data.username}`
 										: widget.data.title || platform || "Link")}
