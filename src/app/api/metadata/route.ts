@@ -79,7 +79,6 @@ export async function GET(request: NextRequest) {
         const match = html.match(pattern)
         if (match && match[1] && match[1].includes('scdn.co')) {
           image = match[1]
-          console.log(`Spotify: Found profile image using pattern ${i + 1}:`, image)
           break
         }
       }
@@ -90,7 +89,6 @@ export async function GET(request: NextRequest) {
         const match = html.match(pattern)
         if (match && match[1] && match[1].length > 0 && match[1].length < 100) {
           displayName = match[1]
-          console.log(`Spotify: Found display name using pattern ${i + 1}:`, displayName)
           break
         }
       }
@@ -101,26 +99,14 @@ export async function GET(request: NextRequest) {
         const parts = description.split(" · ");
         if (parts.length > 1) {
           displayName = parts[1].trim();
-          console.log('Spotify: Extracted display name from description:', displayName);
         }
       }
       
       // If still no display name found, try using the og:title as display name
       if (!displayName && ogTitleMatch && ogTitleMatch[1]) {
         displayName = ogTitleMatch[1]
-        console.log('Spotify: Using og:title as display name:', displayName)
       }
       
-      console.log('=== SPOTIFY METADATA DEBUG ===');
-      console.log('URL:', url);
-      console.log('Response status:', response.status);
-      console.log('HTML length:', html?.length || 0);
-      console.log('og:image match:', ogImageMatch);
-      console.log('og:title match:', ogTitleMatch);
-      console.log('Extracted image:', image);
-      console.log('Extracted display name:', displayName);
-      console.log('All Spotify CDN images found:', html.match(/https:\/\/[^"\s]*\.scdn\.co[^"\s]*\.(jpg|jpeg|png|webp)/gi)?.slice(0, 3));
-      console.log('===============================');
     }
     
     let favicon = faviconMatch?.[1] || ''

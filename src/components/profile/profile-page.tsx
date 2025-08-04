@@ -598,17 +598,6 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 	};
 
 	const renderWidget = (widget: Widget) => {
-		// Debug logging for Spotify widgets
-		if (widget.data.platform === 'spotify') {
-			console.log('=== PROFILE PAGE SPOTIFY WIDGET RENDER DEBUG ===');
-			console.log('Widget ID:', widget.id);
-			console.log('widget.data.display_name:', widget.data.display_name);
-			console.log('widget.data.username:', widget.data.username);
-			console.log('widget.data.title:', widget.data.title);
-			console.log('widget.data.platform:', widget.data.platform);
-			console.log('Full widget.data:', widget.data);
-			console.log('=================================================');
-		}
 		// In mobile view, force all widgets except small-circle to be treated as small-square for consistent behavior
 		const effectiveSize = isMobile && widget.size !== 'small-circle' ? 'small-square' : widget.size;
 		const sizeClass = getWidgetSizeClass(effectiveSize);
