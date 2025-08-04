@@ -318,21 +318,81 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
       // Handle normal widget creation (social links, essential widgets, and pro widgets)
       let finalWidgetData = { ...widgetData }
 
-      // For Twitch embeds, fetch metadata to get profile image
-      if (selectedWidget === 'pro_twitch_embed' && widgetData.username) {
+      // Debug what's happening in widget creation
+      console.log('Widget creation debug:', {
+        selectedWidget,
+        widgetData,
+        platform: widgetData.platform
+      })
+
+      // For widgets that support profile images, fetch metadata for larger sizes
+      const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube']
+      const platformForMetadata = selectedWidget === 'pro_twitch_embed' ? 'twitch' : widgetData.platform
+      const widgetSize = selectedWidget === 'pro_twitch_embed' || selectedWidget === 'pro_youtube_live' ? 'large-square' : 'small-square'
+      
+      // Use profile images for supported platforms regardless of widget size (except small-circle)
+      const shouldUseProfileImage = widgetSize !== 'small-circle'
+      
+      if (shouldUseProfileImage && platformForMetadata && supportedPlatforms.includes(platformForMetadata) && (widgetData.username || widgetData.url)) {
         try {
-          const twitchUrl = `https://www.twitch.tv/${widgetData.username}`
+          let profileUrl = ''
           
-          const metadataResponse = await fetch(`/api/metadata?url=${encodeURIComponent(twitchUrl)}`)
-          if (metadataResponse.ok) {
-            const metadata = await metadataResponse.json()
-            
-            if (metadata.profileImage || metadata.image) {
-              finalWidgetData.profileImage = metadata.profileImage || metadata.image
+          // Construct profile URL based on platform
+          if (platformForMetadata === 'twitch' && widgetData.username) {
+            profileUrl = `https://www.twitch.tv/${widgetData.username}`
+          } else if (platformForMetadata === 'spotify' && widgetData.username) {
+            profileUrl = `https://open.spotify.com/user/${widgetData.username}`
+          } else if (platformForMetadata === 'tiktok' && widgetData.username) {
+            profileUrl = `https://www.tiktok.com/@${widgetData.username}`
+          } else if (platformForMetadata === 'youtube' && widgetData.username) {
+            profileUrl = widgetData.username.startsWith('UC') || widgetData.username.length === 24
+              ? `https://www.youtube.com/channel/${widgetData.username}`
+              : `https://www.youtube.com/@${widgetData.username}`
+          } else if (widgetData.url) {
+            profileUrl = widgetData.url
+          }
+          
+          if (profileUrl) {
+            const metadataResponse = await fetch(`/api/metadata?url=${encodeURIComponent(profileUrl)}`)
+            if (metadataResponse.ok) {
+              const metadata = await metadataResponse.json()
+              
+              // Debug logging for Spotify
+              if (platformForMetadata === 'spotify') {
+                console.log('Spotify metadata debug:', {
+                  url: profileUrl,
+                  metadata,
+                  profileImage: metadata.profileImage,
+                  image: metadata.image,
+                  title: metadata.title,
+                  description: metadata.description,
+                  displayName: metadata.displayName
+                })
+              }
+              
+              if (metadata.profileImage || metadata.image) {
+                finalWidgetData.profileImage = metadata.profileImage || metadata.image
+              }
+              
+              // Also try to get display name for Spotify
+              if (platformForMetadata === 'spotify' && metadata.displayName) {
+                finalWidgetData.displayName = metadata.displayName
+                // Use display name as the title instead of @username for better UX
+                finalWidgetData.title = metadata.displayName
+              }
+            } else {
+              // Log failed requests for Spotify
+              if (platformForMetadata === 'spotify') {
+                console.log('Spotify metadata request failed:', {
+                  url: profileUrl,
+                  status: metadataResponse.status,
+                  statusText: metadataResponse.statusText
+                })
+              }
             }
           }
         } catch (error) {
-          console.warn('Failed to fetch Twitch metadata in widget creation:', error)
+          console.warn(`Failed to fetch ${platformForMetadata} metadata in widget creation:`, error)
         }
       }
 
@@ -347,11 +407,29 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
           platform: widgetData.platform,
           username: widgetData.username,
           url: widgetData.url,
-          title: widgetData.username ? `@${widgetData.username}` : widgetData.title || widgetData.platform
+          title: finalWidgetData.displayName || finalWidgetData.title || (widgetData.username ? `@${widgetData.username}` : widgetData.title || widgetData.platform),
+          // Map the metadata fields to the correct database column names
+          display_name: finalWidgetData.displayName,
+          profile_image_url: finalWidgetData.profileImage
         },
         position: { x: 0, y: 0 },
         webPosition: { x: 0, y: 0 },
         mobilePosition: { x: 0, y: 0 }
+      }
+
+      // Debug logging for widget creation
+      if (widgetData.platform === 'spotify') {
+        console.log('Final Spotify widget being created:', {
+          selectedWidget,
+          widgetSize,
+          shouldUseProfileImage,
+          finalWidgetData,
+          widgetData,
+          widget,
+          title: widget.data.title,
+          profile_image_url: widget.data.profile_image_url,
+          display_name: widget.data.display_name
+        })
       }
 
       onAddWidget(widget)
@@ -751,6 +829,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                                   />
                                 </div>
                               )}
+
                             </>
                           )}
                         </>

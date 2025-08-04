@@ -503,6 +503,23 @@ export function AppearanceCustomizer({
 								// Failed to extract platform info from URL
 							}
 
+							// For Spotify, try to extract display name from description after metadata is available
+							if (metadata.description && item.url && item.url.includes('spotify.com')) {
+								console.log('=== SPOTIFY LOADWIDGETS DEBUG ===');
+								console.log('metadata.description:', metadata.description);
+								console.log('item.url:', item.url);
+								console.log('Before parsing - displayName:', displayName);
+								
+								// Extract name from descriptions like "User · Dan Block"
+								const parts = metadata.description.split(" · ");
+								console.log('Split parts:', parts);
+								if (parts.length > 1) {
+									displayName = parts[1].trim();
+									console.log('After parsing - displayName:', displayName);
+								}
+								console.log('=====================================');
+							}
+
 							// Safe JSON parsing with fallback - position mobile widgets more tightly
 							let widgetPosition = { x: 20, y: index * 80 + 20 };
 							let webPosition = { x: 20, y: index * 80 + 20 };
@@ -590,8 +607,17 @@ export function AppearanceCustomizer({
 									appLogo: metadata.appLogo || metadata.favicon || "",
 									platform: item.platform || platform || undefined,
 									username: item.username || username || undefined,
-									displayName: item.display_name || displayName || "",
-									profileImage: item.profile_image_url || metadata.profileImage || "",
+									display_name: (() => {
+										if (item.url && item.url.includes('spotify.com')) {
+											console.log('=== SPOTIFY WIDGET DATA ASSIGNMENT DEBUG ===');
+											console.log('item.display_name (from database):', item.display_name);
+											console.log('displayName (extracted):', displayName);
+											console.log('Final choice:', item.display_name || displayName || "");
+											console.log('============================================');
+										}
+										return item.display_name || displayName || "";
+									})(),
+									profile_image_url: item.profile_image_url || metadata.profileImage || "",
 									content: item.content || "",
 									caption: item.caption || "",
 									price: item.price || "",
@@ -1365,8 +1391,10 @@ export function AppearanceCustomizer({
 			let finalUrl = widget.data.url || "";
 			let title = widget.data.title || widget.data.platform || "Widget";
 
-			// For social platforms, use the username as title if available
-			if (widget.data.username) {
+			// For social platforms, prefer display name over username
+			if (widget.data.display_name) {
+				title = widget.data.display_name;
+			} else if (widget.data.username) {
 				title =
 					widget.data.platform === "website"
 						? widget.data.username
@@ -1434,28 +1462,42 @@ export function AppearanceCustomizer({
 					) {
 						metadata.displayName = profileMetadata.displayName;
 						// Update the title to use display name
-						title = `@${widget.data.username}`;
+						title = profileMetadata.displayName;
 					}
 
 					// For Spotify, try to extract display name from metadata description
-					if (widget.data.platform === "spotify" && !metadata.displayName) {
+					if (widget.data.platform === "spotify") {
 						try {
 							const metadataResponse = await fetch(
 								`/api/metadata?url=${encodeURIComponent(widget.data.url || "")}`
 							);
 							if (metadataResponse.ok) {
 								const metadataData = await metadataResponse.json();
+								console.log('=== SPOTIFY METADATA EXTRACTION DEBUG ===');
+								console.log('metadataData:', metadataData);
+								console.log('metadataData.description:', metadataData.description);
+								console.log('metadataData.displayName:', metadataData.displayName);
+								
 								// Map the image field to profileImage for consistency
 								if (metadataData.image && !metadata.profileImage) {
 									metadata.profileImage = metadataData.image;
 								}
-								if (metadataData.description) {
+								
+								// First try the displayName from server-side extraction
+								if (metadataData.displayName && metadataData.displayName !== widget.data.username) {
+									metadata.displayName = metadataData.displayName;
+									console.log('Using server displayName:', metadataData.displayName);
+								} else if (metadataData.description) {
 									// Extract name from descriptions like "User · Dan Block"
 									const parts = metadataData.description.split(" · ");
+									console.log('Description parts:', parts);
 									if (parts.length > 1) {
 										metadata.displayName = parts[1].trim();
+										console.log('Extracted from description:', parts[1].trim());
 									}
 								}
+								console.log('Final metadata.displayName:', metadata.displayName);
+								console.log('==========================================');
 							}
 						} catch (error) {
 							console.warn("Failed to fetch Spotify metadata:", error);
@@ -1549,6 +1591,17 @@ export function AppearanceCustomizer({
 				return;
 			}
 
+			// Debug logging for Spotify database insert
+			if (widget.data.platform === 'spotify') {
+				console.log('=== SPOTIFY DATABASE INSERT DEBUG ===');
+				console.log('metadata.displayName:', metadata.displayName);
+				console.log('title (variable):', title);
+				console.log('metadata.title:', metadata.title);
+				console.log('Database title will be:', metadata.displayName || title.trim() || metadata.title);
+				console.log('Database display_name will be:', metadata.displayName);
+				console.log('======================================');
+			}
+
 			// Save to links table for non-QR code widgets
 			const { data: linkData, error: linkError } = await supabase
 				.from("links")
@@ -1558,7 +1611,7 @@ export function AppearanceCustomizer({
 						currentPage?.id ||
 						pages?.find((p) => p.is_primary)?.id ||
 						pages?.[0]?.id,
-					title: title.trim() || metadata.title,
+					title: metadata.displayName || title.trim() || metadata.title,
 					url: finalUrl,
 					order: widgets.length + 1,
 					is_active: true,
@@ -1567,7 +1620,7 @@ export function AppearanceCustomizer({
 					platform: widget.data.platform,
 					username: widget.data.username,
 					display_name: metadata.displayName,
-					profile_image_url: metadata.profileImage,
+					profile_image_url: widget.data.profile_image_url || metadata.profileImage,
 					widget_type: widget.type,
 					content: widget.data.content,
 					caption: widget.data.caption,
@@ -1603,8 +1656,8 @@ export function AppearanceCustomizer({
 					appLogo: metadata.appLogo,
 					platform: widget.data.platform,
 					username: widget.data.username,
-					displayName: metadata.displayName || "",
-					profileImage: widget.data.profileImage || metadata.profileImage || "",
+					display_name: metadata.displayName || "",
+					profile_image_url: widget.data.profile_image_url || metadata.profileImage || "",
 					content: widget.data.content,
 					caption: widget.data.caption,
 					price: widget.data.price,
@@ -2105,6 +2158,18 @@ export function AppearanceCustomizer({
 	};
 
 	const renderWidget = (widget: Widget, inRightPanel = false) => {
+		// Debug logging for Spotify widgets
+		if (widget.data.platform === 'spotify') {
+			console.log('=== SPOTIFY WIDGET RENDER DEBUG ===');
+			console.log('Widget ID:', widget.id);
+			console.log('widget.data.display_name:', widget.data.display_name);
+			console.log('widget.data.username:', widget.data.username);
+			console.log('widget.data.title:', widget.data.title);
+			console.log('widget.data.platform:', widget.data.platform);
+			console.log('Full widget.data:', widget.data);
+			console.log('=====================================');
+		}
+		
 		// In mobile view, force all widgets except small-circle to be treated as small-square for consistent behavior
 		const effectiveSize =
 			activeView === "mobile" && widget.size !== "small-circle" ? "small-square" : widget.size;
@@ -2140,17 +2205,20 @@ export function AppearanceCustomizer({
 
 				// Helper function to get the appropriate image for a platform
 				const getWidgetImage = (platform: string, widget: any, socialInfo: any) => {
-					// For Twitch, prefer profile image over platform logo
-					if (platform === 'twitch' && widget.data.profileImage) {
+					// Check if profile image is available for supported platforms (except small-circle)
+					const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube'];
+					const shouldUseProfileImage = widget.size !== 'small-circle';
+					
+					if (supportedPlatforms.includes(platform) && shouldUseProfileImage && (widget.data.profile_image_url || widget.data.profileImage)) {
 						return {
-							src: widget.data.profileImage,
-							alt: widget.data.username || "Twitch Profile",
+							src: widget.data.profile_image_url || widget.data.profileImage,
+							alt: widget.data.username || `${platform} Profile`,
 							className: "object-cover rounded-full",
 							fallbackSrc: socialInfo.logoUrl,
 							fallbackClassName: "object-contain filter invert brightness-0"
 						};
 					}
-					// For all other platforms, use platform logo
+					// For small widgets or when profile image is not available, use platform logo
 					if (socialInfo.logoUrl) {
 						return {
 							src: socialInfo.logoUrl,
@@ -2266,15 +2334,10 @@ export function AppearanceCustomizer({
 											: "text-gray-900 text-sm"
 									} break-words leading-tight`}
 								>
-									{activeView === "mobile"
-										? widget.data.title ||
-										  widget.data.displayName ||
-										  capitalizedPlatform ||
-										  "Link"
-										: widget.data.displayName ||
-										  (widget.data.username
-												? `@${widget.data.username}`
-												: widget.data.title || capitalizedPlatform || "Link")}
+									{widget.data.display_name ||
+										(widget.data.username
+											? `@${widget.data.username}`
+											: widget.data.title || capitalizedPlatform || "Link")}
 								</div>
 							</div>
 						</div>
@@ -2317,10 +2380,10 @@ export function AppearanceCustomizer({
 							}`}
 						>
 							{/* Background - Profile Picture or Platform Logo */}
-							{widget.data.profileImage ? (
+							{widget.data.profile_image_url ? (
 								<div className="absolute inset-0">
 									<img
-										src={widget.data.profileImage}
+										src={widget.data.profile_image_url}
 										alt={widget.data.username || platform}
 										className="w-full h-full object-cover"
 										onError={(e) => {
@@ -2378,15 +2441,10 @@ export function AppearanceCustomizer({
 										activeView === "mobile" ? "text-xs" : "text-xs"
 									} font-medium text-white leading-tight`}
 								>
-									{activeView === "mobile"
-										? widget.data.title ||
-										  widget.data.displayName ||
-										  capitalizedPlatform ||
-										  "Link"
-										: widget.data.displayName ||
-										  (widget.data.username
-												? `@${widget.data.username}`
-												: widget.data.title || capitalizedPlatform || "Link")}
+									{widget.data.display_name ||
+										(widget.data.username
+											? `@${widget.data.username}`
+											: widget.data.title || capitalizedPlatform || "Link")}
 								</div>
 								{widget.data.username &&
 									platform &&
@@ -2404,10 +2462,10 @@ export function AppearanceCustomizer({
 					return (
 						<div className="relative h-full w-full overflow-hidden rounded-2xl">
 							{/* Background - Profile Picture or Platform Logo */}
-							{widget.data.profileImage ? (
+							{widget.data.profile_image_url ? (
 								<div className="absolute inset-0">
 									<img
-										src={widget.data.profileImage}
+										src={widget.data.profile_image_url}
 										alt={widget.data.username || platform}
 										className="w-full h-full object-cover"
 										onError={(e) => {
@@ -2441,7 +2499,7 @@ export function AppearanceCustomizer({
 							{/* Content */}
 							<div className="absolute bottom-3 left-3 right-3 z-10">
 								<div className="text-sm font-medium text-white">
-									{widget.data.displayName ||
+									{widget.data.display_name ||
 										(widget.data.username
 											? `@${widget.data.username}`
 											: widget.data.title || platform || "Link")}
@@ -2460,10 +2518,10 @@ export function AppearanceCustomizer({
 					return (
 						<div className="relative h-full w-full overflow-hidden rounded-3xl">
 							{/* Background - Profile Picture or Platform Logo */}
-							{widget.data.profileImage ? (
+							{widget.data.profile_image_url ? (
 								<div className="absolute inset-0">
 									<img
-										src={widget.data.profileImage}
+										src={widget.data.profile_image_url}
 										alt={widget.data.username || platform}
 										className="w-full h-full object-cover"
 										onError={(e) => {
@@ -2516,7 +2574,7 @@ export function AppearanceCustomizer({
 							{/* Content */}
 							<div className="absolute bottom-4 left-4 right-4 z-10">
 								<div className="text-base font-semibold text-white">
-									{widget.data.displayName ||
+									{widget.data.display_name ||
 										(widget.data.username
 											? `@${widget.data.username}`
 											: widget.data.title || platform || "Link")}
@@ -2535,10 +2593,10 @@ export function AppearanceCustomizer({
 				return (
 					<div className="relative h-full w-full overflow-hidden rounded-2xl">
 						{/* Background - Profile Picture or Platform Logo */}
-						{widget.data.profileImage ? (
+						{widget.data.profile_image_url ? (
 							<div className="absolute inset-0">
 								<img
-									src={widget.data.profileImage}
+									src={widget.data.profile_image_url}
 									alt={widget.data.username || platform}
 									className="w-full h-full object-cover"
 									onError={(e) => {
@@ -2575,7 +2633,7 @@ export function AppearanceCustomizer({
 						{/* Content */}
 						<div className="absolute bottom-3 left-3 right-3">
 							<div className="text-sm font-medium text-white">
-								{widget.data.displayName ||
+								{widget.data.display_name ||
 									(widget.data.username
 										? `@${widget.data.username}`
 										: widget.data.title || platform || "Link")}

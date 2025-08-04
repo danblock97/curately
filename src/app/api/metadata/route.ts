@@ -45,7 +45,84 @@ export async function GET(request: NextRequest) {
     
     const title = ogTitleMatch?.[1] || titleMatch?.[1] || url
     const description = ogDescriptionMatch?.[1] || descriptionMatch?.[1] || ''
-    const image = ogImageMatch?.[1] || ''
+    let image = ogImageMatch?.[1] || ''
+    let displayName = ''
+    
+    // For Spotify, try alternative methods to find profile images and display names
+    if (url.includes('spotify.com')) {
+      // Try to find profile image in various Spotify-specific patterns
+      const spotifyImagePatterns = [
+        // Look for profile image URLs in JavaScript/JSON data
+        /"image"[^"]*"([^"]*https:\/\/[^"]*\.scdn\.co[^"]*)/i,
+        /"avatar"[^"]*"([^"]*)/i,
+        /profileImageUrl[^"]*"([^"]*)/i,
+        // Look for any Spotify CDN image URLs
+        /https:\/\/[^"\s]*\.scdn\.co[^"\s]*\.(jpg|jpeg|png|webp)/i,
+        // Look for Spotify image URLs in data attributes
+        /data-image=['"]*([^'"]*scdn\.co[^'"]*)/i
+      ]
+      
+      // Try to find display name in various patterns
+      const spotifyNamePatterns = [
+        // Look for display name in various Spotify patterns
+        /"display_name"[^"]*"([^"]*)/i,
+        /"name"[^"]*"([^"]*)/i,
+        /displayName[^"]*"([^"]*)/i,
+        // Look for artist or user name
+        /"artist"[^"]*"name"[^"]*"([^"]*)/i,
+        /"user"[^"]*"display_name"[^"]*"([^"]*)/i
+      ]
+      
+      // Try image patterns
+      for (let i = 0; i < spotifyImagePatterns.length; i++) {
+        const pattern = spotifyImagePatterns[i]
+        const match = html.match(pattern)
+        if (match && match[1] && match[1].includes('scdn.co')) {
+          image = match[1]
+          console.log(`Spotify: Found profile image using pattern ${i + 1}:`, image)
+          break
+        }
+      }
+      
+      // Try name patterns
+      for (let i = 0; i < spotifyNamePatterns.length; i++) {
+        const pattern = spotifyNamePatterns[i]
+        const match = html.match(pattern)
+        if (match && match[1] && match[1].length > 0 && match[1].length < 100) {
+          displayName = match[1]
+          console.log(`Spotify: Found display name using pattern ${i + 1}:`, displayName)
+          break
+        }
+      }
+      
+      // If no display name found through patterns, try extracting from description
+      if (!displayName && description) {
+        // Try to extract name from descriptions like "User · Dan Block"
+        const parts = description.split(" · ");
+        if (parts.length > 1) {
+          displayName = parts[1].trim();
+          console.log('Spotify: Extracted display name from description:', displayName);
+        }
+      }
+      
+      // If still no display name found, try using the og:title as display name
+      if (!displayName && ogTitleMatch && ogTitleMatch[1]) {
+        displayName = ogTitleMatch[1]
+        console.log('Spotify: Using og:title as display name:', displayName)
+      }
+      
+      console.log('=== SPOTIFY METADATA DEBUG ===');
+      console.log('URL:', url);
+      console.log('Response status:', response.status);
+      console.log('HTML length:', html?.length || 0);
+      console.log('og:image match:', ogImageMatch);
+      console.log('og:title match:', ogTitleMatch);
+      console.log('Extracted image:', image);
+      console.log('Extracted display name:', displayName);
+      console.log('All Spotify CDN images found:', html.match(/https:\/\/[^"\s]*\.scdn\.co[^"\s]*\.(jpg|jpeg|png|webp)/gi)?.slice(0, 3));
+      console.log('===============================');
+    }
+    
     let favicon = faviconMatch?.[1] || ''
     
     // Convert relative favicon URLs to absolute
@@ -91,17 +168,27 @@ export async function GET(request: NextRequest) {
       favicon = popularApp.logo
     }
 
+    // Decode HTML entities
+    const decodeHtmlEntities = (str: string) => {
+      return str.replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'");
+    };
+
     const result = {
       title: title.trim(),
       description: description.trim(),
-      image: image.trim(),
+      image: decodeHtmlEntities(image.trim()),
       favicon: favicon.trim(),
       url,
       isPopularApp: !!popularApp,
       appName: popularApp?.name || '',
-      appLogo: popularApp?.logo || favicon
+      appLogo: popularApp?.logo || favicon,
+      displayName: displayName.trim(),
+      profileImage: decodeHtmlEntities(image.trim()) // Add profileImage alias for consistency
     }
-    
     
     return NextResponse.json(result)
     
