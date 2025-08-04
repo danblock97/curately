@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
               `connect-src 'self' ${supabaseUrl} wss://${supabaseHost}`,
-              "frame-src 'self' https://player.twitch.tv",
+              "frame-src 'self' https://player.twitch.tv https://www.youtube.com",
               "base-uri 'self'",
               "form-action 'self'",
               "upgrade-insecure-requests"

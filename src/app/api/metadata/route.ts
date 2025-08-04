@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       favicon = popularApp.logo
     }
 
-    return NextResponse.json({
+    const result = {
       title: title.trim(),
       description: description.trim(),
       image: image.trim(),
@@ -100,7 +100,10 @@ export async function GET(request: NextRequest) {
       isPopularApp: !!popularApp,
       appName: popularApp?.name || '',
       appLogo: popularApp?.logo || favicon
-    })
+    }
+    
+    
+    return NextResponse.json(result)
     
   } catch (error) {
     console.error('Error fetching metadata:', error)

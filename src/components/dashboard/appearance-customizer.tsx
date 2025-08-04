@@ -360,6 +360,11 @@ export function AppearanceCustomizer({
 										);
 										if (metadataResponse.ok) {
 											metadata = await metadataResponse.json();
+											
+											// Map the image field to profileImage for consistency
+											if (metadata.image && !metadata.profileImage) {
+												metadata.profileImage = metadata.image;
+											}
 										}
 									}
 								} catch (error) {
@@ -569,6 +574,8 @@ export function AppearanceCustomizer({
 									: item.widget_type || "link";
 							
 							let itemSize = item.size || "thin";
+							
+							
 							return {
 								id: item.id,
 								type: itemType,
@@ -584,7 +591,7 @@ export function AppearanceCustomizer({
 									platform: item.platform || platform || undefined,
 									username: item.username || username || undefined,
 									displayName: item.display_name || displayName || "",
-									profileImage: item.profile_image_url || "",
+									profileImage: item.profile_image_url || metadata.profileImage || "",
 									content: item.content || "",
 									caption: item.caption || "",
 									price: item.price || "",
@@ -1438,6 +1445,10 @@ export function AppearanceCustomizer({
 							);
 							if (metadataResponse.ok) {
 								const metadataData = await metadataResponse.json();
+								// Map the image field to profileImage for consistency
+								if (metadataData.image && !metadata.profileImage) {
+									metadata.profileImage = metadataData.image;
+								}
 								if (metadataData.description) {
 									// Extract name from descriptions like "User · Dan Block"
 									const parts = metadataData.description.split(" · ");
@@ -1593,7 +1604,7 @@ export function AppearanceCustomizer({
 					platform: widget.data.platform,
 					username: widget.data.username,
 					displayName: metadata.displayName || "",
-					profileImage: metadata.profileImage || "",
+					profileImage: widget.data.profileImage || metadata.profileImage || "",
 					content: widget.data.content,
 					caption: widget.data.caption,
 					price: widget.data.price,
@@ -2127,60 +2138,30 @@ export function AppearanceCustomizer({
 					};
 				};
 
-				// Check for Twitch embed widget (special case) - handle both legacy and new sizes
-				if (widget.data.platform === 'twitch' && (widget.size === 'extra-large' || widget.size === 'large-square')) {
-					return (
-						<div className="relative h-full w-full bg-gray-900 rounded-lg overflow-hidden">
-							{/* Twitch embed preview */}
-							<div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-purple-800">
-								{/* Header */}
-								<div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/60 to-transparent p-2">
-									<div className="flex items-center justify-between">
-										<div className="flex items-center space-x-2">
-											<div className="w-4 h-4 bg-purple-600 rounded flex items-center justify-center">
-												<svg className="w-2 h-2 text-white fill-white" viewBox="0 0 24 24">
-													<polygon points="5,3 19,12 5,21" />
-												</svg>
-											</div>
-											<span className="text-white text-xs font-medium">
-												{widget.data.username || 'Channel'}
-											</span>
-										</div>
-										<div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-									</div>
-								</div>
-								
-								{/* Center content */}
-								<div className="absolute inset-0 flex items-center justify-center">
-									<div className="text-center">
-										<div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2">
-											<svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-												<path d="M2.149 0L.537 4.119v15.024h5.731V24h3.224l4.867-4.857h7.81l10.69-10.69V0H2.149Zm29.751 7.533l-4.736 4.736h-9.267l-4.736 4.736V12.27H8.425V2.149h23.475v5.384ZM18.637 7.533V15.024h2.149V7.533h-2.149Zm-5.731 0V15.024h2.149V7.533h-2.149Z"/>
-											</svg>
-										</div>
-										<p className="text-white/90 text-xs font-medium">
-											{widget.data.title || 'Live Stream'}
-										</p>
-										<p className="text-white/60 text-xs mt-1">
-											{widget.data.username ? 'Live on Twitch' : 'Currently Offline'}
-										</p>
-									</div>
-								</div>
-								
-								{/* Bottom info */}
-								<div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-									<div className="flex items-center justify-between">
-										<div className="flex items-center space-x-1">
-											<div className="w-2 h-2 bg-red-500 rounded-full" />
-											<span className="text-white/80 text-xs">LIVE</span>
-										</div>
-										<span className="text-white/60 text-xs">Pro Feature</span>
-									</div>
-								</div>
-							</div>
-						</div>
-					);
-				}
+				// Helper function to get the appropriate image for a platform
+				const getWidgetImage = (platform: string, widget: any, socialInfo: any) => {
+					// For Twitch, prefer profile image over platform logo
+					if (platform === 'twitch' && widget.data.profileImage) {
+						return {
+							src: widget.data.profileImage,
+							alt: widget.data.username || "Twitch Profile",
+							className: "object-cover rounded-full",
+							fallbackSrc: socialInfo.logoUrl,
+							fallbackClassName: "object-contain filter invert brightness-0"
+						};
+					}
+					// For all other platforms, use platform logo
+					if (socialInfo.logoUrl) {
+						return {
+							src: socialInfo.logoUrl,
+							alt: platform || widget.data.title || "External Link",
+							className: "object-contain filter invert brightness-0",
+							fallbackSrc: null,
+							fallbackClassName: null
+						};
+					}
+					return null;
+				};
 
 				// Extract platform from URL if not provided
 				let platform = widget.data.platform || "";
@@ -2197,7 +2178,7 @@ export function AppearanceCustomizer({
 						else if (hostname.includes("instagram.com")) platform = "Instagram";
 						else if (hostname.includes("facebook.com")) platform = "Facebook";
 						else if (hostname.includes("linkedin.com")) platform = "LinkedIn";
-						else if (hostname.includes("youtube.com")) platform = "YouTube";
+						else if (hostname.includes("youtube.com")) platform = "youtube";
 						else if (hostname.includes("tiktok.com")) platform = "TikTok";
 						else if (hostname.includes("twitch.tv")) platform = "twitch";
 						else if (hostname.includes("spotify.com")) platform = "Spotify";
@@ -2250,21 +2231,29 @@ export function AppearanceCustomizer({
 										: "w-8 h-8 rounded-xl"
 								} flex items-center justify-center ${socialInfo.color} ${activeView === "mobile" ? "p-1" : "p-1.5"}`}
 							>
-								{socialInfo.logoUrl ? (
-									<img
-										src={socialInfo.logoUrl}
-										alt={platform || widget.data.title || "External Link"}
-										className="w-5 h-5 object-contain filter invert brightness-0"
-										onError={(e) => {
-											const target = e.target as HTMLImageElement;
-											target.style.display = 'none';
-											const fallback = target.nextElementSibling as HTMLElement;
-											if (fallback) fallback.style.display = 'block';
-										}}
-									/>
-								) : null}
+								{(() => {
+									const imageInfo = getWidgetImage(platform, widget, socialInfo);
+									return imageInfo ? (
+										<img
+											src={imageInfo.src}
+											alt={imageInfo.alt}
+											className={`w-5 h-5 ${imageInfo.className}`}
+											onError={(e) => {
+												const target = e.target as HTMLImageElement;
+												if (imageInfo.fallbackSrc) {
+													target.src = imageInfo.fallbackSrc;
+													target.className = `w-5 h-5 ${imageInfo.fallbackClassName}`;
+												} else {
+													target.style.display = 'none';
+													const fallback = target.nextElementSibling as HTMLElement;
+													if (fallback) fallback.style.display = 'block';
+												}
+											}}
+										/>
+									) : null;
+								})()}
 								<div className={`w-5 h-5 flex items-center justify-center text-white text-sm font-bold ${
-									socialInfo.logoUrl ? 'hidden' : 'block'
+									getWidgetImage(platform, widget, socialInfo) ? 'hidden' : 'block'
 								}`}>
 									{socialInfo.fallback}
 								</div>

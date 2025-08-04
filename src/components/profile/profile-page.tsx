@@ -19,6 +19,7 @@ import { useState, useEffect, useMemo } from "react";
 import { getPlatformLogoUrl, getOptimalLogoSize } from "@/lib/qr-code";
 import { BrandedQRCode } from "@/components/ui/branded-qr-code";
 import { TwitchEmbed } from "@/components/ui/twitch-embed";
+import { YouTubeLiveEmbed } from "@/components/ui/youtube-live-embed";
 
 // Platform definitions matching widget-modal exactly
 const platforms = [
@@ -690,6 +691,21 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 						<div className="h-full w-full">
 							<TwitchEmbed
 								channel={widget.data.username || ''}
+								size={(effectiveSize === 'extra-large' || effectiveSize === 'large-square') ? 'large' : 'medium'}
+								className="w-full h-full"
+								profileImage={widget.data.profileImage}
+							/>
+						</div>
+					);
+				}
+
+				// Check for YouTube Live embed widget (special case) - handle both legacy and new sizes
+				if (widget.data.platform === 'youtube' && (widget.size === 'extra-large' || widget.size === 'large-square')) {
+					return (
+						<div className="h-full w-full">
+							<YouTubeLiveEmbed
+								channelHandle={widget.data.username?.startsWith('@') || !widget.data.username?.startsWith('UC') ? widget.data.username : undefined}
+								channelId={widget.data.username?.startsWith('UC') && widget.data.username?.length === 24 ? widget.data.username : undefined}
 								size={(effectiveSize === 'extra-large' || effectiveSize === 'large-square') ? 'large' : 'medium'}
 								className="w-full h-full"
 							/>

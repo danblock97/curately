@@ -72,6 +72,7 @@ const essentialWidgets = [
 
 const proWidgets = [
   { name: 'Twitch Stream', icon: Package, value: 'twitch_embed', description: 'Embed your live Twitch stream', color: 'bg-purple-600' },
+  { name: 'YouTube Live', icon: Package, value: 'youtube_live', description: 'Embed your live YouTube stream', color: 'bg-red-600' },
 ]
 
 export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, userTier = 'free', defaultType = null, profile }: WidgetModalProps) {
@@ -97,6 +98,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
     customLogoUrl?: string
     logoFile?: string // Base64 encoded logo for API
     outputType?: 'link' | 'qr_code' // New field for output type selection
+    profileImage?: string // For storing profile images from metadata
   }>({})
 
   // Handle defaultType from dashboard
@@ -159,6 +161,11 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
 
   const handleAddWidget = async () => {
     if (!selectedWidget) return
+
+    // Show loading state for widgets that need metadata
+    if (selectedWidget === 'pro_twitch_embed') {
+      setIsConverting(true)
+    }
 
     // Handle Linktree conversion
     if (selectedWidget === 'convert_linktree') {
@@ -309,14 +316,34 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
       }
     } else {
       // Handle normal widget creation (social links, essential widgets, and pro widgets)
+      let finalWidgetData = { ...widgetData }
+
+      // For Twitch embeds, fetch metadata to get profile image
+      if (selectedWidget === 'pro_twitch_embed' && widgetData.username) {
+        try {
+          const twitchUrl = `https://www.twitch.tv/${widgetData.username}`
+          
+          const metadataResponse = await fetch(`/api/metadata?url=${encodeURIComponent(twitchUrl)}`)
+          if (metadataResponse.ok) {
+            const metadata = await metadataResponse.json()
+            
+            if (metadata.profileImage || metadata.image) {
+              finalWidgetData.profileImage = metadata.profileImage || metadata.image
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to fetch Twitch metadata in widget creation:', error)
+        }
+      }
+
       const widget: Widget = {
         id: Date.now().toString(),
         type: (selectedWidget.startsWith('platform_') ? 'social' : 
               selectedWidget.startsWith('essential') ? widgetData.type || 'link' :
-              selectedWidget === 'pro_twitch_embed' ? 'social' : 'link') as Widget['type'],
-        size: selectedWidget === 'pro_twitch_embed' ? 'large-square' : 'small-square',
+              selectedWidget === 'pro_twitch_embed' || selectedWidget === 'pro_youtube_live' ? 'social' : 'link') as Widget['type'],
+        size: selectedWidget === 'pro_twitch_embed' || selectedWidget === 'pro_youtube_live' ? 'large-square' : 'small-square',
         data: {
-          ...widgetData,
+          ...finalWidgetData,
           platform: widgetData.platform,
           username: widgetData.username,
           url: widgetData.url,
@@ -328,6 +355,11 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
       }
 
       onAddWidget(widget)
+    }
+
+    // Reset loading state
+    if (selectedWidget === 'pro_twitch_embed') {
+      setIsConverting(false)
     }
 
     onClose()
@@ -352,7 +384,10 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
   const handleEssentialSelect = (type: string) => {
     if (type === 'twitch_embed') {
       setSelectedWidget('pro_twitch_embed')
-      setWidgetData({ type: 'twitch_embed', title: '', username: '', platform: 'twitch', url: '' })
+      setWidgetData({ type: 'twitch_embed', username: '', platform: 'twitch', url: '' })
+    } else if (type === 'youtube_live') {
+      setSelectedWidget('pro_youtube_live')
+      setWidgetData({ type: 'youtube_live', username: '', platform: 'youtube', url: '' })
     } else {
       setSelectedWidget(`essential_${type}`)
       setWidgetData({ type, title: '', url: '' })
@@ -495,6 +530,9 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                           if (selectedWidget === 'pro_twitch_embed') {
                             return 'Add Twitch Stream';
                           }
+                          if (selectedWidget === 'pro_youtube_live') {
+                            return 'Add YouTube Live';
+                          }
                           return 'Add Widget';
                         })()}
                       </h2>
@@ -519,6 +557,9 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                           }
                           if (selectedWidget === 'pro_twitch_embed') {
                             return 'Embed your live stream with automatic online/offline detection';
+                          }
+                          if (selectedWidget === 'pro_youtube_live') {
+                            return 'Embed your live YouTube stream with automatic online/offline detection';
                           }
                           return 'Configure your widget';
                         })()}
@@ -1027,8 +1068,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                                 setWidgetData({
                                   ...widgetData, 
                                   username,
-                                  url: `https://www.twitch.tv/${username}`,
-                                  title: widgetData.title || `${username} Live Stream`
+                                  url: `https://www.twitch.tv/${username}`
                                 })
                               }}
                               className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
@@ -1037,16 +1077,6 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                               Enter your Twitch username (without @)
                             </p>
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="twitch-title" className="text-sm font-medium text-gray-700">Widget Title</Label>
-                            <Input
-                              id="twitch-title"
-                              placeholder="My Live Stream"
-                              value={widgetData.title || ''}
-                              onChange={(e) => setWidgetData({...widgetData, title: e.target.value})}
-                              className="h-10 rounded-xl border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
-                            />
-                          </div>
                           <div className="bg-purple-50 border border-purple-200 rounded-xl p-3">
                             <div className="flex items-start space-x-2">
                               <Sparkles className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
@@ -1054,6 +1084,43 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                                 <p className="text-sm font-medium text-purple-900">Pro Feature</p>
                                 <p className="text-xs text-purple-700 mt-1">
                                   This widget will show your live Twitch stream when you're online, or an attractive offline screen when you're not streaming. Viewers can click to visit your channel.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      ) : widgetData.type === 'youtube_live' ? (
+                        /* YouTube Live Configuration */
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="youtube-channel" className="text-sm font-medium text-gray-700">YouTube Channel</Label>
+                            <Input
+                              id="youtube-channel"
+                              placeholder="@yourusername or channel ID"
+                              value={widgetData.username || ''}
+                              onChange={(e) => {
+                                const username = e.target.value.replace(/^@/, '')
+                                setWidgetData({
+                                  ...widgetData, 
+                                  username,
+                                  url: username.startsWith('UC') || username.length === 24 
+                                    ? `https://www.youtube.com/channel/${username}` 
+                                    : `https://www.youtube.com/@${username}`
+                                })
+                              }}
+                              className="h-10 rounded-xl border-gray-200 focus:border-red-400 focus:ring-red-400/20"
+                            />
+                            <p className="text-xs text-gray-500">
+                              Enter your YouTube handle (@username) or Channel ID
+                            </p>
+                          </div>
+                          <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                            <div className="flex items-start space-x-2">
+                              <Sparkles className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-red-900">Pro Feature</p>
+                                <p className="text-xs text-red-700 mt-1">
+                                  This widget will show your live YouTube stream when you're online, or an attractive offline screen when you're not streaming. Viewers can click to visit your channel.
                                 </p>
                               </div>
                             </div>

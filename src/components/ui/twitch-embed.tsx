@@ -18,6 +18,7 @@ interface TwitchEmbedProps {
   size?: 'small' | 'medium' | 'large'
   showTitle?: boolean
   showViewers?: boolean
+  profileImage?: string
 }
 
 export function TwitchEmbed({ 
@@ -27,7 +28,8 @@ export function TwitchEmbed({
   className = '', 
   size = 'large',
   showTitle = true,
-  showViewers = true 
+  showViewers = true,
+  profileImage
 }: TwitchEmbedProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -89,7 +91,21 @@ export function TwitchEmbed({
         <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/60 to-transparent p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-purple-600 rounded flex items-center justify-center">
+              {profileImage ? (
+                <img 
+                  src={profileImage} 
+                  alt={cleanChannel}
+                  className="w-6 h-6 rounded-full object-cover"
+                  onError={(e) => {
+                    // Fallback to Twitch logo if profile image fails
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div className={`w-6 h-6 bg-purple-600 rounded flex items-center justify-center ${profileImage ? 'hidden' : 'flex'}`}>
                 <TwitchLogo className="w-4 h-4 text-white" />
               </div>
               <span className="text-white text-sm font-medium">{cleanChannel}</span>
@@ -130,7 +146,21 @@ export function TwitchEmbed({
           className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900"
         >
           <div className="text-center">
-            <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-3">
+            {profileImage ? (
+              <img 
+                src={profileImage} 
+                alt={cleanChannel}
+                className="w-12 h-12 rounded-full object-cover mx-auto mb-3"
+                onError={(e) => {
+                  // Fallback to Twitch logo if profile image fails
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div className={`w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 ${profileImage ? 'hidden' : 'flex'}`}>
               <TwitchLogo className="w-6 h-6 text-white" />
             </div>
             {cleanChannel ? (
