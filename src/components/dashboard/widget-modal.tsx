@@ -318,12 +318,6 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
       // Handle normal widget creation (social links, essential widgets, and pro widgets)
       let finalWidgetData = { ...widgetData }
 
-      // Debug what's happening in widget creation
-      console.log('Widget creation debug:', {
-        selectedWidget,
-        widgetData,
-        platform: widgetData.platform
-      })
 
       // For widgets that support profile images, fetch metadata for larger sizes
       const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube']
@@ -358,41 +352,21 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
               const metadata = await metadataResponse.json()
               
               // Debug logging for Spotify
-              if (platformForMetadata === 'spotify') {
-                console.log('Spotify metadata debug:', {
-                  url: profileUrl,
-                  metadata,
-                  profileImage: metadata.profileImage,
-                  image: metadata.image,
-                  title: metadata.title,
-                  description: metadata.description,
-                  displayName: metadata.displayName
-                })
-              }
               
               if (metadata.profileImage || metadata.image) {
-                finalWidgetData.profileImage = metadata.profileImage || metadata.image
+                finalWidgetData.profileImage = metadata.profileImage || metadata.image;
               }
               
               // Also try to get display name for Spotify
               if (platformForMetadata === 'spotify' && metadata.displayName) {
-                finalWidgetData.displayName = metadata.displayName
+                finalWidgetData.displayName = metadata.displayName;
                 // Use display name as the title instead of @username for better UX
-                finalWidgetData.title = metadata.displayName
-              }
-            } else {
-              // Log failed requests for Spotify
-              if (platformForMetadata === 'spotify') {
-                console.log('Spotify metadata request failed:', {
-                  url: profileUrl,
-                  status: metadataResponse.status,
-                  statusText: metadataResponse.statusText
-                })
+                finalWidgetData.title = metadata.displayName;
               }
             }
           }
         } catch (error) {
-          console.warn(`Failed to fetch ${platformForMetadata} metadata in widget creation:`, error)
+          console.warn(`Failed to fetch ${platformForMetadata} metadata in widget creation:`, error);
         }
       }
 
@@ -418,19 +392,6 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
       }
 
       // Debug logging for widget creation
-      if (widgetData.platform === 'spotify') {
-        console.log('Final Spotify widget being created:', {
-          selectedWidget,
-          widgetSize,
-          shouldUseProfileImage,
-          finalWidgetData,
-          widgetData,
-          widget,
-          title: widget.data.title,
-          profile_image_url: widget.data.profile_image_url,
-          display_name: widget.data.display_name
-        })
-      }
 
       onAddWidget(widget)
     }

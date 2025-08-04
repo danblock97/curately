@@ -505,19 +505,11 @@ export function AppearanceCustomizer({
 
 							// For Spotify, try to extract display name from description after metadata is available
 							if (metadata.description && item.url && item.url.includes('spotify.com')) {
-								console.log('=== SPOTIFY LOADWIDGETS DEBUG ===');
-								console.log('metadata.description:', metadata.description);
-								console.log('item.url:', item.url);
-								console.log('Before parsing - displayName:', displayName);
-								
 								// Extract name from descriptions like "User · Dan Block"
 								const parts = metadata.description.split(" · ");
-								console.log('Split parts:', parts);
 								if (parts.length > 1) {
 									displayName = parts[1].trim();
-									console.log('After parsing - displayName:', displayName);
 								}
-								console.log('=====================================');
 							}
 
 							// Safe JSON parsing with fallback - position mobile widgets more tightly
@@ -607,16 +599,7 @@ export function AppearanceCustomizer({
 									appLogo: metadata.appLogo || metadata.favicon || "",
 									platform: item.platform || platform || undefined,
 									username: item.username || username || undefined,
-									display_name: (() => {
-										if (item.url && item.url.includes('spotify.com')) {
-											console.log('=== SPOTIFY WIDGET DATA ASSIGNMENT DEBUG ===');
-											console.log('item.display_name (from database):', item.display_name);
-											console.log('displayName (extracted):', displayName);
-											console.log('Final choice:', item.display_name || displayName || "");
-											console.log('============================================');
-										}
-										return item.display_name || displayName || "";
-									})(),
+									display_name: item.display_name || displayName || "",
 									profile_image_url: item.profile_image_url || metadata.profileImage || "",
 									content: item.content || "",
 									caption: item.caption || "",
@@ -1473,11 +1456,6 @@ export function AppearanceCustomizer({
 							);
 							if (metadataResponse.ok) {
 								const metadataData = await metadataResponse.json();
-								console.log('=== SPOTIFY METADATA EXTRACTION DEBUG ===');
-								console.log('metadataData:', metadataData);
-								console.log('metadataData.description:', metadataData.description);
-								console.log('metadataData.displayName:', metadataData.displayName);
-								
 								// Map the image field to profileImage for consistency
 								if (metadataData.image && !metadata.profileImage) {
 									metadata.profileImage = metadataData.image;
@@ -1486,18 +1464,13 @@ export function AppearanceCustomizer({
 								// First try the displayName from server-side extraction
 								if (metadataData.displayName && metadataData.displayName !== widget.data.username) {
 									metadata.displayName = metadataData.displayName;
-									console.log('Using server displayName:', metadataData.displayName);
 								} else if (metadataData.description) {
 									// Extract name from descriptions like "User · Dan Block"
 									const parts = metadataData.description.split(" · ");
-									console.log('Description parts:', parts);
 									if (parts.length > 1) {
 										metadata.displayName = parts[1].trim();
-										console.log('Extracted from description:', parts[1].trim());
 									}
 								}
-								console.log('Final metadata.displayName:', metadata.displayName);
-								console.log('==========================================');
 							}
 						} catch (error) {
 							console.warn("Failed to fetch Spotify metadata:", error);
@@ -1592,15 +1565,6 @@ export function AppearanceCustomizer({
 			}
 
 			// Debug logging for Spotify database insert
-			if (widget.data.platform === 'spotify') {
-				console.log('=== SPOTIFY DATABASE INSERT DEBUG ===');
-				console.log('metadata.displayName:', metadata.displayName);
-				console.log('title (variable):', title);
-				console.log('metadata.title:', metadata.title);
-				console.log('Database title will be:', metadata.displayName || title.trim() || metadata.title);
-				console.log('Database display_name will be:', metadata.displayName);
-				console.log('======================================');
-			}
 
 			// Save to links table for non-QR code widgets
 			const { data: linkData, error: linkError } = await supabase
@@ -2238,16 +2202,6 @@ export function AppearanceCustomizer({
 
 	const renderWidget = (widget: Widget, inRightPanel = false) => {
 		// Debug logging for Spotify widgets
-		if (widget.data.platform === 'spotify') {
-			console.log('=== SPOTIFY WIDGET RENDER DEBUG ===');
-			console.log('Widget ID:', widget.id);
-			console.log('widget.data.display_name:', widget.data.display_name);
-			console.log('widget.data.username:', widget.data.username);
-			console.log('widget.data.title:', widget.data.title);
-			console.log('widget.data.platform:', widget.data.platform);
-			console.log('Full widget.data:', widget.data);
-			console.log('=====================================');
-		}
 		
 		// In mobile view, force all widgets except small-circle to be treated as small-square for consistent behavior
 		const effectiveSize =

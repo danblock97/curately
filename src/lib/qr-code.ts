@@ -370,7 +370,6 @@ export async function generateBrandedQRCodeServer(
     // we'll return the base QR code and let the client handle logo overlay
     // In a production environment, you might want to use a library like Sharp or Jimp
     
-    console.log('Server-side branded QR: Logo URL provided but server-side overlay not implemented')
     return `data:image/png;base64,${qrCodeBuffer.toString('base64')}`
   } catch (error) {
     console.error('Error generating branded QR code (server):', error)

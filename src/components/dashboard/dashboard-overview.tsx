@@ -55,13 +55,14 @@ const item = {
 }
 
 export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes, userId, profile, pages }: DashboardOverviewProps) {
-  const [links, setLinks] = useState<Link[]>([])
-  const [qrCodes, setQrCodes] = useState<QRCode[]>([])
+  const [links, setLinks] = useState<Link[]>(initialLinks || [])
+  const [qrCodes, setQrCodes] = useState<QRCode[]>(initialQrCodes || [])
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [currentPageNum, setCurrentPageNum] = useState(1)
   const [itemsPerPage] = useState(6)
   const [showWidgetModal, setShowWidgetModal] = useState(false)
   const [widgetModalDefaultType, setWidgetModalDefaultType] = useState<string | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   
   // Get the current page (default to primary page, only consider active pages)
   const activePages = pages.filter(page => page.is_active !== false)
@@ -123,11 +124,58 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
   
   const planUsage = usePlanLimits(links, profile.tier, pages.filter(page => page.is_active !== false).length, qrCodes.map(qr => ({ is_active: qr.is_active })))
 
-  // Initialize with server data
+  // Initialize with server data and add client-side refresh
   useEffect(() => {
-    setLinks(initialLinks)
-    setQrCodes(initialQrCodes)
+    if (initialLinks && initialLinks.length > 0) {
+      setLinks(initialLinks)
+    }
+    if (initialQrCodes && initialQrCodes.length > 0) {
+      setQrCodes(initialQrCodes)
+    }
   }, [initialLinks, initialQrCodes])
+
+  // Add client-side data refresh for when server data is stale
+  useEffect(() => {
+    const refreshData = async () => {
+      // Only refresh if we have no data but should have some, or if explicitly refreshing
+      if ((!links.length && !qrCodes.length) || isRefreshing) {
+        setIsRefreshing(true)
+        try {
+          const { createClient } = await import('@/lib/supabase/client')
+          const supabase = createClient()
+          
+          const [linksResult, qrCodesResult] = await Promise.all([
+            supabase
+              .from('links')
+              .select('*')
+              .eq('user_id', userId)
+              .order('order', { ascending: true }),
+            supabase
+              .from('qr_codes')
+              .select('*')
+              .eq('user_id', userId)
+              .order('order_index', { ascending: true })
+          ])
+          
+          if (linksResult.data) {
+            setLinks(linksResult.data)
+          }
+          if (qrCodesResult.data) {
+            setQrCodes(qrCodesResult.data)
+          }
+        } catch (error) {
+          console.error('Error refreshing dashboard data:', error)
+        } finally {
+          setIsRefreshing(false)
+        }
+      }
+    }
+
+    // Refresh data when component mounts if no initial data
+    if (!initialLinks?.length && !initialQrCodes?.length) {
+      refreshData()
+    }
+  }, [userId, initialLinks?.length, initialQrCodes?.length, isRefreshing, links.length, qrCodes.length])
   
   // Reset pagination when page or items change
   useEffect(() => {
@@ -155,7 +203,8 @@ export function DashboardOverview({ links: initialLinks, qrCodes: initialQrCodes
   const handleAddWidget = (widget: Widget) => {
     setShowWidgetModal(false)
     setWidgetModalDefaultType(null)
-    toast.success('Widget added successfully! Please refresh to see changes.')
+    setIsRefreshing(true)
+    toast.success('Widget added successfully!')
   }
 
   const handleCustomLinkClick = () => {
