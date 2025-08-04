@@ -2102,6 +2102,85 @@ export function AppearanceCustomizer({
 		}
 	};
 
+	// Touch event handlers for mobile devices
+	const handleTouchStart = (e: React.TouchEvent, widgetId: string) => {
+		const widget = widgets.find((w) => w.id === widgetId);
+		if (!widget) return;
+
+		const touch = e.touches[0];
+		const rect = e.currentTarget.getBoundingClientRect();
+		const offset = {
+			x: touch.clientX - rect.left,
+			y: touch.clientY - rect.top,
+		};
+
+		setDragOffset(offset);
+		setDraggedWidget(widgetId);
+		setDragPreview(null);
+
+		// Add visual feedback
+		if (e.currentTarget) {
+			(e.currentTarget as HTMLElement).style.opacity = "0.5";
+		}
+	};
+
+	const handleTouchMove = (e: React.TouchEvent) => {
+		e.preventDefault(); // Prevent scrolling
+		if (!draggedWidget || !gridRef.current) return;
+
+		const touch = e.touches[0];
+		const rect = gridRef.current.getBoundingClientRect();
+		const widget = widgets.find((w) => w.id === draggedWidget);
+		if (!widget) return;
+
+		// Account for container padding (24px on each side)
+		const touchPosition = {
+			x: Math.max(
+				0,
+				Math.min(rect.width - 48, touch.clientX - rect.left - dragOffset.x - 24)
+			),
+			y: Math.max(0, touch.clientY - rect.top - dragOffset.y - 24),
+		};
+
+		const previewPosition = findValidPosition(widget, touchPosition);
+		setDragPreview({ ...previewPosition, widget });
+	};
+
+	const handleTouchEnd = (e: React.TouchEvent) => {
+		if (!draggedWidget || !gridRef.current) {
+			// Reset state
+			if (e.currentTarget) {
+				(e.currentTarget as HTMLElement).style.opacity = "1";
+			}
+			setDraggedWidget(null);
+			setDragPreview(null);
+			setDragOffset({ x: 0, y: 0 });
+			return;
+		}
+
+		const touch = e.changedTouches[0];
+		const rect = gridRef.current.getBoundingClientRect();
+		
+		// Account for container padding (24px on each side)
+		const newPosition = {
+			x: Math.max(
+				0,
+				Math.min(rect.width - 48, touch.clientX - rect.left - dragOffset.x - 24)
+			),
+			y: Math.max(0, touch.clientY - rect.top - dragOffset.y - 24),
+		};
+
+		handleWidgetMove(draggedWidget, newPosition);
+		
+		// Reset opacity
+		if (e.currentTarget) {
+			(e.currentTarget as HTMLElement).style.opacity = "1";
+		}
+		setDraggedWidget(null);
+		setDragPreview(null);
+		setDragOffset({ x: 0, y: 0 });
+	};
+
 	const getWidgetSizeClass = (size: Widget["size"], inRightPanel = false) => {
 		if (inRightPanel) {
 			switch (size) {
@@ -2906,6 +2985,9 @@ export function AppearanceCustomizer({
 				draggable
 				onDragStart={(e) => handleDragStart(e, widget.id)}
 				onDragEnd={handleDragEnd}
+				onTouchStart={(e) => handleTouchStart(e, widget.id)}
+				onTouchMove={handleTouchMove}
+				onTouchEnd={handleTouchEnd}
 			>
 				<Card
 					className={`h-full relative cursor-move ${
@@ -3279,6 +3361,7 @@ export function AppearanceCustomizer({
 									onDragOver={handleDragOver}
 									onDrop={handleDrop}
 									onDragLeave={handleDragLeave}
+									onTouchMove={handleTouchMove}
 									style={{
 										backgroundImage: `radial-gradient(circle at ${
 											GRID_SIZE / 2
@@ -3363,6 +3446,7 @@ export function AppearanceCustomizer({
 							onDragOver={handleDragOver}
 							onDrop={handleDrop}
 							onDragLeave={handleDragLeave}
+							onTouchMove={handleTouchMove}
 							style={{
 								backgroundImage: `radial-gradient(circle at ${
 									GRID_SIZE / 2
