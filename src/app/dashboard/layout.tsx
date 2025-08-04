@@ -31,12 +31,15 @@ export default function DashboardLayout({
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [primaryPage, setPrimaryPage] = useState<Page | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
     const checkAuthAndLoadData = async () => {
+      if (hasCheckedAuth) return
+      
       try {
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         
@@ -78,10 +81,11 @@ export default function DashboardLayout({
         router.push('/auth')
       } finally {
         setIsLoading(false)
+        setHasCheckedAuth(true)
       }
     }
 
-    // Run auth check on mount
+    // Run auth check on mount only once
     checkAuthAndLoadData()
 
     // Listen for auth state changes
@@ -90,9 +94,11 @@ export default function DashboardLayout({
         setUser(null)
         setProfile(null)
         setPrimaryPage(null)
+        setHasCheckedAuth(false)
         router.push('/auth')
-      } else if (event === 'SIGNED_IN' && session?.user) {
-        // Reload data when user signs in
+      } else if (event === 'SIGNED_IN' && session?.user && !hasCheckedAuth) {
+        // Reload data when user signs in only if we haven't checked yet
+        setHasCheckedAuth(false)
         checkAuthAndLoadData()
       }
     })
@@ -108,7 +114,7 @@ export default function DashboardLayout({
       subscription.unsubscribe()
       window.removeEventListener('profileSetupComplete', handleProfileSetupComplete)
     }
-  }, [router, supabase])
+  }, [router, supabase, hasCheckedAuth])
 
   // Render layout immediately since server handles auth protection
   // The header and sidebar components will handle their own loading states
