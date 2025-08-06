@@ -42,3 +42,6 @@ next-env.d.ts
 supabase/consolidated_schema.sql
 
 certificates
+
+# claude code
+.claude

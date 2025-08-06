@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discord Community
+    url: https://discord.gg/X2yQ6mpBSc
+    about: Join our Discord community for real-time support and discussions
+  - name: Email Support (Pro users)
+    url: mailto:support@curately.com
+    about: Pro users can reach out via email for priority support
