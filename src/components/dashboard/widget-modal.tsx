@@ -38,6 +38,8 @@ import { toast } from 'sonner'
 import { checkCanCreateLink } from '@/hooks/use-plan-limits'
 import { createClient } from '@/lib/supabase/client'
 
+
+
 interface WidgetModalProps {
   isOpen: boolean
   onClose: () => void
@@ -59,6 +61,7 @@ const platforms = [
   { name: 'GitHub', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', icon: Github, value: 'github', color: 'bg-gray-800', baseUrl: 'https://github.com/' },
   { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', icon: Music, value: 'spotify', color: 'bg-green-500', baseUrl: 'https://open.spotify.com/user/' },
   { name: 'Twitch', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/twitch.svg', icon: Package, value: 'twitch', color: 'bg-purple-600', baseUrl: 'https://www.twitch.tv/' },
+  { name: 'Kick', logoUrl: 'https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/kick.svg', icon: Package, value: 'kick', color: 'bg-green-600', baseUrl: 'https://kick.com/' },
   { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', icon: Globe, value: 'website', color: 'bg-blue-500', baseUrl: '' },
 ]
 
@@ -71,8 +74,9 @@ const essentialWidgets = [
 ]
 
 const proWidgets = [
-  { name: 'Twitch Stream', icon: Package, value: 'twitch_embed', description: 'Embed your live Twitch stream', color: 'bg-purple-600' },
-  { name: 'YouTube Live', icon: Package, value: 'youtube_live', description: 'Embed your live YouTube stream', color: 'bg-red-600' },
+  { name: 'Twitch Stream', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/twitch.svg', value: 'twitch_embed', description: 'Embed your live Twitch stream', color: 'bg-purple-600' },
+  { name: 'YouTube Live', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg', value: 'youtube_live', description: 'Embed your live YouTube stream', color: 'bg-red-600' },
+  { name: 'Kick Stream', logoUrl: 'https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/kick.svg', value: 'kick_embed', description: 'Embed your live Kick stream', color: 'bg-green-600' },
 ]
 
 export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, userTier = 'free', defaultType = null, profile }: WidgetModalProps) {
@@ -163,7 +167,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
     if (!selectedWidget) return
 
     // Show loading state for widgets that need metadata
-    if (selectedWidget === 'pro_twitch_embed') {
+    if (selectedWidget === 'pro_twitch_embed' || selectedWidget === 'pro_kick_embed') {
       setIsConverting(true)
     }
 
@@ -320,9 +324,9 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
 
 
       // For widgets that support profile images, fetch metadata for larger sizes
-      const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube']
-      const platformForMetadata = selectedWidget === 'pro_twitch_embed' ? 'twitch' : widgetData.platform
-      const widgetSize = selectedWidget === 'pro_twitch_embed' || selectedWidget === 'pro_youtube_live' ? 'large-square' : 'small-square'
+      const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube', 'kick']
+      const platformForMetadata = selectedWidget === 'pro_twitch_embed' ? 'twitch' : selectedWidget === 'pro_kick_embed' ? 'kick' : widgetData.platform
+      const widgetSize = selectedWidget === 'pro_twitch_embed' || selectedWidget === 'pro_youtube_live' || selectedWidget === 'pro_kick_embed' ? 'large-square' : 'small-square'
       
       // Use profile images for supported platforms regardless of widget size (except small-circle)
       const shouldUseProfileImage = widgetSize !== 'small-circle'
@@ -334,6 +338,8 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
           // Construct profile URL based on platform
           if (platformForMetadata === 'twitch' && widgetData.username) {
             profileUrl = `https://www.twitch.tv/${widgetData.username}`
+          } else if (platformForMetadata === 'kick' && widgetData.username) {
+            profileUrl = `https://kick.com/${widgetData.username}`
           } else if (platformForMetadata === 'spotify' && widgetData.username) {
             profileUrl = `https://open.spotify.com/user/${widgetData.username}`
           } else if (platformForMetadata === 'tiktok' && widgetData.username) {
@@ -351,10 +357,11 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
             if (metadataResponse.ok) {
               const metadata = await metadataResponse.json()
               
-              // Debug logging for Spotify
-              
               if (metadata.profileImage || metadata.image) {
                 finalWidgetData.profileImage = metadata.profileImage || metadata.image;
+              } else if (metadata.appLogo && metadata.isPopularApp) {
+                // Use app logo as fallback for popular apps like Kick that don't provide profile images
+                finalWidgetData.profileImage = metadata.appLogo;
               }
               
               // Also try to get display name for Spotify
@@ -374,8 +381,8 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
         id: Date.now().toString(),
         type: (selectedWidget.startsWith('platform_') ? 'social' : 
               selectedWidget.startsWith('essential') ? widgetData.type || 'link' :
-              selectedWidget === 'pro_twitch_embed' || selectedWidget === 'pro_youtube_live' ? 'social' : 'link') as Widget['type'],
-        size: selectedWidget === 'pro_twitch_embed' || selectedWidget === 'pro_youtube_live' ? 'large-square' : 'small-square',
+              selectedWidget === 'pro_twitch_embed' || selectedWidget === 'pro_youtube_live' || selectedWidget === 'pro_kick_embed' ? 'social' : 'link') as Widget['type'],
+        size: selectedWidget === 'pro_twitch_embed' || selectedWidget === 'pro_youtube_live' || selectedWidget === 'pro_kick_embed' ? 'large-square' : 'small-square',
         data: {
           ...finalWidgetData,
           platform: widgetData.platform,
@@ -391,13 +398,12 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
         mobilePosition: { x: 0, y: 0 }
       }
 
-      // Debug logging for widget creation
 
       onAddWidget(widget)
     }
 
     // Reset loading state
-    if (selectedWidget === 'pro_twitch_embed') {
+    if (selectedWidget === 'pro_twitch_embed' || selectedWidget === 'pro_kick_embed') {
       setIsConverting(false)
     }
 
@@ -427,6 +433,9 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
     } else if (type === 'youtube_live') {
       setSelectedWidget('pro_youtube_live')
       setWidgetData({ type: 'youtube_live', username: '', platform: 'youtube', url: '' })
+    } else if (type === 'kick_embed') {
+      setSelectedWidget('pro_kick_embed')
+      setWidgetData({ type: 'kick_embed', username: '', platform: 'kick', url: '' })
     } else {
       setSelectedWidget(`essential_${type}`)
       setWidgetData({ type, title: '', url: '' })
@@ -572,6 +581,9 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                           if (selectedWidget === 'pro_youtube_live') {
                             return 'Add YouTube Live';
                           }
+                          if (selectedWidget === 'pro_kick_embed') {
+                            return 'Add Kick Stream';
+                          }
                           return 'Add Widget';
                         })()}
                       </h2>
@@ -599,6 +611,9 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                           }
                           if (selectedWidget === 'pro_youtube_live') {
                             return 'Embed your live YouTube stream with automatic online/offline detection';
+                          }
+                          if (selectedWidget === 'pro_kick_embed') {
+                            return 'Embed your live Kick stream with automatic online/offline detection';
                           }
                           return 'Configure your widget';
                         })()}
@@ -1166,6 +1181,41 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                             </div>
                           </div>
                         </>
+                      ) : widgetData.type === 'kick_embed' ? (
+                        /* Kick Stream Configuration */
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="kick-channel" className="text-sm font-medium text-gray-700">Kick Channel</Label>
+                            <Input
+                              id="kick-channel"
+                              placeholder="yourusername"
+                              value={widgetData.username || ''}
+                              onChange={(e) => {
+                                const username = e.target.value.replace(/^@/, '')
+                                setWidgetData({
+                                  ...widgetData, 
+                                  username,
+                                  url: `https://kick.com/${username}`
+                                })
+                              }}
+                              className="h-10 rounded-xl border-gray-200 focus:border-green-400 focus:ring-green-400/20"
+                            />
+                            <p className="text-xs text-gray-500">
+                              Enter your Kick username (without @)
+                            </p>
+                          </div>
+                          <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+                            <div className="flex items-start space-x-2">
+                              <Sparkles className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-green-900">Pro Feature</p>
+                                <p className="text-xs text-green-700 mt-1">
+                                  This widget will show your live Kick stream when you're online, or an attractive offline screen when you're not streaming. Viewers can click to visit your channel.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </>
                       ) : (
                         /* Standard Link Configuration */
                         <>
@@ -1380,7 +1430,20 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-sm ${
                                       userTier === 'pro' ? widget.color : 'bg-gray-400'
                                     }`}>
-                                      <widget.icon className="w-4 h-4 text-white" />
+                                      <img 
+                                        src={widget.logoUrl} 
+                                        alt={widget.name}
+                                        className="w-4 h-4 object-contain filter invert brightness-0"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                          const fallback = target.nextElementSibling as HTMLElement;
+                                          if (fallback) fallback.style.display = 'block';
+                                        }}
+                                      />
+                                      <div className="w-4 h-4 items-center justify-center text-white text-sm font-bold hidden">
+                                        {widget.name.charAt(0)}
+                                      </div>
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <h4 className={`font-medium text-sm ${

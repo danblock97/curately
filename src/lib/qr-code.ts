@@ -441,6 +441,8 @@ export function getPlatformLogoUrl(platform: string): string | null {
     'apple_music': '/platform-logos/apple-music.png',
     'soundcloud': '/platform-logos/soundcloud.png',
     'github': '/platform-logos/github.png',
+    'twitch': '/platform-logos/twitch.png',
+    'kick': '/platform-logos/kick.png',
     'website': '/platform-logos/website.png'
   }
 
