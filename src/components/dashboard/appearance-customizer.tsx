@@ -46,6 +46,9 @@ const platforms = [
   { name: 'GitHub', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', value: 'github', color: 'bg-gray-800' },
   { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', value: 'spotify', color: 'bg-green-500' },
   { name: 'Twitch', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/twitch.svg', value: 'twitch', color: 'bg-purple-600' },
+  { name: 'Kick', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/kick.svg', value: 'kick', color: 'bg-green-600' },
+  { name: 'Threads', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/threads.svg', value: 'threads', color: 'bg-black' },
+  { name: 'Snapchat', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/snapchat.svg', value: 'snapchat', color: 'bg-yellow-400' },
   { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', value: 'website', color: 'bg-blue-500' },
 ];
 
@@ -481,6 +484,22 @@ export function AppearanceCustomizer({
 										if (pathSegments.length > 0) {
 											username = pathSegments[0];
 										}
+									} else if (hostname.includes("threads.net")) {
+										platform = "threads";
+										const pathSegments = urlObj.pathname
+											.split("/")
+											.filter(Boolean);
+										if (pathSegments.length > 0) {
+											username = pathSegments[0].replace("@", "");
+										}
+									} else if (hostname.includes("snapchat.com")) {
+										platform = "snapchat";
+										const pathSegments = urlObj.pathname
+											.split("/")
+											.filter(Boolean);
+										if (pathSegments.length > 1 && pathSegments[0] === "add") {
+											username = pathSegments[1];
+										}
 									}
 								}
 
@@ -734,6 +753,8 @@ export function AppearanceCustomizer({
 				spotify: `https://unavatar.io/spotify/${username}`,
 				apple_music: `https://unavatar.io/apple-music/${username}`,
 				soundcloud: `https://unavatar.io/soundcloud/${username}`,
+				threads: `https://unavatar.io/threads/${username}`,
+				snapchat: `https://unavatar.io/snapchat/${username}`,
 			};
 
 			const profileUrl = profileUrls[platform.toLowerCase()];
@@ -822,6 +843,10 @@ export function AppearanceCustomizer({
 			} else if (platform.toLowerCase() === "apple_music") {
 				displayName = username;
 			} else if (platform.toLowerCase() === "soundcloud") {
+				displayName = username;
+			} else if (platform.toLowerCase() === "threads") {
+				displayName = `@${username}`;
+			} else if (platform.toLowerCase() === "snapchat") {
 				displayName = username;
 			} else if (platform.toLowerCase() === "podcast") {
 				displayName = username;
@@ -2287,6 +2312,10 @@ export function AppearanceCustomizer({
 							platform = "Apple Music";
 						else if (hostname.includes("soundcloud.com"))
 							platform = "SoundCloud";
+						else if (hostname.includes("threads.net"))
+							platform = "Threads";
+						else if (hostname.includes("snapchat.com"))
+							platform = "Snapchat";
 					} catch (e) {
 						// Invalid URL, use default
 					}
@@ -2306,6 +2335,8 @@ export function AppearanceCustomizer({
 						spotify: "Spotify",
 						apple_music: "Apple Music",
 						soundcloud: "SoundCloud",
+						threads: "Threads",
+						snapchat: "Snapchat",
 						website: "Website",
 					};
 					return (
