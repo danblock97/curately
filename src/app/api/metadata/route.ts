@@ -16,6 +16,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 })
     }
 
+    // Handle special cases for platforms that might block requests
+    const urlObj = new URL(url)
+    const domain = urlObj.hostname.toLowerCase()
+    
+    // Special handling for Kick.com - they might block scraping
+    if (domain.includes('kick.com')) {
+      // For Kick, we'll provide fallback metadata without scraping
+      const channelName = urlObj.pathname.replace('/', '')
+      return NextResponse.json({
+        title: `${channelName} on Kick`,
+        description: `Watch ${channelName} live on Kick`,
+        image: '',
+        favicon: 'https://logo.clearbit.com/kick.com',
+        url,
+        isPopularApp: true,
+        appName: 'Kick',
+        appLogo: 'https://logo.clearbit.com/kick.com',
+        displayName: channelName,
+        profileImage: '' // Will be empty since we can't scrape Kick
+      })
+    }
+
     // Fetch the webpage
     const response = await fetch(url, {
       headers: {
@@ -24,6 +46,33 @@ export async function GET(request: NextRequest) {
     })
 
     if (!response.ok) {
+      // If fetch fails, check if it's a known platform and provide fallback
+      const popularApps = {
+        'twitter.com': { name: 'X (Twitter)', logo: 'https://logo.clearbit.com/x.com' },
+        'x.com': { name: 'X (Twitter)', logo: 'https://logo.clearbit.com/x.com' },
+        'instagram.com': { name: 'Instagram', logo: 'https://logo.clearbit.com/instagram.com' },
+        'kick.com': { name: 'Kick', logo: 'https://logo.clearbit.com/kick.com' },
+        'twitch.tv': { name: 'Twitch', logo: 'https://logo.clearbit.com/twitch.tv' }
+      }
+      
+      const fallbackApp = popularApps[domain as keyof typeof popularApps] || popularApps[domain.replace('www.', '') as keyof typeof popularApps]
+      
+      if (fallbackApp) {
+        const pathName = urlObj.pathname.replace('/', '') || 'Profile'
+        return NextResponse.json({
+          title: `${pathName} on ${fallbackApp.name}`,
+          description: `Visit ${pathName} on ${fallbackApp.name}`,
+          image: '',
+          favicon: fallbackApp.logo,
+          url,
+          isPopularApp: true,
+          appName: fallbackApp.name,
+          appLogo: fallbackApp.logo,
+          displayName: pathName,
+          profileImage: ''
+        })
+      }
+      
       return NextResponse.json({ error: 'Failed to fetch URL' }, { status: 400 })
     }
 
@@ -128,8 +177,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Detect popular apps and get their official logos
-    const urlObj = new URL(url)
-    const domain = urlObj.hostname.toLowerCase()
+    const domain2 = urlObj.hostname.toLowerCase()
     const popularApps = {
       'twitter.com': { name: 'X (Twitter)', logo: 'https://logo.clearbit.com/x.com' },
       'x.com': { name: 'X (Twitter)', logo: 'https://logo.clearbit.com/x.com' },
@@ -144,10 +192,11 @@ export async function GET(request: NextRequest) {
       'discord.com': { name: 'Discord', logo: 'https://logo.clearbit.com/discord.com' },
       'twitch.tv': { name: 'Twitch', logo: 'https://logo.clearbit.com/twitch.tv' },
       'spotify.com': { name: 'Spotify', logo: 'https://logo.clearbit.com/spotify.com' },
-      'soundcloud.com': { name: 'SoundCloud', logo: 'https://logo.clearbit.com/soundcloud.com' }
+      'soundcloud.com': { name: 'SoundCloud', logo: 'https://logo.clearbit.com/soundcloud.com' },
+      'kick.com': { name: 'Kick', logo: 'https://logo.clearbit.com/kick.com' }
     }
 
-    const popularApp = popularApps[domain as keyof typeof popularApps] || popularApps[domain.replace('www.', '') as keyof typeof popularApps]
+    const popularApp = popularApps[domain2 as keyof typeof popularApps] || popularApps[domain2.replace('www.', '') as keyof typeof popularApps]
     
     // Use popular app info if available
     if (popularApp) {

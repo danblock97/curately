@@ -20,6 +20,7 @@ import { getPlatformLogoUrl, getOptimalLogoSize } from "@/lib/qr-code";
 import { BrandedQRCode } from "@/components/ui/branded-qr-code";
 import { TwitchEmbed } from "@/components/ui/twitch-embed";
 import { YouTubeLiveEmbed } from "@/components/ui/youtube-live-embed";
+import { KickEmbed } from "@/components/ui/kick-embed";
 
 // Platform definitions matching widget-modal exactly
 const platforms = [
@@ -32,6 +33,7 @@ const platforms = [
   { name: 'GitHub', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', value: 'github', color: 'bg-gray-800' },
   { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', value: 'spotify', color: 'bg-green-500' },
   { name: 'Twitch', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/twitch.svg', value: 'twitch', color: 'bg-purple-600' },
+  { name: 'Kick', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/kick.svg', value: 'kick', color: 'bg-green-600' },
   { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', value: 'website', color: 'bg-blue-500' },
 ];
 
@@ -430,6 +432,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				spotify: `https://unavatar.io/spotify/${username}`,
 				apple_music: `https://unavatar.io/apple-music/${username}`,
 				soundcloud: `https://unavatar.io/soundcloud/${username}`,
+				kick: `https://unavatar.io/kick/${username}`,
+				twitch: `https://unavatar.io/twitch/${username}`,
 			};
 
 			const profileUrl = profileUrls[platform.toLowerCase()];
@@ -712,6 +716,20 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 						</div>
 					);
 				}
+				
+				// Check for Kick embed widget (special case) - handle both legacy and new sizes
+				if (widget.data.platform === 'kick' && (widget.size === 'extra-large' || widget.size === 'large-square')) {
+					return (
+						<div className="h-full w-full">
+							<KickEmbed
+								channel={widget.data.username || ''}
+								size={(effectiveSize === 'extra-large' || effectiveSize === 'large-square') ? 'large' : 'medium'}
+								className="w-full h-full"
+								profileImage={widget.data.profile_image_url}
+							/>
+						</div>
+					);
+				}
 
 				const getSocialInfo = (platform: string) => {
 					// Use the same platform data as widget-modal
@@ -736,7 +754,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				// Helper function to get the appropriate image for a platform
 				const getWidgetImage = (platform: string, widget: any, socialInfo: any) => {
 					// Check if profile image is available for supported platforms (except small-circle)
-					const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube'];
+					const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube', 'kick'];
 					const shouldUseProfileImage = widget.size !== 'small-circle';
 					
 					if (supportedPlatforms.includes(platform) && shouldUseProfileImage && widget.data.profile_image_url) {
@@ -832,8 +850,6 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 													target.className = `w-4 h-4 ${imageInfo.fallbackClassName || imageInfo.className}`;
 												} else {
 													target.style.display = 'none';
-													const fallback = target.nextElementSibling as HTMLElement;
-													if (fallback) fallback.style.display = 'block';
 												}
 											}}
 										/>
