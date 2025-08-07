@@ -52,17 +52,19 @@ interface WidgetModalProps {
 }
 
 const platforms = [
-  { name: 'Instagram', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg', icon: Instagram, value: 'instagram', color: 'bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500', baseUrl: 'https://www.instagram.com/' },
-  { name: 'Facebook', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg', icon: Facebook, value: 'facebook', color: 'bg-blue-600', baseUrl: 'https://www.facebook.com/' },
-  { name: 'TikTok', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/tiktok.svg', icon: Package, value: 'tiktok', color: 'bg-black', baseUrl: 'https://www.tiktok.com/@' },
-  { name: 'LinkedIn', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg', icon: Linkedin, value: 'linkedin', color: 'bg-blue-700', baseUrl: 'https://www.linkedin.com/in/' },
-  { name: 'YouTube', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg', icon: Youtube, value: 'youtube', color: 'bg-red-500', baseUrl: 'https://www.youtube.com/@' },
-  { name: 'X (Twitter)', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg', icon: Twitter, value: 'twitter', color: 'bg-black', baseUrl: 'https://x.com/' },
-  { name: 'GitHub', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg', icon: Github, value: 'github', color: 'bg-gray-800', baseUrl: 'https://github.com/' },
-  { name: 'Spotify', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/spotify.svg', icon: Music, value: 'spotify', color: 'bg-green-500', baseUrl: 'https://open.spotify.com/user/' },
-  { name: 'Twitch', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/twitch.svg', icon: Package, value: 'twitch', color: 'bg-purple-600', baseUrl: 'https://www.twitch.tv/' },
-  { name: 'Kick', logoUrl: 'https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/kick.svg', icon: Package, value: 'kick', color: 'bg-green-600', baseUrl: 'https://kick.com/' },
-  { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', icon: Globe, value: 'website', color: 'bg-blue-500', baseUrl: '' },
+  { name: 'Instagram', logoUrl: '/platform-logos/instagram.png', icon: Instagram, value: 'instagram', color: 'bg-gradient-to-br from-purple-500 via-pink-500 to-yellow-500', baseUrl: 'https://www.instagram.com/' },
+  { name: 'Facebook', logoUrl: '/platform-logos/facebook.png', icon: Facebook, value: 'facebook', color: 'bg-blue-600', baseUrl: 'https://www.facebook.com/' },
+  { name: 'TikTok', logoUrl: '/platform-logos/tiktok.png', icon: Package, value: 'tiktok', color: 'bg-black', baseUrl: 'https://www.tiktok.com/@' },
+  { name: 'LinkedIn', logoUrl: '/platform-logos/linkedin.webp', icon: Linkedin, value: 'linkedin', color: 'bg-blue-700', baseUrl: 'https://www.linkedin.com/in/' },
+  { name: 'YouTube', logoUrl: '/platform-logos/youtube.png', icon: Youtube, value: 'youtube', color: 'bg-red-500', baseUrl: 'https://www.youtube.com/@' },
+  { name: 'X (Twitter)', logoUrl: '/platform-logos/x.png', icon: Twitter, value: 'twitter', color: 'bg-black', baseUrl: 'https://x.com/' },
+  { name: 'GitHub', logoUrl: '/platform-logos/github.png', icon: Github, value: 'github', color: 'bg-gray-800', baseUrl: 'https://github.com/' },
+  { name: 'Spotify', logoUrl: '/platform-logos/spotify.png', icon: Music, value: 'spotify', color: 'bg-green-500', baseUrl: 'https://open.spotify.com/user/' },
+  { name: 'Twitch', logoUrl: '/platform-logos/twitch.webp', icon: Package, value: 'twitch', color: 'bg-purple-600', baseUrl: 'https://www.twitch.tv/' },
+  { name: 'Kick', logoUrl: '/platform-logos/kick.jpg', icon: Package, value: 'kick', color: 'bg-green-600', baseUrl: 'https://kick.com/' },
+  { name: 'Threads', logoUrl: '/platform-logos/threads.jpg', icon: Package, value: 'threads', color: 'bg-black', baseUrl: 'https://www.threads.net/@' },
+  { name: 'Snapchat', logoUrl: '/platform-logos/snapchat.png', icon: Package, value: 'snapchat', color: 'bg-yellow-400', baseUrl: 'https://www.snapchat.com/add/' },
+  { name: 'Website', logoUrl: '/platform-logos/website.png', icon: Globe, value: 'website', color: 'bg-blue-500', baseUrl: '' },
 ]
 
 const essentialWidgets = [
@@ -74,9 +76,9 @@ const essentialWidgets = [
 ]
 
 const proWidgets = [
-  { name: 'Twitch Stream', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/twitch.svg', value: 'twitch_embed', description: 'Embed your live Twitch stream', color: 'bg-purple-600' },
-  { name: 'YouTube Live', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/youtube.svg', value: 'youtube_live', description: 'Embed your live YouTube stream', color: 'bg-red-600' },
-  { name: 'Kick Stream', logoUrl: 'https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/kick.svg', value: 'kick_embed', description: 'Embed your live Kick stream', color: 'bg-green-600' },
+  { name: 'Twitch Stream', logoUrl: '/platform-logos/twitch.webp', value: 'twitch_embed', description: 'Embed your live Twitch stream', color: 'bg-purple-600' },
+  { name: 'YouTube Live', logoUrl: '/platform-logos/youtube.png', value: 'youtube_live', description: 'Embed your live YouTube stream', color: 'bg-red-600' },
+  { name: 'Kick Stream', logoUrl: '/platform-logos/kick.jpg', value: 'kick_embed', description: 'Embed your live Kick stream', color: 'bg-green-600' },
 ]
 
 export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, userTier = 'free', defaultType = null, profile }: WidgetModalProps) {
@@ -1316,7 +1318,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                         transition={{ duration: 0.2 }}
                       >
                         <Card 
-                          className="cursor-pointer border-2 border-orange-200 hover:border-orange-300 hover:shadow-lg transition-all duration-200 rounded-xl bg-gradient-to-br from-orange-50 to-yellow-50"
+                          className="cursor-pointer border-2 border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-200 rounded-xl bg-white"
                           onClick={() => {
                             setSelectedWidget('convert_linktree')
                             setWidgetData({ type: 'convert', title: 'Import from Linktree', url: '' })
@@ -1325,8 +1327,19 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                         >
                           <CardContent className="p-4">
                             <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-sm">
-                                <span className="text-white text-xs font-bold">LT</span>
+                              <div className="w-10 h-10 flex items-center justify-center">
+                                <img 
+                                  src="/platform-logos/linktree.webp" 
+                                  alt="Linktree"
+                                  className="w-9 h-9 object-contain"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const fallback = target.nextElementSibling as HTMLElement;
+                                    if (fallback) fallback.style.display = 'block';
+                                  }}
+                                />
+                                <span className="text-gray-600 text-xs font-bold hidden">LT</span>
                               </div>
                               <div>
                                 <h4 className="font-medium text-gray-900">Import from Linktree</h4>
@@ -1367,8 +1380,8 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                             >
                               <CardContent className="p-3">
                                 <div className="flex items-center space-x-3">
-                                  <div className={`w-9 h-9 ${widget.color} rounded-xl flex items-center justify-center shadow-sm`}>
-                                    <widget.icon className="w-4 h-4 text-white" />
+                                  <div className="w-9 h-9 flex items-center justify-center">
+                                    <widget.icon className="w-4 h-4 text-gray-600" />
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <h4 className="font-medium text-gray-900 text-sm">{widget.name}</h4>
@@ -1427,13 +1440,11 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                               >
                                 <CardContent className="p-3">
                                   <div className="flex items-center space-x-3">
-                                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-sm ${
-                                      userTier === 'pro' ? widget.color : 'bg-gray-400'
-                                    }`}>
+                                    <div className="w-9 h-9 flex items-center justify-center">
                                       <img 
                                         src={widget.logoUrl} 
                                         alt={widget.name}
-                                        className="w-4 h-4 object-contain filter invert brightness-0"
+                                        className="w-8 h-8 object-contain"
                                         onError={(e) => {
                                           const target = e.target as HTMLImageElement;
                                           target.style.display = 'none';
@@ -1509,11 +1520,11 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                             >
                               <CardContent className="p-3">
                                 <div className="flex items-center space-x-3">
-                                  <div className={`w-10 h-10 ${platform.color} rounded-xl flex items-center justify-center shadow-sm`}>
+                                  <div className="w-10 h-10 flex items-center justify-center">
                                     <img 
                                       src={platform.logoUrl} 
                                       alt={platform.name}
-                                      className="w-5 h-5 object-contain filter invert brightness-0"
+                                      className="w-9 h-9 object-contain"
                                       onError={(e) => {
                                         const target = e.target as HTMLImageElement;
                                         target.style.display = 'none';

@@ -179,21 +179,23 @@ export async function GET(request: NextRequest) {
     // Detect popular apps and get their official logos
     const domain2 = urlObj.hostname.toLowerCase()
     const popularApps = {
-      'twitter.com': { name: 'X (Twitter)', logo: 'https://logo.clearbit.com/x.com' },
-      'x.com': { name: 'X (Twitter)', logo: 'https://logo.clearbit.com/x.com' },
-      'instagram.com': { name: 'Instagram', logo: 'https://logo.clearbit.com/instagram.com' },
-      'facebook.com': { name: 'Facebook', logo: 'https://logo.clearbit.com/facebook.com' },
-      'linkedin.com': { name: 'LinkedIn', logo: 'https://logo.clearbit.com/linkedin.com' },
-      'youtube.com': { name: 'YouTube', logo: 'https://logo.clearbit.com/youtube.com' },
-      'tiktok.com': { name: 'TikTok', logo: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/tiktok.svg' },
-      'github.com': { name: 'GitHub', logo: 'https://logo.clearbit.com/github.com' },
+      'twitter.com': { name: 'X (Twitter)', logo: '/platform-logos/x.png' },
+      'x.com': { name: 'X (Twitter)', logo: '/platform-logos/x.png' },
+      'instagram.com': { name: 'Instagram', logo: '/platform-logos/instagram.png' },
+      'facebook.com': { name: 'Facebook', logo: '/platform-logos/facebook.png' },
+      'linkedin.com': { name: 'LinkedIn', logo: '/platform-logos/linkedin.webp' },
+      'youtube.com': { name: 'YouTube', logo: '/platform-logos/youtube.png' },
+      'tiktok.com': { name: 'TikTok', logo: '/platform-logos/tiktok.png' },
+      'github.com': { name: 'GitHub', logo: '/platform-logos/github.png' },
+      'threads.net': { name: 'Threads', logo: '/platform-logos/threads.jpg' },
+      'snapchat.com': { name: 'Snapchat', logo: '/platform-logos/snapchat.png' },
+      'twitch.tv': { name: 'Twitch', logo: '/platform-logos/twitch.webp' },
+      'spotify.com': { name: 'Spotify', logo: '/platform-logos/spotify.png' },
+      'kick.com': { name: 'Kick', logo: '/platform-logos/kick.jpg' },
       'medium.com': { name: 'Medium', logo: 'https://logo.clearbit.com/medium.com' },
       'reddit.com': { name: 'Reddit', logo: 'https://logo.clearbit.com/reddit.com' },
       'discord.com': { name: 'Discord', logo: 'https://logo.clearbit.com/discord.com' },
-      'twitch.tv': { name: 'Twitch', logo: 'https://logo.clearbit.com/twitch.tv' },
-      'spotify.com': { name: 'Spotify', logo: 'https://logo.clearbit.com/spotify.com' },
-      'soundcloud.com': { name: 'SoundCloud', logo: 'https://logo.clearbit.com/soundcloud.com' },
-      'kick.com': { name: 'Kick', logo: 'https://logo.clearbit.com/kick.com' }
+      'soundcloud.com': { name: 'SoundCloud', logo: 'https://logo.clearbit.com/soundcloud.com' }
     }
 
     const popularApp = popularApps[domain2 as keyof typeof popularApps] || popularApps[domain2.replace('www.', '') as keyof typeof popularApps]
