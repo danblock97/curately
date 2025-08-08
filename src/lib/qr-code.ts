@@ -435,14 +435,14 @@ export function getPlatformLogoUrl(platform: string): string | null {
     'twitter': '/platform-logos/x.png',
     'x': '/platform-logos/x.png',
     'facebook': '/platform-logos/facebook.png',
-    'linkedin': '/platform-logos/linkedin.png',
+    'linkedin': '/platform-logos/linkedin.webp',
     'youtube': '/platform-logos/youtube.png',
     'spotify': '/platform-logos/spotify.png',
-    'apple_music': '/platform-logos/apple-music.png',
-    'soundcloud': '/platform-logos/soundcloud.png',
     'github': '/platform-logos/github.png',
-    'twitch': '/platform-logos/twitch.png',
-    'kick': '/platform-logos/kick.png',
+    'twitch': '/platform-logos/twitch.webp',
+    'kick': '/platform-logos/kick.avif',
+    'threads': '/platform-logos/threads.jpg',
+    'snapchat': '/platform-logos/snapchat.jpg',
     'website': '/platform-logos/website.png'
   }
 
