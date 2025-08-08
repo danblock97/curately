@@ -2531,7 +2531,7 @@ export function AppearanceCustomizer({
 							}`}
 						>
 							{/* Background - Profile Picture or Platform Logo */}
-                            {widget.data.profile_image_url ? (
+                            {widget.data.profile_image_url && (platform || '').toString().toLowerCase() !== 'snapchat' ? (
 								<div className="absolute inset-0">
 									<img
 										src={widget.data.profile_image_url}
@@ -2634,7 +2634,7 @@ export function AppearanceCustomizer({
 					return (
 						<div className="relative h-full w-full overflow-hidden rounded-2xl">
 							{/* Background - Profile Picture or Platform Logo */}
-                            {widget.data.profile_image_url ? (
+                            {widget.data.profile_image_url && (platform || '').toString().toLowerCase() !== 'snapchat' ? (
 								<div className="absolute inset-0">
 									<img
 										src={widget.data.profile_image_url}
@@ -2779,7 +2779,7 @@ export function AppearanceCustomizer({
 				return (
 					<div className="relative h-full w-full overflow-hidden rounded-2xl">
 						{/* Background - Profile Picture or Platform Logo */}
-                        {widget.data.profile_image_url ? (
+                        {widget.data.profile_image_url && (platform || '').toString().toLowerCase() !== 'snapchat' ? (
 							<div className="absolute inset-0">
 								<img
 									src={widget.data.profile_image_url}
