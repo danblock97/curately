@@ -219,6 +219,16 @@ export async function GET(request: NextRequest) {
       const urlObj = new URL(url)
       favicon = `${urlObj.origin}/favicon.ico`
     }
+    
+    // Ensure absolute image URL for og:image
+    if (image && !image.startsWith('http')) {
+      const urlObj = new URL(url)
+      if (image.startsWith('/')) {
+        image = `${urlObj.origin}${image}`
+      } else {
+        image = `${urlObj.origin}/${image}`
+      }
+    }
 
     // Detect popular apps and get their official logos
     const domain2 = urlObj.hostname.toLowerCase()
@@ -248,6 +258,10 @@ export async function GET(request: NextRequest) {
     // Use popular app info if available
     if (popularApp) {
       favicon = popularApp.logo
+      // For Discord and other known platforms, also provide a stable appLogo
+      if (!image && (domain2.includes('discord.gg') || domain2.includes('discord.com'))) {
+        image = '/platform-logos/discord.webp'
+      }
     }
 
     // Decode HTML entities

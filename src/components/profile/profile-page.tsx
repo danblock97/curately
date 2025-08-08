@@ -36,7 +36,7 @@ const platforms = [
   { name: 'Kick', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/kick.svg', value: 'kick', color: 'bg-green-600' },
   { name: 'Threads', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/threads.svg', value: 'threads', color: 'bg-black' },
   { name: 'Snapchat', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/snapchat.svg', value: 'snapchat', color: 'bg-yellow-400' },
-  { name: 'Discord', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/discord.svg', value: 'discord', color: 'bg-indigo-600' },
+  { name: 'Discord', logoUrl: '/platform-logos/discord.webp', value: 'discord', color: 'bg-indigo-600' },
   { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', value: 'website', color: 'bg-blue-500' },
 ];
 
