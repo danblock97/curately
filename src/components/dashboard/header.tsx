@@ -12,7 +12,7 @@ type Profile = Database['public']['Tables']['profiles']['Row']
 type Page = Database['public']['Tables']['pages']['Row']
 
 interface DashboardHeaderProps {
-  user: User
+  user: User | null
   profile: Profile | null
   primaryPage?: Page | null
 }

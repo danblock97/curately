@@ -22,11 +22,13 @@ export function Navbar() {
 
   // Check authentication status on mount and listen for auth changes
   useEffect(() => {
+    let isMounted = true
     const checkAuth = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         
         if (user) {
+          if (!isMounted) return
           setIsAuthenticated(true)
           setUser(user)
           
@@ -37,18 +39,22 @@ export function Navbar() {
             .eq('id', user.id)
             .single()
           
+          if (!isMounted) return
           setProfile(profile)
         } else {
+          if (!isMounted) return
           setIsAuthenticated(false)
           setUser(null)
           setProfile(null)
         }
       } catch (error) {
         console.error('Error checking auth:', error)
+        if (!isMounted) return
         setIsAuthenticated(false)
         setUser(null)
         setProfile(null)
       } finally {
+        if (!isMounted) return
         setLoading(false)
       }
     }
@@ -58,6 +64,7 @@ export function Navbar() {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
+        if (!isMounted) return
         setIsAuthenticated(true)
         setUser(session.user)
         
@@ -68,16 +75,20 @@ export function Navbar() {
           .eq('id', session.user.id)
           .single()
         
+        if (!isMounted) return
         setProfile(profile)
       } else if (event === 'SIGNED_OUT') {
+        if (!isMounted) return
         setIsAuthenticated(false)
         setUser(null)
         setProfile(null)
       }
+      if (!isMounted) return
       setLoading(false)
     })
     
     return () => {
+      isMounted = false
       subscription.unsubscribe()
     }
   }, [])
