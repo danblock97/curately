@@ -440,9 +440,10 @@ export function getPlatformLogoUrl(platform: string): string | null {
     'spotify': '/platform-logos/spotify.png',
     'github': '/platform-logos/github.png',
     'twitch': '/platform-logos/twitch.webp',
-    'kick': '/platform-logos/kick.avif',
+    'kick': '/platform-logos/kick.jpg',
     'threads': '/platform-logos/threads.jpg',
-    'snapchat': '/platform-logos/snapchat.jpg',
+    'snapchat': '/platform-logos/snapchat.png',
+    'discord': '/platform-logos/discord.webp',
     'website': '/platform-logos/website.png'
   }
 

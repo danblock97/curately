@@ -49,6 +49,7 @@ const platforms = [
   { name: 'Kick', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/kick.svg', value: 'kick', color: 'bg-green-600' },
   { name: 'Threads', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/threads.svg', value: 'threads', color: 'bg-black' },
   { name: 'Snapchat', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/snapchat.svg', value: 'snapchat', color: 'bg-yellow-400' },
+  { name: 'Discord', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/discord.svg', value: 'discord', color: 'bg-indigo-600' },
   { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', value: 'website', color: 'bg-blue-500' },
 ];
 
@@ -361,14 +362,27 @@ export function AppearanceCustomizer({
 										const metadataResponse = await fetch(
 											`/api/metadata?url=${encodeURIComponent(item.url)}`
 										);
-										if (metadataResponse.ok) {
-											metadata = await metadataResponse.json();
-											
-											// Map the image field to profileImage for consistency
-											if (metadata.image && !metadata.profileImage) {
-												metadata.profileImage = metadata.image;
-											}
-										}
+                                    if (metadataResponse.ok) {
+                                        metadata = await metadataResponse.json();
+                                        
+                                        // Map the image field to profileImage for consistency
+                                        if (metadata.image && !metadata.profileImage) {
+                                            metadata.profileImage = metadata.image;
+                                        }
+
+                                        // Backfill to DB so it persists after refresh
+                                        try {
+                                            await supabase
+                                                .from("links")
+                                                .update({
+                                                    profile_image_url: item.profile_image_url || metadata.profileImage || null,
+                                                    display_name: item.display_name || metadata.displayName || null,
+                                                })
+                                                .eq("id", item.id);
+                                        } catch (e) {
+                                            console.warn("Failed to backfill link metadata", e);
+                                        }
+                                    }
 									}
 								} catch (error) {
 									console.error(
@@ -441,7 +455,7 @@ export function AppearanceCustomizer({
 										if (pathSegments.length > 0) {
 											username = pathSegments[0].replace("@", "");
 										}
-									} else if (hostname.includes("facebook.com")) {
+                  } else if (hostname.includes("facebook.com")) {
 										platform = "facebook";
 										const pathSegments = urlObj.pathname
 											.split("/")
@@ -449,7 +463,7 @@ export function AppearanceCustomizer({
 										if (pathSegments.length > 0) {
 											username = pathSegments[0];
 										}
-									} else if (hostname.includes("spotify.com")) {
+                  } else if (hostname.includes("spotify.com")) {
 										platform = "spotify";
 										const pathSegments = urlObj.pathname
 											.split("/")
@@ -457,6 +471,14 @@ export function AppearanceCustomizer({
 										if (pathSegments.length > 1 && pathSegments[0] === "user") {
 											username = pathSegments[1]; // Extract just the user ID, ignore query params
 										}
+                  } else if (hostname.includes("discord.com") || hostname.includes("discord.gg")) {
+                    platform = "discord";
+                    const pathSegments = urlObj.pathname
+                      .split("/")
+                      .filter(Boolean);
+                    if (pathSegments.length > 0) {
+                      username = pathSegments[0];
+                    }
 									} else if (hostname.includes("music.apple.com")) {
 										platform = "apple_music";
 										const pathSegments = urlObj.pathname
@@ -720,7 +742,9 @@ export function AppearanceCustomizer({
 					isPopularApp: metadata.isPopularApp || false,
 					appName: metadata.appName || "",
 					appLogo: metadata.appLogo || "",
-					displayName: "",
+					// Prefer profileImage provided by API, fallback to image
+					profileImage: metadata.profileImage || metadata.image || "",
+					displayName: metadata.displayName || "",
 				};
 			}
 		} catch (error) {
@@ -735,6 +759,7 @@ export function AppearanceCustomizer({
 			isPopularApp: false,
 			appName: "",
 			appLogo: "",
+			profileImage: "",
 			displayName: "",
 		};
 	};
@@ -1440,19 +1465,18 @@ export function AppearanceCustomizer({
 				displayName: "",
 				fileUrl: "",
 			};
-			if (finalUrl && !finalUrl.includes("placeholder.local")) {
-				try {
-					const linkMeta = await fetchLinkMetadata(finalUrl);
-					metadata = {
-						...linkMeta,
-						profileImage: "",
-						displayName: "",
-						fileUrl: "",
-					};
-				} catch (error) {
-					console.warn("Failed to fetch metadata:", error);
-				}
-			}
+            if (finalUrl && !finalUrl.includes("placeholder.local")) {
+                try {
+                    const linkMeta = await fetchLinkMetadata(finalUrl);
+                    // Preserve profileImage and displayName from metadata fetch
+                    metadata = {
+                        ...linkMeta,
+                        fileUrl: "",
+                    };
+                } catch (error) {
+                    console.warn("Failed to fetch metadata:", error);
+                }
+            }
 
 			// Try to get profile metadata for social platforms
 			if (widget.data.platform && widget.data.username) {
@@ -1473,8 +1497,8 @@ export function AppearanceCustomizer({
 						title = profileMetadata.displayName;
 					}
 
-					// For Spotify, try to extract display name from metadata description
-					if (widget.data.platform === "spotify") {
+                    // For Spotify, try to extract display name from metadata description
+                    if (widget.data.platform === "spotify") {
 						try {
 							const metadataResponse = await fetch(
 								`/api/metadata?url=${encodeURIComponent(widget.data.url || "")}`
@@ -1500,7 +1524,29 @@ export function AppearanceCustomizer({
 						} catch (error) {
 							console.warn("Failed to fetch Spotify metadata:", error);
 						}
-					}
+                    }
+
+                    // For Discord, try to use server name and icon from invite metadata
+                    if (widget.data.platform === "discord") {
+                      try {
+                        const metadataResponse = await fetch(
+                          `/api/metadata?url=${encodeURIComponent(widget.data.url || "")}`
+                        );
+                        if (metadataResponse.ok) {
+                          const metadataData = await metadataResponse.json();
+                          if (metadataData.image && !metadata.profileImage) {
+                            metadata.profileImage = metadataData.image;
+                          }
+                          if (metadataData.displayName && metadataData.displayName !== widget.data.username) {
+                            metadata.displayName = metadataData.displayName;
+                            title = metadataData.displayName;
+                          }
+                          console.log('[appearance-customizer] Discord metadata', metadataData);
+                        }
+                      } catch (error) {
+                        console.warn("Failed to fetch Discord metadata:", error);
+                      }
+                    }
 				} catch (error) {
 					console.warn("Failed to fetch profile metadata:", error);
 				}
@@ -2264,7 +2310,7 @@ export function AppearanceCustomizer({
 				// Helper function to get the appropriate image for a platform
 				const getWidgetImage = (platform: string, widget: any, socialInfo: any) => {
 					// Check if profile image is available for supported platforms (except small-circle)
-					const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube'];
+            const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube', 'kick', 'discord'];
 					const shouldUseProfileImage = widget.size !== 'small-circle';
 					
 					if (supportedPlatforms.includes(platform) && shouldUseProfileImage && (widget.data.profile_image_url || widget.data.profileImage)) {
