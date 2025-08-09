@@ -36,6 +36,7 @@ const platforms = [
   { name: 'Kick', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/kick.svg', value: 'kick', color: 'bg-green-600' },
   { name: 'Threads', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/threads.svg', value: 'threads', color: 'bg-black' },
   { name: 'Snapchat', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/snapchat.svg', value: 'snapchat', color: 'bg-yellow-400' },
+  { name: 'Discord', logoUrl: '/platform-logos/discord.webp', value: 'discord', color: 'bg-indigo-600' },
   { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', value: 'website', color: 'bg-blue-500' },
 ];
 
@@ -163,9 +164,14 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									const metadataResponse = await fetch(
 										`/api/metadata?url=${encodeURIComponent(link.url)}`
 									);
-									if (metadataResponse.ok) {
-										metadata = await metadataResponse.json();
-									}
+                                    if (metadataResponse.ok) {
+                                        metadata = await metadataResponse.json();
+                                        if (
+                                            (link.url?.includes('discord.com') || link.url?.includes('discord.gg'))
+                                        ) {
+                                            console.log('[profile-page] Discord metadata', metadata);
+                                        }
+                                    }
 								}
 							} catch (error) {
 								console.error(
@@ -237,7 +243,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 										if (pathSegments.length > 0) {
 											username = pathSegments[0].replace("@", "");
 										}
-									} else if (hostname.includes("facebook.com")) {
+                  } else if (hostname.includes("facebook.com")) {
 										platform = "facebook";
 										const pathSegments = urlObj.pathname
 											.split("/")
@@ -245,7 +251,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 										if (pathSegments.length > 0) {
 											username = pathSegments[0];
 										}
-									} else if (hostname.includes("spotify.com")) {
+                  } else if (hostname.includes("spotify.com")) {
 										platform = "spotify";
 										const pathSegments = urlObj.pathname
 											.split("/")
@@ -253,6 +259,14 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 										if (pathSegments.length > 1 && pathSegments[0] === "user") {
 											username = pathSegments[1]; // Extract just the user ID, ignore query params
 										}
+                  } else if (hostname.includes("discord.com") || hostname.includes("discord.gg")) {
+                    platform = "discord";
+                    const pathSegments = urlObj.pathname
+                      .split("/")
+                      .filter(Boolean);
+                    if (pathSegments.length > 0) {
+                      username = pathSegments[0];
+                    }
 									} else if (hostname.includes("music.apple.com")) {
 										platform = "apple_music";
 										const pathSegments = urlObj.pathname
@@ -385,7 +399,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 								id: link.id,
 								type: (link.widget_type || link.link_type || "link") as Widget['type'],
 								size: (link.size || "thin") as Widget['size'],
-								data: {
+                                data: {
 									title: link.title || "",
 									url: link.url || "",
 									description: metadata.description || "",
@@ -395,8 +409,8 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 									appLogo: metadata.appLogo || metadata.favicon || "",
 									platform: link.platform || platform || undefined,
 									username: link.username || username || undefined,
-									display_name: link.display_name || displayName || "",
-									profile_image_url: link.profile_image_url || "",
+                                    display_name: link.display_name || displayName || metadata.displayName || "",
+                                    profile_image_url: link.profile_image_url || metadata.profileImage || "",
 									content: link.content || "",
 									caption: link.caption || "",
 									price: link.price || "",
@@ -778,7 +792,7 @@ export function ProfilePage({ page, profile, links, socialLinks }: ProfilePagePr
 				// Helper function to get the appropriate image for a platform
 				const getWidgetImage = (platform: string, widget: any, socialInfo: any) => {
 					// Check if profile image is available for supported platforms (except small-circle)
-					const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube', 'kick'];
+					const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube', 'kick', 'discord'];
 					const shouldUseProfileImage = widget.size !== 'small-circle';
 					
 					if (supportedPlatforms.includes(platform) && shouldUseProfileImage && widget.data.profile_image_url) {

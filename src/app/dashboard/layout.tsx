@@ -37,6 +37,7 @@ export default function DashboardLayout({
   const supabase = createClient()
 
   useEffect(() => {
+    let isMounted = true
     const checkAuthAndLoadData = async () => {
       if (hasCheckedAuth) return
       
@@ -48,6 +49,7 @@ export default function DashboardLayout({
           return
         }
 
+        if (!isMounted) return
         setUser(user)
 
         // Get user profile with display fields
@@ -73,6 +75,7 @@ export default function DashboardLayout({
           if (pageError && pageError.code !== 'PGRST116') {
             console.error('Error fetching primary page:', pageError)
           } else if (primaryPage) {
+            if (!isMounted) return
             setPrimaryPage(primaryPage)
           }
         }
@@ -80,6 +83,7 @@ export default function DashboardLayout({
         console.error('Auth check error:', error)
         router.push('/auth')
       } finally {
+        if (!isMounted) return
         setIsLoading(false)
         setHasCheckedAuth(true)
       }
@@ -111,6 +115,7 @@ export default function DashboardLayout({
     window.addEventListener('profileSetupComplete', handleProfileSetupComplete)
 
     return () => {
+      isMounted = false
       subscription.unsubscribe()
       window.removeEventListener('profileSetupComplete', handleProfileSetupComplete)
     }

@@ -49,6 +49,7 @@ const platforms = [
   { name: 'Kick', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/kick.svg', value: 'kick', color: 'bg-green-600' },
   { name: 'Threads', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/threads.svg', value: 'threads', color: 'bg-black' },
   { name: 'Snapchat', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/snapchat.svg', value: 'snapchat', color: 'bg-yellow-400' },
+  { name: 'Discord', logoUrl: '/platform-logos/discord.webp', value: 'discord', color: 'bg-indigo-600' },
   { name: 'Website', logoUrl: 'https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/googlechrome.svg', value: 'website', color: 'bg-blue-500' },
 ];
 
@@ -361,14 +362,48 @@ export function AppearanceCustomizer({
 										const metadataResponse = await fetch(
 											`/api/metadata?url=${encodeURIComponent(item.url)}`
 										);
-										if (metadataResponse.ok) {
-											metadata = await metadataResponse.json();
-											
-											// Map the image field to profileImage for consistency
-											if (metadata.image && !metadata.profileImage) {
-												metadata.profileImage = metadata.image;
-											}
-										}
+                                    if (metadataResponse.ok) {
+                                        metadata = await metadataResponse.json();
+                                        
+                                        // Map the image field to profileImage for consistency
+                                        if (metadata.image && !metadata.profileImage) {
+                                            metadata.profileImage = metadata.image;
+                                        }
+
+                                        // Determine platform from URL for persistence
+                                        let detectedPlatform = item.platform || '';
+                                        try {
+                                            const u = new URL(item.url);
+                                            const h = u.hostname.toLowerCase();
+                                            if (h.includes('discord.com') || h.includes('discord.gg')) detectedPlatform = 'discord';
+                                            else if (h.includes('instagram.com')) detectedPlatform = 'instagram';
+                                            else if (h.includes('tiktok.com')) detectedPlatform = 'tiktok';
+                                            else if (h.includes('youtube.com')) detectedPlatform = 'youtube';
+                                            else if (h.includes('x.com') || h.includes('twitter.com')) detectedPlatform = 'twitter';
+                                            else if (h.includes('facebook.com')) detectedPlatform = 'facebook';
+                                            else if (h.includes('linkedin.com')) detectedPlatform = 'linkedin';
+                                            else if (h.includes('spotify.com')) detectedPlatform = 'spotify';
+                                            else if (h.includes('github.com')) detectedPlatform = 'github';
+                                        } catch {}
+
+                                        // Backfill to DB so it persists after refresh
+                                        try {
+                                            const normalizedProfileImage = (item.profile_image_url && typeof item.profile_image_url === 'string' && item.profile_image_url.startsWith('http'))
+                                                ? item.profile_image_url
+                                                : (metadata.profileImage || null)
+                                            await supabase
+                                                .from("links")
+                                                .update({
+                                                    profile_image_url: normalizedProfileImage,
+                                                    display_name: item.display_name || metadata.displayName || null,
+                                                    platform: detectedPlatform || item.platform,
+                                                    title: item.title || metadata.displayName || metadata.title || item.title,
+                                                })
+                                                .eq("id", item.id);
+                                        } catch (e) {
+                                            console.warn("Failed to backfill link metadata", e);
+                                        }
+                                    }
 									}
 								} catch (error) {
 									console.error(
@@ -441,7 +476,7 @@ export function AppearanceCustomizer({
 										if (pathSegments.length > 0) {
 											username = pathSegments[0].replace("@", "");
 										}
-									} else if (hostname.includes("facebook.com")) {
+                  } else if (hostname.includes("facebook.com")) {
 										platform = "facebook";
 										const pathSegments = urlObj.pathname
 											.split("/")
@@ -449,7 +484,7 @@ export function AppearanceCustomizer({
 										if (pathSegments.length > 0) {
 											username = pathSegments[0];
 										}
-									} else if (hostname.includes("spotify.com")) {
+                  } else if (hostname.includes("spotify.com")) {
 										platform = "spotify";
 										const pathSegments = urlObj.pathname
 											.split("/")
@@ -457,6 +492,14 @@ export function AppearanceCustomizer({
 										if (pathSegments.length > 1 && pathSegments[0] === "user") {
 											username = pathSegments[1]; // Extract just the user ID, ignore query params
 										}
+                  } else if (hostname.includes("discord.com") || hostname.includes("discord.gg")) {
+                    platform = "discord";
+                    const pathSegments = urlObj.pathname
+                      .split("/")
+                      .filter(Boolean);
+                    if (pathSegments.length > 0) {
+                      username = pathSegments[0];
+                    }
 									} else if (hostname.includes("music.apple.com")) {
 										platform = "apple_music";
 										const pathSegments = urlObj.pathname
@@ -604,7 +647,12 @@ export function AppearanceCustomizer({
 							let itemSize = item.size || "thin";
 							
 							
-							return {
+                            // Normalize profile image URL for rendering
+                            const computedProfileImageUrl = (item.profile_image_url && typeof item.profile_image_url === 'string' && item.profile_image_url.startsWith('http'))
+                                ? item.profile_image_url
+                                : (metadata.profileImage || "")
+
+                            return {
 								id: item.id,
 								type: itemType,
 								size: itemSize,
@@ -618,8 +666,8 @@ export function AppearanceCustomizer({
 									appLogo: metadata.appLogo || metadata.favicon || "",
 									platform: item.platform || platform || undefined,
 									username: item.username || username || undefined,
-									display_name: item.display_name || displayName || "",
-									profile_image_url: item.profile_image_url || metadata.profileImage || "",
+                                    display_name: item.display_name || displayName || "",
+                                    profile_image_url: computedProfileImageUrl,
 									content: item.content || "",
 									caption: item.caption || "",
 									price: item.price || "",
@@ -720,7 +768,9 @@ export function AppearanceCustomizer({
 					isPopularApp: metadata.isPopularApp || false,
 					appName: metadata.appName || "",
 					appLogo: metadata.appLogo || "",
-					displayName: "",
+					// Prefer profileImage provided by API, fallback to image
+					profileImage: metadata.profileImage || metadata.image || "",
+					displayName: metadata.displayName || "",
 				};
 			}
 		} catch (error) {
@@ -735,6 +785,7 @@ export function AppearanceCustomizer({
 			isPopularApp: false,
 			appName: "",
 			appLogo: "",
+			profileImage: "",
 			displayName: "",
 		};
 	};
@@ -1440,19 +1491,18 @@ export function AppearanceCustomizer({
 				displayName: "",
 				fileUrl: "",
 			};
-			if (finalUrl && !finalUrl.includes("placeholder.local")) {
-				try {
-					const linkMeta = await fetchLinkMetadata(finalUrl);
-					metadata = {
-						...linkMeta,
-						profileImage: "",
-						displayName: "",
-						fileUrl: "",
-					};
-				} catch (error) {
-					console.warn("Failed to fetch metadata:", error);
-				}
-			}
+            if (finalUrl && !finalUrl.includes("placeholder.local")) {
+                try {
+                    const linkMeta = await fetchLinkMetadata(finalUrl);
+                    // Preserve profileImage and displayName from metadata fetch
+                    metadata = {
+                        ...linkMeta,
+                        fileUrl: "",
+                    };
+                } catch (error) {
+                    console.warn("Failed to fetch metadata:", error);
+                }
+            }
 
 			// Try to get profile metadata for social platforms
 			if (widget.data.platform && widget.data.username) {
@@ -1473,8 +1523,8 @@ export function AppearanceCustomizer({
 						title = profileMetadata.displayName;
 					}
 
-					// For Spotify, try to extract display name from metadata description
-					if (widget.data.platform === "spotify") {
+                    // For Spotify, try to extract display name from metadata description
+                    if (widget.data.platform === "spotify") {
 						try {
 							const metadataResponse = await fetch(
 								`/api/metadata?url=${encodeURIComponent(widget.data.url || "")}`
@@ -1500,7 +1550,29 @@ export function AppearanceCustomizer({
 						} catch (error) {
 							console.warn("Failed to fetch Spotify metadata:", error);
 						}
-					}
+                    }
+
+                    // For Discord, try to use server name and icon from invite metadata
+                    if (widget.data.platform === "discord") {
+                      try {
+                        const metadataResponse = await fetch(
+                          `/api/metadata?url=${encodeURIComponent(widget.data.url || "")}`
+                        );
+                        if (metadataResponse.ok) {
+                          const metadataData = await metadataResponse.json();
+                          if (metadataData.image && !metadata.profileImage) {
+                            metadata.profileImage = metadataData.image;
+                          }
+                          if (metadataData.displayName && metadataData.displayName !== widget.data.username) {
+                            metadata.displayName = metadataData.displayName;
+                            title = metadataData.displayName;
+                          }
+                          console.log('[appearance-customizer] Discord metadata', metadataData);
+                        }
+                      } catch (error) {
+                        console.warn("Failed to fetch Discord metadata:", error);
+                      }
+                    }
 				} catch (error) {
 					console.warn("Failed to fetch profile metadata:", error);
 				}
@@ -2241,9 +2313,10 @@ export function AppearanceCustomizer({
 			const renderSocialWidget = () => {
 				// QR code handling removed due to type issues
 
-				const getSocialInfo = (platform: string) => {
+                const getSocialInfo = (platform: string) => {
 					// Use the same platform data as widget-modal
-					const platformData = platforms.find(p => p.value === platform.toLowerCase());
+                  const normalized = (platform || '').toString().trim().toLowerCase();
+                  const platformData = platforms.find(p => p.value === normalized);
 					if (platformData) {
 						return {
 							logoUrl: platformData.logoUrl,
@@ -2262,14 +2335,25 @@ export function AppearanceCustomizer({
 				};
 
 				// Helper function to get the appropriate image for a platform
-				const getWidgetImage = (platform: string, widget: any, socialInfo: any) => {
+                const getWidgetImage = (platform: string, widget: any, socialInfo: any) => {
 					// Check if profile image is available for supported platforms (except small-circle)
-					const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube'];
+            const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube', 'kick', 'discord'];
 					const shouldUseProfileImage = widget.size !== 'small-circle';
+                  const isValidHttpImage = (url?: string) => {
+                    if (!url || typeof url !== 'string') return false;
+                    if (!/^https?:\/\//i.test(url)) return false;
+                    // Allow common image extensions or any URL if it loads (we still guard with onError)
+                    return /(\.png|\.jpg|\.jpeg|\.webp|\.gif)(\?.*)?$/i.test(url) || true;
+                  };
 					
-					if (supportedPlatforms.includes(platform) && shouldUseProfileImage && (widget.data.profile_image_url || widget.data.profileImage)) {
+                  const profileUrl = widget.data.profile_image_url || widget.data.profileImage;
+                  if (
+                    supportedPlatforms.includes((platform || '').toString().toLowerCase()) &&
+                    shouldUseProfileImage &&
+                    isValidHttpImage(profileUrl)
+                  ) {
 						return {
-							src: widget.data.profile_image_url || widget.data.profileImage,
+                      src: profileUrl,
 							alt: widget.data.username || `${platform} Profile`,
 							className: "object-cover rounded-full",
 							fallbackSrc: socialInfo.logoUrl,
@@ -2291,7 +2375,7 @@ export function AppearanceCustomizer({
 
 				// Extract platform from URL if not provided
 				let platform = widget.data.platform || "";
-				if (!platform && widget.data.url) {
+                if (!platform && widget.data.url) {
 					try {
 						const urlObj = new URL(widget.data.url);
 						const hostname = urlObj.hostname.toLowerCase();
@@ -2310,8 +2394,10 @@ export function AppearanceCustomizer({
 						else if (hostname.includes("spotify.com")) platform = "Spotify";
 						else if (hostname.includes("music.apple.com"))
 							platform = "Apple Music";
-						else if (hostname.includes("soundcloud.com"))
+                    else if (hostname.includes("soundcloud.com"))
 							platform = "SoundCloud";
+                    else if (hostname.includes("discord.com") || hostname.includes("discord.gg"))
+                      platform = "discord";
 						else if (hostname.includes("threads.net"))
 							platform = "Threads";
 						else if (hostname.includes("snapchat.com"))
@@ -2335,6 +2421,7 @@ export function AppearanceCustomizer({
 						spotify: "Spotify",
 						apple_music: "Apple Music",
 						soundcloud: "SoundCloud",
+                    discord: "Discord",
 						threads: "Threads",
 						snapchat: "Snapchat",
 						website: "Website",
@@ -2444,14 +2531,35 @@ export function AppearanceCustomizer({
 							}`}
 						>
 							{/* Background - Profile Picture or Platform Logo */}
-							{widget.data.profile_image_url ? (
+                            {widget.data.profile_image_url && (platform || '').toString().toLowerCase() !== 'snapchat' ? (
 								<div className="absolute inset-0">
 									<img
 										src={widget.data.profile_image_url}
 										alt={widget.data.username || platform}
 										className="w-full h-full object-cover"
 										onError={(e) => {
-											(e.target as HTMLImageElement).style.display = "none";
+                                            const target = e.target as HTMLImageElement;
+                                            // Fallback to platform logo background if profile image fails
+                                            const parent = target.parentElement;
+                                            if (parent) {
+                                                parent.innerHTML = `
+                                                  <div class=\"absolute inset-0 ${socialInfo.color} flex items-center justify-center\"> 
+                                                    ${
+                                                      socialInfo.logoUrl
+                                                        ? `<img src=\"${socialInfo.logoUrl}\" alt=\"${platform || "Platform"}\" class=\"${
+                                                            activeView === "mobile" ? "w-20 h-20" : "w-32 h-32"
+                                                          } object-contain filter invert brightness-0 opacity-20\" />`
+                                                        : ""
+                                                    }
+                                                    <div class=\"${
+                                                      activeView === "mobile" ? "w-20 h-20" : "w-32 h-32"
+                                                    } flex items-center justify-center text-white ${
+                                                      activeView === "mobile" ? "text-sm" : "text-lg"
+                                                    } font-bold opacity-20 ${socialInfo.logoUrl ? "hidden" : "block"}\">${
+              socialInfo.fallback
+            }</div>
+                                                  </div>`
+                                            }
 										}}
 									/>
 									<div
@@ -2526,14 +2634,28 @@ export function AppearanceCustomizer({
 					return (
 						<div className="relative h-full w-full overflow-hidden rounded-2xl">
 							{/* Background - Profile Picture or Platform Logo */}
-							{widget.data.profile_image_url ? (
+                            {widget.data.profile_image_url && (platform || '').toString().toLowerCase() !== 'snapchat' ? (
 								<div className="absolute inset-0">
 									<img
 										src={widget.data.profile_image_url}
 										alt={widget.data.username || platform}
 										className="w-full h-full object-cover"
 										onError={(e) => {
-											(e.target as HTMLImageElement).style.display = "none";
+                                            const target = e.target as HTMLImageElement;
+                                            const parent = target.parentElement;
+                                            if (parent) {
+                                                parent.innerHTML = `
+                                                  <div class=\"absolute inset-0 ${socialInfo.color} flex items-center justify-center\"> 
+                                                    ${
+                                                      socialInfo.logoUrl
+                                                        ? `<img src=\"${socialInfo.logoUrl}\" alt=\"${platform || "Platform"}\" class=\"w-36 h-36 object-contain filter invert brightness-0 opacity-20\" />`
+                                                        : ""
+                                                    }
+                                                    <div class=\"w-20 h-20 flex items-center justify-center text-white text-2xl font-bold opacity-20 ${
+                                                      socialInfo.logoUrl ? "hidden" : "block"
+                                                    }\">${socialInfo.fallback}</div>
+                                                  </div>`
+                                            }
 										}}
 									/>
 									<div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -2657,15 +2779,29 @@ export function AppearanceCustomizer({
 				return (
 					<div className="relative h-full w-full overflow-hidden rounded-2xl">
 						{/* Background - Profile Picture or Platform Logo */}
-						{widget.data.profile_image_url ? (
+                        {widget.data.profile_image_url && (platform || '').toString().toLowerCase() !== 'snapchat' ? (
 							<div className="absolute inset-0">
 								<img
 									src={widget.data.profile_image_url}
 									alt={widget.data.username || platform}
 									className="w-full h-full object-cover"
 									onError={(e) => {
-										const target = e.target as HTMLImageElement;
-										target.style.display = "none";
+                                        const target = e.target as HTMLImageElement;
+                                        // Replace with platform logo fallback block
+                                        const parent = target.parentElement;
+                                        if (parent) {
+                                            parent.innerHTML = `
+                          <div class=\"absolute inset-0 ${socialInfo.color} flex items-center justify-center\">
+                            ${
+                              socialInfo.logoUrl
+                                ? `<img src=\"${socialInfo.logoUrl}\" alt=\"${platform}\" class=\"w-32 h-32 object-contain filter invert brightness-0 opacity-20\" />`
+                                : ""
+                            }
+                            <div class=\"w-16 h-16 flex items-center justify-center text-white text-2xl font-bold opacity-20 ${
+                              socialInfo.logoUrl ? "hidden" : "block"
+                            }\">${socialInfo.fallback}</div>
+                          </div>`
+                                        }
 									}}
 								/>
 								<div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>

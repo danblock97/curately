@@ -157,6 +157,50 @@ export async function GET(request: NextRequest) {
       }
       
     }
+
+    // Discord: try to extract server name and icon from invite pages
+    if (url.includes('discord.gg') || url.includes('discord.com')) {
+      try {
+        // Many Discord invite pages expose og:title like "Join the <Server Name> Discord Server!"
+        // and og:image as the server icon.
+        let serverName = ''
+        if (ogTitleMatch && ogTitleMatch[1]) {
+          const rawTitle = ogTitleMatch[1]
+          const titlePatterns = [
+            /Join\s+(?:the\s+)?(.+?)\s+(?:Discord Server|on Discord)/i,
+            /Join\s+(.+?)\s+on Discord/i,
+            /^(.+?)\s+\|\s+Discord$/i
+          ]
+          for (const pattern of titlePatterns) {
+            const m = rawTitle.match(pattern)
+            if (m && m[1]) { serverName = m[1].trim(); break }
+          }
+          if (!serverName) {
+            // Fallback: remove common Discord title suffixes/prefixes
+            serverName = rawTitle
+              .replace(/Join\s+the\s+/i, '')
+              .replace(/\s+Discord Server!?/i, '')
+              .replace(/\s+\|\s+Discord/i, '')
+              .trim()
+          }
+        }
+
+        // Use og:image as profile image when present
+        if (ogImageMatch && ogImageMatch[1]) {
+          image = ogImageMatch[1]
+        }
+
+        // Expose for consumers
+        if (serverName) {
+          displayName = serverName
+        }
+
+        // Helpful log to inspect Discord metadata shape during development
+        console.log('[metadata] Discord parsed', { title: ogTitleMatch?.[1], serverName: displayName, image })
+      } catch (e) {
+        console.warn('Failed to parse Discord metadata', e)
+      }
+    }
     
     let favicon = faviconMatch?.[1] || ''
     
@@ -175,6 +219,16 @@ export async function GET(request: NextRequest) {
       const urlObj = new URL(url)
       favicon = `${urlObj.origin}/favicon.ico`
     }
+    
+    // Ensure absolute image URL for og:image
+    if (image && !image.startsWith('http')) {
+      const urlObj = new URL(url)
+      if (image.startsWith('/')) {
+        image = `${urlObj.origin}${image}`
+      } else {
+        image = `${urlObj.origin}/${image}`
+      }
+    }
 
     // Detect popular apps and get their official logos
     const domain2 = urlObj.hostname.toLowerCase()
@@ -192,6 +246,7 @@ export async function GET(request: NextRequest) {
       'twitch.tv': { name: 'Twitch', logo: '/platform-logos/twitch.webp' },
       'spotify.com': { name: 'Spotify', logo: '/platform-logos/spotify.png' },
       'kick.com': { name: 'Kick', logo: '/platform-logos/kick.jpg' },
+      'discord.com': { name: 'Discord', logo: '/platform-logos/discord.webp' },
       'medium.com': { name: 'Medium', logo: 'https://logo.clearbit.com/medium.com' },
       'reddit.com': { name: 'Reddit', logo: 'https://logo.clearbit.com/reddit.com' },
       'discord.com': { name: 'Discord', logo: 'https://logo.clearbit.com/discord.com' },
@@ -203,6 +258,10 @@ export async function GET(request: NextRequest) {
     // Use popular app info if available
     if (popularApp) {
       favicon = popularApp.logo
+      // For Discord and other known platforms, also provide a stable appLogo
+      if (!image && (domain2.includes('discord.gg') || domain2.includes('discord.com'))) {
+        image = '/platform-logos/discord.webp'
+      }
     }
 
     // Decode HTML entities

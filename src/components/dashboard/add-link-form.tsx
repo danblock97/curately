@@ -189,6 +189,7 @@ export function AddLinkForm({ onLinkAdded, onQrCodeAdded, onCancel, nextOrder, s
         else if (urlLower.includes('youtube.com')) detectedPlatform = 'youtube'
         else if (urlLower.includes('spotify.com')) detectedPlatform = 'spotify'
         else if (urlLower.includes('github.com')) detectedPlatform = 'github'
+        else if (urlLower.includes('discord.com') || urlLower.includes('discord.gg')) detectedPlatform = 'discord'
       }
 
       const response = await fetch('/api/links/qr-code', {

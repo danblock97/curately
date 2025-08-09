@@ -64,6 +64,7 @@ const platforms = [
   { name: 'Kick', logoUrl: '/platform-logos/kick.jpg', icon: Package, value: 'kick', color: 'bg-green-600', baseUrl: 'https://kick.com/' },
   { name: 'Threads', logoUrl: '/platform-logos/threads.jpg', icon: Package, value: 'threads', color: 'bg-black', baseUrl: 'https://www.threads.net/@' },
   { name: 'Snapchat', logoUrl: '/platform-logos/snapchat.png', icon: Package, value: 'snapchat', color: 'bg-yellow-400', baseUrl: 'https://www.snapchat.com/add/' },
+  { name: 'Discord', logoUrl: '/platform-logos/discord.webp', icon: Package, value: 'discord', color: 'bg-indigo-600', baseUrl: 'https://discord.gg/' },
   { name: 'Website', logoUrl: '/platform-logos/website.png', icon: Globe, value: 'website', color: 'bg-blue-500', baseUrl: '' },
 ]
 
@@ -326,7 +327,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
 
 
       // For widgets that support profile images, fetch metadata for larger sizes
-      const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube', 'kick']
+      const supportedPlatforms = ['twitch', 'spotify', 'tiktok', 'youtube', 'kick', 'discord']
       const platformForMetadata = selectedWidget === 'pro_twitch_embed' ? 'twitch' : selectedWidget === 'pro_kick_embed' ? 'kick' : widgetData.platform
       const widgetSize = selectedWidget === 'pro_twitch_embed' || selectedWidget === 'pro_youtube_live' || selectedWidget === 'pro_kick_embed' ? 'large-square' : 'small-square'
       
@@ -695,6 +696,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                                    widgetData.platform === 'linkedin' ? 'LinkedIn URL' :
                                    widgetData.platform === 'spotify' ? 'Spotify URL' :
                                    widgetData.platform === 'github' ? 'GitHub URL' :
+                                   widgetData.platform === 'discord' ? 'Discord URL' :
                                    'URL'}
                                 </Label>
                                 <Input
@@ -870,7 +872,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="qr-url" className="text-sm font-medium text-gray-700">
-                              {widgetData.platform === 'website' ? 'Website URL' : 
+                               {widgetData.platform === 'website' ? 'Website URL' : 
                                widgetData.platform === 'instagram' ? 'Instagram URL' :
                                widgetData.platform === 'tiktok' ? 'TikTok URL' :
                                widgetData.platform === 'youtube' ? 'YouTube URL' :
@@ -878,6 +880,7 @@ export function WidgetModal({ isOpen, onClose, onAddWidget, socialLinks, links, 
                                widgetData.platform === 'linkedin' ? 'LinkedIn URL' :
                                widgetData.platform === 'spotify' ? 'Spotify URL' :
                                widgetData.platform === 'github' ? 'GitHub URL' :
+                               widgetData.platform === 'discord' ? 'Discord URL' :
                                'URL'}
                             </Label>
                             <Input
